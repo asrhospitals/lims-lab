@@ -15,15 +15,14 @@ const UpdateProfileEntryMaster = () => {
     register,
     handleSubmit,
     reset,
-    trigger,
     formState: { errors },
   } = useForm({
     mode: "onBlur",
     defaultValues: {
       profileName: "",
       profilecode: "",
-      alternativebarcode: true,
-      isactive: true,
+      alternativebarcode: "true",
+      isactive: "true",
     },
   });
 
@@ -34,8 +33,14 @@ const UpdateProfileEntryMaster = () => {
       reset({
         profileName: data.profileName || "",
         profilecode: data.profilecode || "",
-        alternativebarcode: data.alternativebarcode ? "true" : "false",
-        isactive: data.isactive ? "true" : "false",
+        alternativebarcode:
+          data.alternativebarcode === true || data.alternativebarcode === "true" || data.alternativebarcode === "Yes"
+            ? "true"
+            : "false",
+        isactive:
+          data.isactive === true || data.isactive === "true" || data.isactive === "Active"
+            ? "true"
+            : "false",
       });
     };
 
@@ -59,16 +64,15 @@ const UpdateProfileEntryMaster = () => {
     }
 
     setIsSubmitting(true);
-
-    const payload = {
-      profileName: data.profileName,
-      profilecode: data.profilecode,
-      alternativebarcode: data.alternativebarcode === "true",
-      isactive: data.isactive === "true",
-    };
-
     try {
       const authToken = localStorage.getItem("authToken");
+
+      const payload = {
+        profileName: data.profileName,
+        profilecode: data.profilecode,
+        alternativebarcode: data.alternativebarcode === "true",
+        isactive: data.isactive === "true",
+      };
 
       await axios.put(
         `https://asrlab-production.up.railway.app/lims/master/update-profileentry/${profileEntryMasterToUpdate.id}`,
@@ -95,41 +99,6 @@ const UpdateProfileEntryMaster = () => {
     }
   };
 
-  const fields = [
-    {
-      name: "profileName",
-      label: "Profile Name",
-      placeholder: "Enter Profile Name",
-      validation: { required: "Profile name is required" },
-    },
-    {
-      name: "profilecode",
-      label: "Profile Code",
-      placeholder: "Enter Profile Code",
-      validation: { required: "Profile code is required" },
-    },
-    {
-      name: "alternativebarcode",
-      label: "Alternative Barcode",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Please choose an option" },
-    },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Please choose an option" },
-    },
-  ];
-
   if (!profileEntryMasterToUpdate) {
     return (
       <div className="text-center py-10 text-gray-500">
@@ -143,20 +112,9 @@ const UpdateProfileEntryMaster = () => {
       <div className="fixed top-[61px] w-full z-10">
         <nav className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-            <li>
-              <Link to="/" className="text-gray-700 hover:text-teal-600 transition-colors">
-                🏠︎ Home
-              </Link>
-            </li>
+            <li><Link to="/" className="text-gray-700 hover:text-teal-600">🏠︎ Home</Link></li>
             <li className="text-gray-400">/</li>
-            <li>
-              <Link
-                to="/view-profile-entry-master"
-                className="text-gray-700 hover:text-teal-600 transition-colors"
-              >
-                Profile Entry Master
-              </Link>
-            </li>
+            <li><Link to="/view-profile-entry-master" className="text-gray-700 hover:text-teal-600">Profile Entry</Link></li>
             <li className="text-gray-400">/</li>
             <li className="text-gray-500">Update Profile Entry</li>
           </ol>
@@ -165,79 +123,96 @@ const UpdateProfileEntryMaster = () => {
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
-        >
-          <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
-            <h4 className="font-semibold text-white">Update Profile Entry</h4>
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+          <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
+            <h4 className="text-white font-semibold">Update Profile Entry</h4>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {fields.map(({ name, label, placeholder, type = "text", options, validation }, index) => (
-                <div key={index} className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    {label}
-                    {validation?.required && (
-                      <span className="text-red-500"> *</span>
-                    )}
-                  </label>
+              {/* Profile Entry Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Profile Entry Name</label>
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  {...register("profileName", { required: "Profile Entry Name is required." })}
+                  className={`w-full px-4 py-2 rounded-lg border ${errors.profileName ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                />
+                {errors.profileName && <p className="text-red-500 text-xs mt-1">{errors.profileName.message}</p>}
+              </div>
 
-                  {type === "radio" ? (
-                    <div className="flex space-x-4 pt-2">
-                      {options.map((opt) => (
-                        <label key={opt.value} className="inline-flex items-center">
-                          <input
-                            type="radio"
-                            {...register(name, validation)}
-                            value={opt.value}
-                            className="h-4 w-4 text-teal-600"
-                          />
-                          <span className="ml-2">{opt.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <input
-                      type={type}
-                      {...register(name, validation)}
-                      onBlur={() => trigger(name)}
-                      placeholder={placeholder}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors[name]
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-gray-300 focus:ring-teal-500"
-                      } focus:ring-2 transition`}
-                    />
-                  )}
+              {/* Profile Code */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Profile Code</label>
+                <input
+                  type="text"
+                  placeholder="Profile Code"
+                  {...register("profilecode", { required: "Profile Code is required." })}
+                  className={`w-full px-4 py-2 rounded-lg border ${errors.profilecode ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                />
+                {errors.profilecode && <p className="text-red-500 text-xs mt-1">{errors.profilecode.message}</p>}
+              </div>
 
-                  {errors[name] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors[name].message}
-                    </p>
-                  )}
+              {/* Alternative Barcode */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Is alternative barcode?</label>
+                <div className="flex space-x-4 pt-2">
+                  {["true", "false"].map((val) => (
+                    <label key={val} className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        {...register("alternativebarcode", { required: "Alternative Barcode status is required." })}
+                        value={val}
+                        className="h-4 w-4 text-teal-600"
+                      />
+                      <span className="ml-2">{val === "true" ? "Yes" : "No"}</span>
+                    </label>
+                  ))}
                 </div>
-              ))}
-            </div>
+                {errors.alternativebarcode && (
+                  <p className="text-red-500 text-xs mt-1">{errors.alternativebarcode.message}</p>
+                )}
+              </div>
 
-            <div className="mt-8 flex justify-end">
-              <button
-                type="button"
-                onClick={() => reset()}
-                className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-              >
-                Reset
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
-              >
-                {isSubmitting ? "Updating..." : "Update Profile"}
-              </button>
+              {/* Is Active */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Is Active?</label>
+                <div className="flex space-x-4 pt-2">
+                  {["true", "false"].map((val) => (
+                    <label key={val} className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        {...register("isactive", { required: "Active status is required." })}
+                        value={val}
+                        className="h-4 w-4 text-teal-600"
+                      />
+                      <span className="ml-2">{val === "true" ? "Yes" : "No"}</span>
+                    </label>
+                  ))}
+                </div>
+                {errors.isactive && (
+                  <p className="text-red-500 text-xs mt-1">{errors.isactive.message}</p>
+                )}
+              </div>
             </div>
+          </div>
+
+          <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-4">
+            <button
+              type="button"
+              onClick={() => navigate("/view-profile-entry-master")}
+              className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-60"
+            >
+              {isSubmitting ? "Updating..." : "Update Profile Entry"}
+            </button>
           </div>
         </form>
       </div>
