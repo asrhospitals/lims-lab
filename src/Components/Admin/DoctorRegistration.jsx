@@ -113,22 +113,20 @@ const FileUpload = ({
     if (value) {
       const files = multiple ? value : [value];
       files.forEach((file, index) => {
-        if (file && file instanceof window.File) {  
+        // Improved type checking
+        if (file && typeof File !== 'undefined' && file instanceof File) {
           try {
             urls[`${file.name}-${index}`] = URL.createObjectURL(file);
           } catch (error) {
             console.error('Failed to create object URL:', error);
           }
-        } else if (file) {
-          console.warn('Skipping non-file object:', file);
         }
       });
     }
 
-    // Set the new URLs
     setFileUrls(urls);
 
-    // Cleanup function to revoke URLs
+    // Cleanup function
     return () => {
       Object.values(urls).forEach(url => {
         URL.revokeObjectURL(url);
@@ -146,8 +144,8 @@ const FileUpload = ({
         {files.map((file, index) => {
           if (!file) return null;
           
-          // Check if file is valid
-          if (!file.type || !file.name || !file.size) {
+          // Improved type checking
+          if (!(typeof File !== 'undefined' && file instanceof File)) {
             console.error('Invalid file object:', file);
             return (
               <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
@@ -181,7 +179,7 @@ const FileUpload = ({
                     className="w-8 h-8 object-cover rounded"
                   />
                 ) : (
-                  <File className="w-5 h-5 text-gray-500" />
+                  <FileText className="w-5 h-5 text-gray-500" />
                 )}
                 <span className="text-sm text-gray-700 truncate max-w-xs">
                   {file.name}

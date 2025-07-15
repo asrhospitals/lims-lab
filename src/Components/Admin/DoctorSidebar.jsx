@@ -83,7 +83,11 @@ const DoctorSidebar = ({
       ],
     },
     { name: "Doctor Approval", icon: <FaUserDoctor />, link: "/approval" },
-
+       {
+      name: "Doctor Master",
+      icon: <FaUserDoctor />,
+      children: []
+    },
 
 
     // {
