@@ -5,7 +5,7 @@ import AdminsDashboard from "./Layouts/DoctorsDashboard";
 import AdminLogin from "./Components/Admin/LoginPage";
 import AdminHome from "./Components/Admin/DoctorHome";
 
-
+import { DoctorRegistration } from "./Components/Admin/DoctorRegistration";
 import AddDept from "./Components/Admin/AddDept";
 import ViewDepartment from "./Components/Admin/ViewDepartments";
 import UpdateDept from "./Components/Admin/UpdateDept";
@@ -23,6 +23,8 @@ import ViewLabToLab from "./Components/Admin/ViewLabToLab";
 import AddNodalHospital from "./Components/Admin/AddNodalHospital";
 import ViewNodalHospital from "./Components/Admin/ViewNodalHospital";
 import AddInstrument from "./Components/Admin/AddInstrument";
+import AdminApproval from "./Components/Admin/AdminApproval";
+import AdminApprovalTest from "./Components/Admin/AdminApprovalTest";
 import ViewInstrument from "./Components/Admin/ViewInstrument";
 import UpdateLabToLab from "./Components/Admin/UpdateLabToLab";
 import UpdateInstrument from "./Components/Admin/UpdateInstrument";
@@ -295,6 +297,14 @@ function App() {
         {
           path: "add-report-doctor-master",
           element: <AddReportDoctor />,
+        },
+        {
+          path: "doctor-registration",
+          element: <DoctorRegistration />,
+        },
+        {
+          path: "approval",
+          element: <AdminApproval />,
         },
         {
           path: "view-report-doctor",

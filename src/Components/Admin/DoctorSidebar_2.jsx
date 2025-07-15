@@ -27,6 +27,8 @@ const DoctorSidebar = ({
   const menuItems = [
     { type: "label", label: "Admin Panel" },
     { name: "Dashboard", icon: <FaHome />, link: "" },
+    
+  
     // {
     //   name: "Appointments",
     //   icon: <IoCalendarOutline />,
@@ -35,6 +37,8 @@ const DoctorSidebar = ({
     //     { name: "Schedule Appointments", link: "schedule-appointments" },
     //   ],
     // },
+    { type: "label", label: "Admin Doctor Approval" },
+    { name: "Dashboard", icon: <FaUserDoctor />, link: "" },
     {
       name: "Master",
       icon: <FaUserDoctor />,
@@ -65,7 +69,7 @@ const DoctorSidebar = ({
 
 
 
-      ],
+      ]
     },
 
 

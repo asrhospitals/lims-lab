@@ -132,6 +132,13 @@ const sections = [
     ],
   },
   {
+    title: "Doctor Registration",
+    icon: <RiUserAddLine className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Doctor Registration", route: "/doctor-registration" }
+    ],
+  },
+  {
     title: "Profile Entry",
     icon: <RiFileList2Line className="text-3xl text-[#238781]" />,
     buttons: [
