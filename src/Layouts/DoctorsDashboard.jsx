@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { Outlet } from "react-router-dom";
 import DoctorSidebar from "../Components/Admin/DoctorSidebar";
 import DocHeroHeader from "../Components/Admin/DocHeroHeader";

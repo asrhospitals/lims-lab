@@ -86,7 +86,9 @@ const DoctorSidebar = ({
        {
       name: "Doctor Master",
       icon: <FaUserDoctor />,
-      children: []
+      children: [
+        {"name":"Doctor Report",link:"/doctorreport"}
+      ]
     },
 
 

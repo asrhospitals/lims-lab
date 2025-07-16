@@ -90,8 +90,8 @@ import AddInvestigation1 from "./Components/Admin/AddInvestigation1";
 
 
 
-
-
+import DocDoctorReportDetail from  "./Components/Admin/DoctorReportDetail"
+import DocDoctorReporteditDetail from  "./Components/Admin/DoctorReporteditDetail"
 
 
 
@@ -301,6 +301,14 @@ function App() {
         {
           path: "doctor-registration",
           element: <DoctorRegistration />,
+        },
+        {
+          path: "doctorreport",
+          element: <DocDoctorReportDetail />,
+        },
+        {
+          path: "doctorreportedit",
+          element: <DocDoctorReporteditDetail />,
         },
         {
           path: "approval",
