@@ -30,7 +30,7 @@ const AddSubDpt = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-department",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-department",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
@@ -60,7 +60,7 @@ const AddSubDpt = () => {
       };
 
       const response = await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-subdepartment",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-subdepartment",
         payload,
         {
           headers: {

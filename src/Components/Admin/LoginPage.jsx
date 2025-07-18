@@ -15,10 +15,10 @@ const LoginPage = () => {
   });
 
   const OTP_SENDER =
-    "https://asrlab-production.up.railway.app/lims/authentication/signin" ||
+    "http://srv913743.hstgr.cloud:2000/lims/authentication/signin" ||
     "http://localhost:3000";
   const OTP_VERIFIER =
-    "https://asrlab-production.up.railway.app/lims/authentication/verifyotp" ||
+    "http://srv913743.hstgr.cloud:2000/lims/authentication/verifyotp" ||
     "http://localhost:3000";
 
   const handleLoginChange = (e) => {
@@ -64,7 +64,7 @@ const LoginPage = () => {
     console.log(payload);
     try {
       const response = await axios.post(
-        "https://asrlab-production.up.railway.app/lims/authentication/verifyotp",
+        "http://srv913743.hstgr.cloud:2000/lims/authentication/verifyotp",
         payload
       );
       toast.success("OTP verified! Redirecting...");

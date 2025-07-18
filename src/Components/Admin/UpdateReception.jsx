@@ -65,7 +65,7 @@ const UpdateReception = () => {
     const fetchData = async () => {
       try {
         const [nodalRes] = await Promise.all([
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-nodal", {
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-nodal", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);
@@ -96,7 +96,7 @@ const UpdateReception = () => {
       };
 
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-recep/${receptionToUpdate.id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-recep/${receptionToUpdate.id}`,
         payload,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );

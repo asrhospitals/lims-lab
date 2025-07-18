@@ -61,7 +61,7 @@ const UpdateRole = () => {
       const authToken = localStorage.getItem("authToken");
 
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-role/${roleToUpdate.id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-role/${roleToUpdate.id}`,
         {
           ...data,
           isactive: data.isactive === "true",

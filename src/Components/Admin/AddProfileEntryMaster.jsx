@@ -31,7 +31,7 @@ const AddProfileEntryMaster = () => {
       const authToken = localStorage.getItem("authToken");
 
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-profileentry",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-profileentry",
         payload,
         {
           headers: {

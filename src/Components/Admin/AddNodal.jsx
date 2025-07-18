@@ -25,7 +25,7 @@ const AddNodal = () => {
       const authToken = localStorage.getItem("authToken");
 
       const response = await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-nodal", // <-- Replace with your actual endpoint
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-nodal", // <-- Replace with your actual endpoint
         data,
         {
           headers: {

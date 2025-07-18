@@ -28,7 +28,7 @@ const UpdateReportDoctor = () => {
     const fetchDepartments = async () => {
       try {
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-department",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-department",
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -92,7 +92,7 @@ const UpdateReportDoctor = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-reportdoctor/${reportDoctorToUpdate?.id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-reportdoctor/${reportDoctorToUpdate?.id}`,
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

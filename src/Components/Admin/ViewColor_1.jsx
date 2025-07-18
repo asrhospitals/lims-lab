@@ -18,7 +18,7 @@ const ViewColor = () => {
 
       try {
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-color",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-color",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

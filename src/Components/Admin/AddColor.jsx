@@ -25,7 +25,7 @@ const AddColor = () => {
       };
 
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-color",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-color",
         payload,
         {
           headers: {

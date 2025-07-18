@@ -20,7 +20,7 @@ const ViewProfileMaster = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-profile",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-profile",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,

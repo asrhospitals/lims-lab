@@ -62,7 +62,7 @@ const UpdateColor = () => {
       const token = localStorage.getItem("authToken");
 
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-color/${colorToUpdate.color_id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-color/${colorToUpdate.color_id}`,
         {
           color_code: data.color_code,
           color_status: data.color_status,

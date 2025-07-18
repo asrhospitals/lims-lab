@@ -26,7 +26,7 @@ const AddReceptionist = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-nodal",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-nodal",
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -61,7 +61,7 @@ const AddReceptionist = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-recep",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-recep",
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

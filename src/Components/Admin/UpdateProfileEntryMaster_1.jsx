@@ -90,7 +90,7 @@ const UpdateProfileEntryMaster = () => {
 
 
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-profileentry/${profileEntryMasterToUpdate.id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-profileentry/${profileEntryMasterToUpdate.id}`,
         payload,
         {
           headers: {

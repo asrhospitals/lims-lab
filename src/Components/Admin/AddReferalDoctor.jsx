@@ -24,7 +24,7 @@ const AddReferalDoctor = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const { data } = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-hospital",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-hospital",
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -62,7 +62,7 @@ const AddReferalDoctor = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-refdoc",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-refdoc",
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

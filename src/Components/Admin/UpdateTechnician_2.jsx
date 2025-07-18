@@ -29,7 +29,7 @@ const UpdateTechnician = () => {
       try {
         // Fetch technician details
         const technicianRes = await axios.get(
-          `https://asrlab-production.up.railway.app/lims/master/get-tech/${id}`,
+          `http://srv913743.hstgr.cloud:2000/lims/master/get-tech/${id}`,
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -54,13 +54,13 @@ const UpdateTechnician = () => {
 
         // Fetch dropdowns
         const [nodalRes, roleRes, instRes] = await Promise.all([
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-nodal", {
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-nodal", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-role", {
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-role", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-instrument", {
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-instrument", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);
@@ -97,7 +97,7 @@ const UpdateTechnician = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-tech/${id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-tech/${id}`,
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

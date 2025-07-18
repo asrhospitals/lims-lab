@@ -105,13 +105,13 @@ const UpdateInvestigation = () => {
     const fetchData = async () => {
       try {
         const [nodalRes, roleRes, instrRes] = await Promise.all([
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-nodal", {
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-nodal", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-role", {
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-role", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-instrument", {
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-instrument", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);
@@ -170,7 +170,7 @@ const UpdateInvestigation = () => {
       };
 
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-test/${investigationToUpdate.investigation_id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-test/${investigationToUpdate.investigation_id}`,
         payload,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );

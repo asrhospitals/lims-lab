@@ -66,7 +66,7 @@ const onSubmit = async (data) => {
     console.log("Payload:", payload);
 
     const response = await axios.put(
-      `https://asrlab-production.up.railway.app/lims/master/update-report/${reportId}`,
+      `http://srv913743.hstgr.cloud:2000/lims/master/update-report/${reportId}`,
       payload,
       {
         headers: {

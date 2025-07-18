@@ -25,7 +25,7 @@ const AddReportDoctor = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-department",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-department",
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -63,7 +63,7 @@ const AddReportDoctor = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-reportdoctor",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-reportdoctor",
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

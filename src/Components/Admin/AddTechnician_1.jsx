@@ -24,7 +24,7 @@ const AddTechnician = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-nodal",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-nodal",
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -40,7 +40,7 @@ const AddTechnician = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-role",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-role",
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -77,7 +77,7 @@ const AddTechnician = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-tech",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-tech",
         payload,
         {
           headers: {

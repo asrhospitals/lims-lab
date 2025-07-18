@@ -22,7 +22,7 @@ const ViewHospitalType = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-hsptltype",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-hsptltype",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
@@ -129,7 +129,7 @@ const ViewHospitalType = () => {
 
           {/* Stats */}
           <div className="flex flex-wrap gap-2 mb-4">
-            <div className="flex items-center bg-blue-200 border border-blue-100 rounded-lg px-3 py-1.5">
+            {/* <div className="flex items-center bg-blue-200 border border-blue-100 rounded-lg px-3 py-1.5">
               <RiCircleFill className="text-blue-500 text-xs mr-1.5" />
               <span className="text-sm font-medium text-gray-700">
                 Active Types
@@ -146,7 +146,7 @@ const ViewHospitalType = () => {
               <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                 {inactiveCount}
               </span>
-            </div>
+            </div> */}
             <button
               onClick={() => navigate("/add-hospitaltype")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"

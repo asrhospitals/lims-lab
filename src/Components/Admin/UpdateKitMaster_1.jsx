@@ -30,7 +30,7 @@ const UpdateKitMaster = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          `https://asrlab-production.up.railway.app/lims/master/get-kit/${id}`,
+          `http://srv913743.hstgr.cloud:2000/lims/master/get-kit/${id}`,
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -50,7 +50,7 @@ const UpdateKitMaster = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-profile",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-profile",
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -88,7 +88,7 @@ const UpdateKitMaster = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-kit/${id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-kit/${id}`,
         payload,
         {
           headers: {

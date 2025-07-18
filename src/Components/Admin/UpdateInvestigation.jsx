@@ -110,13 +110,13 @@ const UpdateInvestigation = () => {
     const fetchData = async () => {
       try {
         const [dept, subDept, role, nodal, instr, hosp, spec] = await Promise.all([
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-department", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-subdepartment", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-role", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-nodal", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-instrument", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-hsptltype", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-specimen", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-department", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-subdepartment", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-role", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-nodal", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-instrument", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-hsptltype", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-specimen", { headers: { Authorization: `Bearer ${authToken}` } }),
         ]);
 
         setDepartments(dept.data.filter((d) => d.isActive));
@@ -177,7 +177,7 @@ const UpdateInvestigation = () => {
       };
 
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-test/${investigationToUpdate.investigation_id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-test/${investigationToUpdate.investigation_id}`,
         payload,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );

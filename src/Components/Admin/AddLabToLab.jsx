@@ -36,7 +36,7 @@ const AddLabToLab = () => {
       };
 
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-labtolab",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-labtolab",
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

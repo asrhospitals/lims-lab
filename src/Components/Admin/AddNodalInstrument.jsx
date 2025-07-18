@@ -26,7 +26,7 @@ const AddNodalInstrument = () => {
       };
 
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-nodalinstrument",
+        "http://srv913743.hstgr.cloud:2000/lims/master/add-nodalinstrument",
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

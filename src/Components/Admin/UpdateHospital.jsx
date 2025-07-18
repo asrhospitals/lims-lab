@@ -41,7 +41,7 @@ const UpdateHospital = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlab-production.up.railway.app/lims/master/get-hsptltype",
+          "http://srv913743.hstgr.cloud:2000/lims/master/get-hsptltype",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
@@ -102,7 +102,7 @@ const UpdateHospital = () => {
       };
 
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-hospital/${hospitalToUpdate.hospital_id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-hospital/${hospitalToUpdate.hospital_id}`,
         payload,
         {
           headers: {

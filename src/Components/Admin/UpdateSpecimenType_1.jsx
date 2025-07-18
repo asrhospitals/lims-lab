@@ -66,7 +66,7 @@ const UpdateSpecimenType = () => {
       const token = localStorage.getItem("authToken");
 
       await axios.put(
-        `https://asrlab-production.up.railway.app/lims/master/update-specimen/${specimenToUpdate.id}`,
+        `http://srv913743.hstgr.cloud:2000/lims/master/update-specimen/${specimenToUpdate.id}`,
         {
           specimenname: data.specimenname,
           specimendes: data.specimendes,
