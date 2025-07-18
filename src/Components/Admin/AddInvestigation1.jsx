@@ -148,7 +148,26 @@ const AddInvestigation1 = () => {
   const [remarks, setRemarks] = useState("");
 
 
+const derivedTests = [
+  {
+    name: "Indirect Bilirubin",
+    formula: "Total Bilirubin – Direct Bilirubin",
+    dependencies: ["total_bilirubin", "direct_bilirubin"],
+  },
+  {
+    name: "LDL Cholesterol",
+    formula: "Total Cholesterol – HDL – (TG / 5)",
+    dependencies: ["total_cholesterol", "HDL", "TG"],
+  },
+  {
+    name: "BMI",
+    formula: "Weight / (Height × Height)",
+    dependencies: ["weight", "height"],
+  },
+];
 
+const [selectedDerived, setSelectedDerived] = useState("");
+const [dependencyTests, setDependencyTests] = useState([]);
  
 
   return (
@@ -189,16 +208,24 @@ const AddInvestigation1 = () => {
 
             <div className="col-span-full"></div>
 
+            
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Test Name <span className="text-red-500">*</span></label>
+              <input {...register("testName", { required: true })} placeholder="Test Name" className="w-full border px-3 py-2 rounded" />
+              {errors.testName && <p className="text-red-600 text-xs mt-1">Test Name is required</p>}
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">Test Category<span className="text-red-500">*</span></label>
               <input {...register("testCategory", { required: true })} placeholder="Test Category" className="w-full border px-3 py-2 rounded" />
               {errors.testCategory && <p className="text-red-600 text-xs mt-1">Test Category is required</p>}
             </div>
 
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Test Name <span className="text-red-500">*</span></label>
-              <input {...register("testName", { required: true })} placeholder="Test Name" className="w-full border px-3 py-2 rounded" />
-              {errors.testName && <p className="text-red-600 text-xs mt-1">Test Name is required</p>}
+              <label className="block text-sm font-medium text-gray-700">Short Name</label>
+              <input {...register("shortCode")} type="number" className="w-full border px-3 py-2 rounded" />
             </div>
 
             <div>
@@ -216,10 +243,48 @@ const AddInvestigation1 = () => {
               </select>
             </div>
 
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Specimen Type</label>
+              <label className="block text-sm font-medium text-gray-700">Sub-Department</label>
+              <select {...register("department")} className="w-full border px-3 py-2 rounded">
+                <option value="">Select Sub-Department</option>
+                {departments.map((d, i) => (
+                  <option key={i} value={d.dptName}>{d.dptName}</option>
+                ))}
+              </select>
+            </div>
+
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Role Type</label>
+              <select {...register("department")} className="w-full border px-3 py-2 rounded">
+                <option value="">Select Role Type</option>
+                {departments.map((d, i) => (
+                  <option key={i} value={d.dptName}>{d.dptName}</option>
+                ))}
+              </select>
+            </div>
+
+
+            {/* Report Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Report Type</label>
+              <select {...register("reportType")} className="w-full border px-3 py-2 rounded">
+                <option value="">Select Report Type</option>
+                <option value="Range">Range</option>
+                <option value="Format">Format</option>
+                <option value="Positive/Negative">Positive/Negative</option>
+                <option value="Reactive/Non-reactive">Reactive/Non-reactive</option>
+                <option value="Others">Others</option>
+              </select>
+              <p className="text-xs text-gray-500">Defines the nature of report</p>
+            </div>
+
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Sample Type</label>
               <select {...register("specimenType")} className="w-full border px-3 py-2 rounded">
-                <option value="">Select Specimen Type</option>
+                <option value="">Select Sample Type</option>
                 {specimens.map((d) => (
                   <option key={d.specimenname} value={d.specimenname}>{d.specimenname}</option>
                 ))}
@@ -255,7 +320,7 @@ const AddInvestigation1 = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Method</label>
+              <label className="block text-sm font-medium text-gray-700">Test Method</label>
               <input {...register("method")} placeholder="Method" className="w-full border px-3 py-2 rounded" />
             </div>
 
@@ -285,12 +350,76 @@ const AddInvestigation1 = () => {
               <p className="text-xs text-gray-500">Order of display in the printout for the Test</p>
             </div>
 
+
+            {/* Derived Test */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Derived Test</label>
+              <select
+                {...register("derivedTest")}
+                onChange={(e) => {
+                  const selected = e.target.value;
+                  setSelectedDerived(selected);
+                  const derived = derivedTests.find((d) => d.name === selected);
+
+                  if (derived) {
+                    setValue("derivedTest", selected);
+                    setDependencyTests(derived.dependencies);
+
+                    derived.dependencies.forEach((dep) => {
+                      setValue(`test_${dep}`, "auto-added"); // Always set, no check needed
+                    });
+                  } else {
+                    setDependencyTests([]);
+                  }
+                }}
+                className="w-full border px-3 py-2 rounded"
+              >
+                <option value="">Select Derived Test</option>
+                {derivedTests.map((test) => (
+                  <option key={test.name} value={test.name}>
+                    {test.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Info Box */}
+              {selectedDerived && (
+                <div className="mt-1 text-sm text-gray-600 bg-gray-100 p-2 rounded">
+                  <strong>Formula:</strong> {
+                    derivedTests.find((d) => d.name === selectedDerived)?.formula
+                  }
+                  <p className="text-xs text-gray-500 mt-1">
+                    This test is calculated from: {
+                      derivedTests.find((d) => d.name === selectedDerived)?.dependencies.join(', ')
+                    }. These will be automatically registered.
+                  </p>
+                </div>
+              )}
+
+              {/* Hidden Fields */}
+              {dependencyTests.map((dep) => (
+                <input
+                  key={dep}
+                  type="hidden"
+                  {...register(`test_${dep}`)}
+                  value="auto-added"
+                />
+              ))}
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">External Test ID</label>
               <input {...register("externalTestId")} placeholder="External Test ID" className="w-full border px-3 py-2 rounded" />
               <p className="text-xs text-gray-500">External ID for Test</p>
             </div>
+
+
           </div>
+
+
+  
+
+
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div className="col-span-full">
@@ -305,14 +434,14 @@ const AddInvestigation1 = () => {
 
               <div className="mx-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {[
-                  { name: "Red", hex: "#FF0000" },
-                  { name: "Blue", hex: "#007BFF" },
-                  { name: "Yellow", hex: "#FFC107" },
-                  { name: "Gold", hex: "#FD7E14" },
-                  { name: "Green", hex: "#28A745" },
-                  { name: "Pink", hex: "#E83E8C" },
-                  { name: "Purple", hex: "#6F42C1" },
-                  { name: "Dark Blue", hex: "#004085" }
+                  { name: "Red", hex: "#a6121d" },
+                  { name: "Blue", hex: "#02B4E5" },
+                  { name: "Yellow", hex: "#DBB634" },
+                  { name: "Gold", hex: "#FFD700" },
+                  { name: "Green", hex: "#21443a" },
+                  { name: "Pink", hex: "#E342AD" },
+                  { name: "Purple", hex: "#8D82CF" },
+                  { name: "Dark Blue", hex: "#224E98" }
                 ].map((color) => (
                   <label
                     key={`Tube_${color.name}`}
@@ -332,7 +461,7 @@ const AddInvestigation1 = () => {
                         ></div>
                         <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10 pointer-events-none" />
                       </div>
-                      <span> <img src="iconred.png" alt="icon" style={{ width: '20px', height: '30px' }} /></span>
+                      {/* <span> <img src="iconred.png" alt="icon" style={{ width: '20px', height: '30px' }} /></span> */}
                       <span className="text-sm font-medium text-gray-800">{color.name}</span>
                     </div>
                   </label>
@@ -498,13 +627,36 @@ const AddInvestigation1 = () => {
             
             <div className="col-span-full grid grid-cols-4 items-start gap-4 mb-4">
               {/* Barcode Length */}
-                <div>
+                <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-700">Barcode Length<span className="text-red-500">*</span></label>
                   <input type="number" placeholder="Enter length" className="w-full border px-3 py-2 rounded" />
                 </div>
 
-               {/* TAT (Turnaround Time) */}
+               {/* Barcodes */}
                 <div>
+                  <label className="block text-sm font-medium text-gray-700">Barcode <span className="text-red-500">*</span></label>
+                  <input type="number" placeholder="Enter Barcode" className="w-full border px-3 py-2 rounded" />
+                </div>
+
+              {/* Separate Barcodes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Separate Barcode </label>
+                  <input type="number" placeholder="Enter Separate Barcode" className="w-full border px-3 py-2 rounded" />
+                </div>
+
+                {/* Suffixed Barcodes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Suffixed Barcode</label>
+                  <input
+                    {...register("suffixedBarcodes")}
+                    placeholder="e.g., -A, -B"
+                    className="w-full border px-3 py-2 rounded"
+                  />
+                </div>
+
+
+               {/* TAT (Turnaround Time) */}
+                <div className="mb-3" >
                   <label className="block text-sm font-medium text-gray-700 mb-1">TAT (Turnaround Time)<span className="text-red-500">*</span></label>
                   <div className="flex gap-0">
                     <input
