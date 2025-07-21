@@ -58,7 +58,7 @@ import ViewSpecimenType from "./Components/Admin/ViewSpecimenType";
 import ViewColor from "./Components/Admin/ViewColor";
 
 
-
+import AddProfileMaster from "./Components/Admin/AddProfileMaster";
 import AddPhlebotomist from "./Components/Admin/AddPhelobomist";
 import AddReception from "./Components/Admin/AddReception";
 import AddTechnician from "./Components/Admin/AddTechnician";
@@ -335,6 +335,10 @@ function App() {
         {
           path: "update-profile-entry-master",
           element: <UpdateProfileEntryMaster />,
+        },
+         {
+          path: "add-profile-master",
+          element: <AddProfileMaster />,
         },
         {
           path: "view-profile-master",
