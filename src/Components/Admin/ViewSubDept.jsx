@@ -1,10 +1,9 @@
-import  { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 import AdminContext from "../../context/adminContext";
-import DataTable from "../utils/DataTable"; // Reuse DataTable like in ViewDepartment
+import DataTable from "../utils/DataTable";
 
 const ViewSubDpt = () => {
   const [subDpts, setSubDpts] = useState([]);
@@ -28,6 +27,7 @@ const ViewSubDpt = () => {
             },
           }
         );
+
         const sortedData = response.data.sort((a, b) => a.id - b.id);
         setSubDpts(sortedData);
         setFilteredSubDpts(sortedData);
@@ -43,17 +43,13 @@ const ViewSubDpt = () => {
   }, []);
 
   useEffect(() => {
-    if (!search.trim()) {
-      setFilteredSubDpts(subDpts);
-    } else {
-      const lowerSearch = search.toLowerCase();
-      const filtered = subDpts.filter(
-        (item) =>
-          item.subDptName.toLowerCase().includes(lowerSearch) ||
-          item.dptName.toLowerCase().includes(lowerSearch)
-      );
-      setFilteredSubDpts(filtered);
-    }
+    const lowerSearch = search.toLowerCase();
+    const filtered = subDpts.filter(
+      (item) =>
+        item.subdptname?.toLowerCase().includes(lowerSearch) ||
+        item.dptname?.toLowerCase().includes(lowerSearch)
+    );
+    setFilteredSubDpts(search.trim() ? filtered : subDpts);
   }, [search, subDpts]);
 
   const handleUpdate = (subDpt) => {
@@ -61,39 +57,55 @@ const ViewSubDpt = () => {
     navigate("/update-subDpt");
   };
 
-  // const activeCount = subDpts.filter((d) => d.isActive).length;
-  // const inactiveCount = subDpts.length - activeCount;
-
   const columns = [
     { key: "id", label: "ID" },
-    { key: "dptName", label: "Department" },
-    { key: "subDptName", label: "Sub-Department" },
+    { key: "dptname", label: "Department" },
+    { key: "subdptname", label: "Sub-Department" },
     { key: "status", label: "Status" },
   ];
 
   const mappedItems = filteredSubDpts.map((item) => ({
     id: item.id,
-    dptName: item.dptName,
-    subDptName: item.subDptName,
-    isActive: item.isActive,
-    status: item.isActive ? "Active" : "Inactive",
+    dptname: item.dptname,
+    subdptname: item.subdptname,
+    isactive: item.isactive,
+    status: item.isactive ? "Active" : "Inactive",
   }));
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem href="/view-subDpt" className="hover:text-blue-600">
-            Sub-Dept /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-subDpt"
+                className="text-gray-700 hover:text-teal-600"
+              >
+                Sub Department
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-500" aria-current="page">
+              Add Sub Department
+            </li>
+          </ol>
+        </nav>
       </div>
+
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
@@ -101,7 +113,7 @@ const ViewSubDpt = () => {
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               Sub-Department List
             </h2>
-            <div className="relative flex-1 sm:w-64">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <input
                 type="text"
                 value={search}
@@ -113,26 +125,8 @@ const ViewSubDpt = () => {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {/* <div className="flex items-center bg-blue-200 border border-blue-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-blue-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Active Types
-              </span>
-              <span className="ml-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {activeCount}
-              </span>
-            </div>
-            <div className="flex items-center bg-red-200 border border-red-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-red-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Inactive Types
-              </span>
-              <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {inactiveCount}
-              </span>
-            </div> */}
             <button
               onClick={() => navigate("/add-subDpt")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"

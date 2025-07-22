@@ -1,10 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react"; 
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { RiSearchLine, RiCircleFill } from "react-icons/ri";
+import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 
 const ViewHospitalType = () => {
   const [filteredHospitalTypes, setFilteredHospitalTypes] = useState([]);
@@ -12,9 +11,7 @@ const ViewHospitalType = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const { hospitalTypes, setHospitalTypes, setHospitalTypeToUpdate } =
-    useContext(AdminContext);
-
+  const { hospitalTypes, setHospitalTypes, setHospitalTypeToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,17 +27,15 @@ const ViewHospitalType = () => {
           }
         );
         const data = response.data || [];
+        // Ensure data has proper keys: id, hsptltype, hsptldsc, isactive
         setHospitalTypes(data);
         setFilteredHospitalTypes(data);
       } catch (err) {
-        setError(
-          err.response?.data?.message || "Failed to fetch hospital types."
-        );
+        setError(err.response?.data?.message || "Failed to fetch hospital types.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchHospitalTypes();
   }, [setHospitalTypes]);
 
@@ -51,8 +46,8 @@ const ViewHospitalType = () => {
       const lower = search.toLowerCase();
       const filtered = hospitalTypes.filter(
         (t) =>
-          t.hsptltype.toLowerCase().includes(lower) ||
-          t.hsptldsc.toLowerCase().includes(lower)
+          (t.hsptltype?.toLowerCase().includes(lower) ||
+          t.hsptldsc?.toLowerCase().includes(lower))
       );
       setFilteredHospitalTypes(filtered);
     }
@@ -63,8 +58,9 @@ const ViewHospitalType = () => {
     navigate("/update-hospitaltype");
   };
 
-  const activeCount = hospitalTypes.filter((t) => t.isActive).length;
-  const inactiveCount = hospitalTypes.length - activeCount;
+  // Stats count for active and inactive hospital types
+  // const activeCount = hospitalTypes.filter((t) => t.isactive).length;
+  // const inactiveCount = hospitalTypes.length - activeCount;
 
   const columns = [
     { key: "id", label: "ID" },
@@ -77,36 +73,60 @@ const ViewHospitalType = () => {
     id: t.id ?? Math.random().toString(36).substr(2, 9),
     hsptltype: t.hsptltype,
     hsptldsc: t.hsptldsc,
-    isActive: t.isActive,
-    status: t.isActive ? "Active" : "Inactive",
+    isactive: t.isactive,
+    status: t.isactive ? "Active" : "Inactive",
   }));
+
+  // Handler for search input change with validation (allow only alphabets, numbers, underscore, comma, space)
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    // Regex to allow alphabets, numbers, underscore, comma, space
+    const regex = /^[a-zA-Z0-9_,\s]*$/;
+    if (value === "" || regex.test(value)) {
+      setSearch(value);
+    }
+  };
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50 ">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem
-            href="#"
-            className="hover:text-blue-600 transition-colors"
-          >
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-hospital"
-            className="hover:text-blue-600 transition-colors"
-          >
-            Hospital Types /
-          </CBreadcrumbItem>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
 
-          <CBreadcrumbItem
-            active
-            className="inline-flex items-center text-gray-500"
-          >
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-hospitaltype"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Hospital Type
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              View Hospital Types
+            </li>
+          </ol>
+        </nav>
       </div>
-      <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
+
+      {/* Main Content */}
+      <div className="w-full mt-14 sm:px-6 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -118,9 +138,10 @@ const ViewHospitalType = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={handleSearchChange}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
                   placeholder="Search hospital type..."
+                  title="Allowed characters: alphabets, numbers, underscore (_), comma (,), space"
                 />
                 <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
               </div>
@@ -129,24 +150,7 @@ const ViewHospitalType = () => {
 
           {/* Stats */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {/* <div className="flex items-center bg-blue-200 border border-blue-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-blue-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Active Types
-              </span>
-              <span className="ml-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {activeCount}
-              </span>
-            </div>
-            <div className="flex items-center bg-red-200 border border-red-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-red-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Inactive Types
-              </span>
-              <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {inactiveCount}
-              </span>
-            </div> */}
+            
             <button
               onClick={() => navigate("/add-hospitaltype")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"

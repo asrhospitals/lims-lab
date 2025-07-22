@@ -1,16 +1,14 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import AdminContext from "../../context/adminContext";
-import { useNavigate } from "react-router-dom";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { useNavigate, Link } from "react-router-dom";
 
 const UpdateDept = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { departmentToUpdate, setDepartmentToUpdate } =
-    useContext(AdminContext);
+  const { departmentToUpdate, setDepartmentToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   const {
@@ -22,13 +20,12 @@ const UpdateDept = () => {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      dptName: "",
-      isActive: "true",
+      dptname: "",
+      isactive: "true",
     },
   });
 
   useEffect(() => {
-    console.log(departmentToUpdate);
     if (!departmentToUpdate) {
       const stored = localStorage.getItem("departmentToUpdate");
       if (stored) {
@@ -36,8 +33,8 @@ const UpdateDept = () => {
           const parsed = JSON.parse(stored);
           setDepartmentToUpdate(parsed);
           reset({
-            dptName: parsed.dptName || "",
-            isActive: String(parsed.isActive),
+            dptname: parsed.dptname || "",
+            isactive: String(parsed.isactive),
           });
         } catch (err) {
           console.error("Failed to parse department from localStorage", err);
@@ -45,8 +42,8 @@ const UpdateDept = () => {
       }
     } else {
       reset({
-        dptName: departmentToUpdate.dptName || "",
-        isActive: String(departmentToUpdate.isActive),
+        dptname: departmentToUpdate.dptname || "",
+        isactive: String(departmentToUpdate.isactive),
       });
     }
   }, [departmentToUpdate, reset, setDepartmentToUpdate]);
@@ -62,7 +59,7 @@ const UpdateDept = () => {
         `https://asrlabs.asrhospitalindia.in/lims/master/update-department/${departmentToUpdate.id}`,
         {
           ...data,
-          isActive: data.isActive === "true",
+          isactive: data.isactive === "true",
         },
         {
           headers: {
@@ -71,10 +68,10 @@ const UpdateDept = () => {
         }
       );
 
-      navigate("/view-departments");
       toast.success("✅ Department updated successfully!");
       setDepartmentToUpdate(null);
       localStorage.removeItem("departmentToUpdate");
+      navigate("/view-departments");
     } catch (error) {
       console.error(error);
       toast.error(
@@ -88,18 +85,22 @@ const UpdateDept = () => {
 
   const fields = [
     {
-      name: "dptName",
+      name: "dptname",
       label: "Department Name",
       placeholder: "Enter Department Name",
       validation: {
         required: "Department name is required",
         minLength: { value: 2, message: "Minimum 2 characters" },
         maxLength: { value: 50, message: "Maximum 50 characters" },
-        pattern: { value: /^[A-Za-z\s]+$/i, message: "Only alphabets allowed" },
+        pattern: {
+          value: /^[A-Za-z0-9_\-\s]+$/,
+          message:
+            "Only alphabets, numbers, spaces, underscores (_) and hyphens (-) are allowed",
+        },
       },
     },
     {
-      name: "isActive",
+      name: "isactive",
       label: "Is Active?",
       type: "radio",
       options: [
@@ -122,29 +123,42 @@ const UpdateDept = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50 ">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem
-            href="#"
-            className="hover:text-blue-600 transition-colors"
-          >
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-departments"
-            className="hover:text-blue-600 transition-colors"
-          >
-            Departments /
-          </CBreadcrumbItem>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
 
-          <CBreadcrumbItem
-            active
-            className="inline-flex items-center text-gray-500"
-          >
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-departments"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Department
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              Update Department
+            </li>
+          </ol>
+        </nav>
       </div>
+
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
@@ -216,6 +230,7 @@ const UpdateDept = () => {
                 onClick={() => {
                   reset();
                   setDepartmentToUpdate(null);
+                  localStorage.removeItem("departmentToUpdate");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >

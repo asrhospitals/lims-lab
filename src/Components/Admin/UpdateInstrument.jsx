@@ -131,7 +131,7 @@ const UpdateInstrument = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
+      <div className="fixed top-[61px] w-full z-10">
         <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
           <CBreadcrumbItem href="/" className="hover:text-blue-600">
             🏠︎ Home /
@@ -148,7 +148,7 @@ const UpdateInstrument = () => {
         </CBreadcrumb>
       </div>
 
-      <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}

@@ -1,19 +1,12 @@
-import React, { useContext, useState } from "react";
+import  {  useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import AdminContext from "../../context/adminContext";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const AddDept = () => {
-  const [files, setFiles] = useState([]);
-  const [previewFile, setPreviewFile] = useState(null);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { departmentToUpdate, setDepartmentToUpdate } =
-    useContext(AdminContext);
   const navigate = useNavigate();
 
   const {
@@ -22,22 +15,14 @@ const AddDept = () => {
     formState: { errors },
     reset,
     trigger,
-  } = useForm({
-    mode: "onBlur",
-  });
+  } = useForm({ mode: "onBlur" });
 
   const onSubmit = async (data) => {
-    console.log(departmentToUpdate);
     setIsSubmitting(true);
-
     try {
-      const formData = new FormData();
-
-      console.log(data);
-
       const authToken = localStorage.getItem("authToken");
 
-      const response = await axios.post(
+      await axios.post(
         "https://asrlabs.asrhospitalindia.in/lims/master/add-department",
         data,
         {
@@ -50,21 +35,15 @@ const AddDept = () => {
       toast.success("✅ New department created successfully!", {
         position: "top-right",
         autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
       });
 
       reset();
-      setFiles([]);
       navigate("/view-departments");
     } catch (error) {
       console.error(error.response || error.message);
       toast.error(
         error?.response?.data?.message ||
-          "❌ Failed to creatr department. Please try again."
+          "❌ Failed to create department. Please try again."
       );
     } finally {
       setIsSubmitting(false);
@@ -73,20 +52,23 @@ const AddDept = () => {
 
   const fields = [
     {
-      name: "dptName",
+      name: "dptname",
       label: "Department Name",
       placeholder: "Enter Department Name",
       validation: {
-        required: "Full name is required",
-        minLength: { value: 2, message: "Minimum 5 characters" },
-        maxLength: { value: 30, message: "Maximum 50 characters" },
-        pattern: { value: /^[A-Za-z\s]+$/i, message: "Only alphabets allowed" },
+        required: "Department name is required",
+        minLength: { value: 2, message: "Minimum 2 characters" },
+        maxLength: { value: 50, message: "Maximum 50 characters" },
+        pattern: {
+          value: /^[A-Za-z0-9_\-\s]+$/,
+          message:
+            "Only alphabets, numbers, spaces, underscores (_) and hyphens (-) are allowed",
+        },
       },
     },
-
     {
-      name: "isActive",
-      label: "Is Active ?",
+      name: "isactive",
+      label: "Is Active?",
       type: "radio",
       options: [
         { value: "true", label: "True" },
@@ -100,34 +82,44 @@ const AddDept = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-departments"
-            className="hover:text-blue-600"
-          >
-            Department /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Add Dept.
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-departments"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Department
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              Add Department
+            </li>
+          </ol>
+        </nav>
       </div>
+
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
+        <ToastContainer />
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -136,6 +128,7 @@ const AddDept = () => {
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add New Department</h4>
           </div>
+
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
@@ -154,24 +147,8 @@ const AddDept = () => {
                         <span className="text-red-500">*</span>
                       )}
                     </label>
-                    {type === "select" ? (
-                      <select
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name]
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:ring-teal-500"
-                        } focus:ring-2 focus:border-transparent transition`}
-                      >
-                        <option value="">Select {label}</option>
-                        {options.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    ) : type === "radio" ? (
+
+                    {type === "radio" ? (
                       <div className="flex space-x-4 pt-2">
                         {options.map((option) => (
                           <label
@@ -195,14 +172,15 @@ const AddDept = () => {
                         type={type}
                         {...register(name, validation)}
                         onBlur={() => trigger(name)}
+                        placeholder={placeholder}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:ring-teal-500"
                         } focus:ring-2 focus:border-transparent transition`}
-                        placeholder={placeholder}
                       />
                     )}
+
                     {errors[name] && (
                       <p className="text-red-500 text-xs mt-1 flex items-center">
                         <svg
@@ -225,16 +203,10 @@ const AddDept = () => {
               )}
             </div>
 
-            {/* File Upload Section */}
-
-            {/* Form Actions */}
             <div className="mt-8 flex justify-end">
               <button
                 type="button"
-                onClick={() => {
-                  reset();
-                  setFiles([]);
-                }}
+                onClick={() => reset()}
                 className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
               >
                 Reset
@@ -288,7 +260,6 @@ const AddDept = () => {
               </button>
             </div>
           </div>
-          
         </form>
       </div>
     </>

@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const AddNodal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const navigate = useNavigate();
 
   const {
     register,
@@ -24,8 +25,8 @@ const AddNodal = () => {
     try {
       const authToken = localStorage.getItem("authToken");
 
-      const response = await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-nodal", // <-- Replace with your actual endpoint
+      await axios.post(
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-nodal",
         data,
         {
           headers: {
@@ -35,7 +36,14 @@ const AddNodal = () => {
       );
 
       toast.success("✅ New nodal lab created successfully!");
+      
+      // Optionally reset form before redirecting
       reset();
+
+      // Redirect to view page after short delay so toast can be seen
+      setTimeout(() => {
+        navigate("/view-nodal");
+      }, 1500);
     } catch (error) {
       console.error(error.response || error.message);
       toast.error(
@@ -55,10 +63,11 @@ const AddNodal = () => {
       validation: {
         required: "Nodal name is required",
         minLength: { value: 2, message: "Minimum 2 characters" },
-        maxLength: { value: 30, message: "Maximum 30 characters" },
+        maxLength: { value: 50, message: "Maximum 50 characters" },
         pattern: {
-          value: /^[A-Za-z\s]+$/i,
-          message: "Only alphabets and spaces allowed",
+          value: /^[A-Za-z0-9_,\s-]+$/i,
+          message:
+            "Only letters, numbers, commas, dashes, underscores and spaces allowed",
         },
       },
     },
@@ -90,23 +99,38 @@ const AddNodal = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex gap-2 items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem>
-            <Link to="/" className="hover:text-blue-600">
-              🏠︎ Home /
-            </Link>
-          </CBreadcrumbItem>
-          <CBreadcrumbItem>
-            <Link to="/view-nodal" className="hover:text-blue-600">
-              Nodal /
-            </Link>
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-nodal"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Nodal
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Add Nodal Lab
+            </li>
+          </ol>
+        </nav>
       </div>
+
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
@@ -116,18 +140,15 @@ const AddNodal = () => {
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add New Nodal Lab</h4>
           </div>
+
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
-                ({
-                  name,
-                  label,
-                  placeholder,
-                  type = "text",
-                  options,
-                  validation,
-                }) => (
-                  <div key={name} className="space-y-1">
+                (
+                  { name, label, placeholder, type = "text", options, validation },
+                  index
+                ) => (
+                  <div key={index} className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">
                       {label}
                       {validation?.required && (
@@ -158,12 +179,12 @@ const AddNodal = () => {
                         type={type}
                         {...register(name, validation)}
                         onBlur={() => trigger(name)}
+                        placeholder={placeholder}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:ring-teal-500"
                         } focus:ring-2 focus:border-transparent transition`}
-                        placeholder={placeholder}
                       />
                     )}
                     {errors[name] && (
@@ -187,6 +208,7 @@ const AddNodal = () => {
                 )
               )}
             </div>
+
             <div className="mt-8 flex justify-end">
               <button
                 type="button"
@@ -238,7 +260,7 @@ const AddNodal = () => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Create nodal lab
+                    Create Nodal Lab
                   </span>
                 )}
               </button>

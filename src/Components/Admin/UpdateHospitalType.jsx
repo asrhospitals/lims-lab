@@ -1,16 +1,14 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import AdminContext from "../../context/adminContext";
-import { useNavigate } from "react-router-dom";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { useNavigate, Link } from "react-router-dom";
 
 const UpdateHospitalType = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { hospitalTypeToUpdate, setHospitalTypeToUpdate } =
-    useContext(AdminContext);
+  const { hospitalTypeToUpdate, setHospitalTypeToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   const {
@@ -24,7 +22,7 @@ const UpdateHospitalType = () => {
     defaultValues: {
       hsptltype: "",
       hsptldsc: "",
-      isActive: "true",
+      isactive: true, // match lowercase column name and boolean type
     },
   });
 
@@ -38,7 +36,7 @@ const UpdateHospitalType = () => {
           reset({
             hsptltype: parsed.hsptltype || "",
             hsptldsc: parsed.hsptldsc || "",
-            isActive: String(parsed.isActive),
+            isactive: parsed.isactive ?? true, // default true if undefined
           });
         } catch (err) {
           console.error("Failed to parse hospitalType from localStorage", err);
@@ -48,7 +46,7 @@ const UpdateHospitalType = () => {
       reset({
         hsptltype: hospitalTypeToUpdate.hsptltype || "",
         hsptldsc: hospitalTypeToUpdate.hsptldsc || "",
-        isActive: String(hospitalTypeToUpdate.isActive),
+        isactive: hospitalTypeToUpdate.isactive ?? true,
       });
     }
   }, [hospitalTypeToUpdate, reset, setHospitalTypeToUpdate]);
@@ -63,8 +61,9 @@ const UpdateHospitalType = () => {
       await axios.put(
         `https://asrlabs.asrhospitalindia.in/lims/master/update-hsptltype/${hospitalTypeToUpdate.id}`,
         {
-          ...data,
-          isActive: data.isActive === "true",
+          hsptltype: data.hsptltype,
+          hsptldsc: data.hsptldsc,
+          isactive: data.isactive, // boolean already
         },
         {
           headers: {
@@ -95,6 +94,11 @@ const UpdateHospitalType = () => {
       placeholder: "Enter Hospital Type Code (e.g., DH)",
       validation: {
         required: "Hospital type code is required",
+        pattern: {
+          value: /^[a-zA-Z0-9_, ]+$/,
+          message:
+            "Only letters, numbers, underscore, comma and spaces allowed",
+        },
       },
     },
     {
@@ -105,15 +109,20 @@ const UpdateHospitalType = () => {
         required: "Description is required",
         minLength: { value: 2, message: "Minimum 2 characters" },
         maxLength: { value: 100, message: "Maximum 100 characters" },
+        pattern: {
+          value: /^[a-zA-Z0-9_, ]+$/,
+          message:
+            "Only letters, numbers, underscore, comma and spaces allowed",
+        },
       },
     },
     {
-      name: "isActive",
+      name: "isactive",
       label: "Is Active?",
       type: "radio",
       options: [
-        { value: "true", label: "True" },
-        { value: "false", label: "False" },
+        { value: true, label: "True" },
+        { value: false, label: "False" },
       ],
       validation: {
         required: "This field is required.",
@@ -131,23 +140,43 @@ const UpdateHospitalType = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-hospitaltype"
-            className="hover:text-blue-600"
-          >
-            Hospital Types /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Add Hospital
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-hospitaltype"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Hospital Types
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              Update Hospital Type
+            </li>
+          </ol>
+        </nav>
       </div>
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+
+      <div className="w-full mt-20 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -178,14 +207,21 @@ const UpdateHospitalType = () => {
                       <div className="flex space-x-4 pt-2">
                         {options.map((option) => (
                           <label
-                            key={option.value}
+                            key={option.value.toString()}
                             className="inline-flex items-center"
                           >
                             <input
                               type="radio"
                               {...register(name, validation)}
-                              value={option.value}
+                              value={option.value.toString()}
                               className="h-4 w-4 text-teal-600"
+                              defaultChecked={
+                                String(option.value) ===
+                                String(
+                                  hospitalTypeToUpdate[name] ??
+                                    (name === "isactive" ? true : "")
+                                )
+                              }
                             />
                             <span className="ml-2">{option.label}</span>
                           </label>

@@ -1,10 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { RiSearchLine, RiCircleFill } from "react-icons/ri";
+import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 
 const ViewNodal = () => {
   const [nodalLabs, setNodalLabs] = useState([]);
@@ -29,7 +28,6 @@ const ViewNodal = () => {
           }
         );
         const data = response.data || [];
-        console.log(data);
         setNodalLabs(data);
         setFilteredNodalLabs(data);
       } catch (err) {
@@ -41,6 +39,15 @@ const ViewNodal = () => {
 
     fetchNodalLabs();
   }, []);
+
+  // Filter based on search with allowed characters only
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    // Allow only alphabets, numbers, _ and , and spaces
+    if (/^[a-zA-Z0-9_,\s]*$/.test(value)) {
+      setSearch(value);
+    }
+  };
 
   useEffect(() => {
     if (!search.trim()) {
@@ -60,40 +67,63 @@ const ViewNodal = () => {
     navigate("/update-nodal");
   };
 
-  // const activeCount = nodalLabs.filter((n) => n.isactive).length;
-  // const inactiveCount = nodalLabs.length - activeCount;
-
+  // Columns reflect actual database column names and types
   const columns = [
     { key: "id", label: "ID" },
     { key: "nodalname", label: "Nodal Name" },
-    { key: "motherlabText", label: "Mother Lab" },
+    { key: "motherlab", label: "Mother Lab" },
     { key: "status", label: "Status" },
   ];
 
+  // Map nodal labs with exact fields and logic for status & motherlab display
   const mappedItems = filteredNodalLabs.map((n) => ({
-    id: n.nodal_id ?? Math.random().toString(36).substring(2, 9),
+    id: n.id ?? Math.random().toString(36).substring(2, 9),
     nodalname: n.nodalname,
-    motherlabText: n.motherlab ? "Yes" : "No",
-    isActive: n.isactive,
+    motherlab: n.motherlab ? "Yes" : "No",
     status: n.isactive ? "Active" : "Inactive",
+    isactive: n.isactive, // for any internal use (optional)
   }));
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex gap-2 items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem href="/view-nodal" className="hover:text-blue-600">
-            Nodal /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10 bg-gray-50 border-b shadow-lg">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-nodal"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Nodal
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              View Nodal
+            </li>
+          </ol>
+        </nav>
       </div>
-      <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
+
+      {/* Main Content */}
+      <div className="w-full mt-12 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -105,7 +135,7 @@ const ViewNodal = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={handleSearchChange}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
                   placeholder="Search nodal lab..."
                 />
@@ -114,35 +144,17 @@ const ViewNodal = () => {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {/* <div className="flex items-center bg-blue-200 border border-blue-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-blue-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Active Nodal Labs
-              </span>
-              <span className="ml-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {activeCount}
-              </span>
-            </div>
-            <div className="flex items-center bg-red-200 border border-red-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-red-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Inactive Nodal Labs
-              </span>
-              <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {inactiveCount}
-              </span>
-            </div> */}
+          {/* Add Button */}
+          <div className="flex flex-wrap gap-2 mb-4 justify-start">
             <button
               onClick={() => navigate("/add-nodal")}
-              className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
+              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
             </button>
           </div>
 
-          {/* Table */}
+          {/* Table or Status */}
           {loading ? (
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (

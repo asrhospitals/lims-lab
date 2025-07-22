@@ -48,10 +48,12 @@ const DoctorSidebar = ({
         // { name: "Add Hospital", link: "add-hospital" },
         { name: "Hospital", link: "view-hospital" },
         { name: "Nodal", link: "view-nodal" },
-        { name: "Lab", link: "/view-labtolab" },
+        
         { name: "Nodal Hospital", link: "/view-nodal-hospitals" },
         { name: "Instrument", link: "/view-instruments" },
         { name: "Nodal Instrument", link: "/view-nodal-instruments" },
+
+        { name: "Lab", link: "/view-labtolab" },
         { name: "Role", link: "/view-roles" },
 
 
@@ -60,7 +62,7 @@ const DoctorSidebar = ({
         { name: "Technician Master", link: "/view-technician" },
         { name: "Referal Doctor", link: "/view-referal-doctor" },
         { name: "Report Doctor", link: "/view-report-doctor" },
-        { name: "Doctor Registration", link: "/doctor-registration" },
+
         { name: "Profile Entry Master", link: "/view-profile-entry-master" },
         { name: "Profile Master", link: "/view-profile-master" },
         { name: "Investigation Master", link: "/view-investigation" },
@@ -82,14 +84,9 @@ const DoctorSidebar = ({
 
       ],
     },
-    { name: "Doctor Approval", icon: <FaUserDoctor />, link: "/approval" },
-       {
-      name: "Doctor Master",
-      icon: <FaUserDoctor />,
-      children: [
-        {"name":"Doctor Report",link:"/doctorreport"}
-      ]
-    },
+
+
+
 
 
     // {
@@ -178,7 +175,7 @@ const DoctorSidebar = ({
 
 
   const ScrollbarStyles = () => (
-  <style jsx="true">{`
+  <style jsx>{`
     .custom-scrollbar {
       overflow-y: auto;
       max-height: 100vh; /* Allow full viewport height scroll */
@@ -439,3 +436,4 @@ const DoctorSidebar = ({
 };
 
 export default DoctorSidebar;
+

@@ -1,8 +1,7 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react"; 
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { RiSearchLine, RiCircleFill } from "react-icons/ri";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
 
@@ -14,7 +13,7 @@ const ViewDepartment = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const { departmenToUpdate, setDepartmentToUpdate } = useContext(AdminContext);
+  const { setDepartmentToUpdate } = useContext(AdminContext);
 
   const navigate = useNavigate();
 
@@ -30,7 +29,10 @@ const ViewDepartment = () => {
             },
           }
         );
-        const departmentsData = response.data.sort((a, b) => a.id - b.id);
+
+        // Sort by id ascending (numeric)
+        const departmentsData = response.data.sort((a, b) => Number(a.id) - Number(b.id));
+
         setDepartments(departmentsData);
         setFilteredDepartments(departmentsData);
       } catch (err) {
@@ -41,7 +43,7 @@ const ViewDepartment = () => {
     };
 
     fetchAllDepartments();
-  }, [setDepartments]);
+  }, []);
 
   useEffect(() => {
     if (!search.trim()) {
@@ -49,7 +51,7 @@ const ViewDepartment = () => {
     } else {
       const lowerSearch = search.toLowerCase();
       const filtered = departments.filter((d) =>
-        d.dptname.toLowerCase().includes(lowerSearch)
+        d.dptname?.toLowerCase().includes(lowerSearch)
       );
       setFilteredDepartments(filtered);
     }
@@ -61,51 +63,54 @@ const ViewDepartment = () => {
     navigate("/update-department");
   };
 
-  const activeCount = departments.filter((d) => d.isActive).length;
-  const inactiveCount = departments.length - activeCount;
-
   const columns = [
     { key: "id", label: "ID" },
     { key: "dptname", label: "Department Name" },
     { key: "status", label: "Status" },
-
-    // Don't include "status" or "actions" here — handled by DataTable
   ];
 
+  // Map raw data to display data with correct boolean status handling
   const mappedItems = filteredDepartments.map((d) => ({
-    id: d.id || Math.random().toString(36).substr(2, 9),
-    dptname: d.dptname,
-    isActive: d.isactive,
+    id: d.id ?? Math.random().toString(36).substr(2, 9),
+    dptname: d.dptname || "",
+    isactive: !!d.isactive, // boolean coercion
     status: d.isactive ? "Active" : "Inactive",
   }));
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-10 ">
-        
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem
-            href="#"
-            className="hover:text-blue-600 transition-colors"
-          >
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-departments"
-            className="hover:text-blue-600 transition-colors"
-          >
-            Departments /
-          </CBreadcrumbItem>
-
-          <CBreadcrumbItem
-            active
-            className="inline-flex items-center text-gray-500"
-          >
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
-
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-profile-Master"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Profile Masters
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              View Profile Masters
+            </li>
+          </ol>
+        </nav>
       </div>
+
       <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
@@ -129,26 +134,6 @@ const ViewDepartment = () => {
 
           {/* Stats */}
           <div className="flex flex-wrap gap-2 mb-4">
-
-            {/* <div className="flex items-center bg-blue-200 border border-blue-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-blue-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Active Types
-              </span>
-              <span className="ml-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {activeCount}
-              </span>
-            </div>
-            <div className="flex items-center bg-red-200 border border-red-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-red-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Inactive Types
-              </span>
-              <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {inactiveCount}
-              </span>
-            </div> */}
-
             <button
               onClick={() => navigate("/add-department")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"

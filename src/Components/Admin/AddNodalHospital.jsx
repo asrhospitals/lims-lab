@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";  
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const AddNodalHospital = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,7 +20,6 @@ const AddNodalHospital = () => {
     trigger,
   } = useForm({ mode: "onBlur" });
 
-  // Fetch hospitals
   useEffect(() => {
     const fetchHospitals = async () => {
       try {
@@ -68,8 +66,8 @@ const AddNodalHospital = () => {
       const authToken = localStorage.getItem("authToken");
 
       const payload = {
-        nodal_id: parseInt(data.nodal_id),
-        hospital_id: parseInt(data.hospital_id),
+        nodalid: parseInt(data.nodal_id, 10),
+        hospitalid: parseInt(data.hospital_id, 10),
         isactive: data.isactive === "true",
       };
 
@@ -100,7 +98,7 @@ const AddNodalHospital = () => {
       label: "Nodal Name",
       type: "select",
       options: nodalList.map((n) => ({
-        value: n.nodal_id,
+        value: n.id,
         label: n.nodalname,
       })),
       validation: { required: "Nodal name is required" },
@@ -110,8 +108,8 @@ const AddNodalHospital = () => {
       label: "Hospital Name",
       type: "select",
       options: hospitalList.map((h) => ({
-        value: h.hospital_id,
-        label: h.hospital_name,
+        value: h.id,
+        label: h.hospitalname,
       })),
       validation: { required: "Hospital name is required" },
     },
@@ -124,34 +122,48 @@ const AddNodalHospital = () => {
         { value: "false", label: "No" },
       ],
       validation: { required: "Status is required." },
+      defaultValue: "true", // optional default
     },
   ];
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50 ">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem
-            href="/"
-            className="hover:text-blue-600 transition-colors"
-          >
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-nodal-hospitals"
-            className="hover:text-blue-600 transition-colors"
-          >
-            Nodal Hospital /
-          </CBreadcrumbItem>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
 
-          <CBreadcrumbItem
-            active
-            className="inline-flex items-center text-gray-500"
-          >
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-nodal-hospitals"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Nodal Hospital
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              Add Nodal Hospital
+            </li>
+          </ol>
+        </nav>
       </div>
+
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         {fetchError && (
@@ -174,6 +186,7 @@ const AddNodalHospital = () => {
                     type = "text",
                     options,
                     validation,
+                    defaultValue,
                   },
                   index
                 ) => (
@@ -194,6 +207,7 @@ const AddNodalHospital = () => {
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:ring-teal-500"
                         } focus:ring-2 transition`}
+                        defaultValue=""
                       >
                         <option value="">Select {label}</option>
                         {options.map((opt) => (
@@ -214,6 +228,7 @@ const AddNodalHospital = () => {
                               {...register(name, validation)}
                               value={opt.value}
                               className="h-4 w-4 text-teal-600"
+                              defaultChecked={defaultValue === opt.value}
                             />
                             <span className="ml-2">{opt.label}</span>
                           </label>
@@ -222,7 +237,14 @@ const AddNodalHospital = () => {
                     ) : (
                       <input
                         type={type}
-                        {...register(name, validation)}
+                        {...register(name, {
+                          ...validation,
+                          pattern: {
+                            value: /^[a-zA-Z0-9_,\s-]*$/,
+                            message:
+                              "Only alphabets, numbers, underscore (_), comma (,) and hyphen (-) are allowed",
+                          },
+                        })}
                         onBlur={() => trigger(name)}
                         placeholder={placeholder}
                         className={`w-full px-4 py-2 rounded-lg border ${

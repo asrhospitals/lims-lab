@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import AdminContext from "../../context/adminContext";
 import { useNavigate, Link } from "react-router-dom";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+
 const UpdateNodal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { nodalToUpdate, setNodalToUpdate } = useContext(AdminContext);
@@ -21,7 +21,7 @@ const UpdateNodal = () => {
     mode: "onBlur",
     defaultValues: {
       nodalname: "",
-      motherlab: "true",
+      motherlab: "Yes", // default to "Yes" to match your localStorage format
       isactive: "true",
     },
   });
@@ -32,21 +32,30 @@ const UpdateNodal = () => {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
+
+          // Convert localStorage values to form radio string values
+          const motherlabValue = parsed.motherlab === "Yes" ? "true" : "false";
+          const isactiveValue = parsed.isactive === true || parsed.isactive === "true" ? "true" : "false";
+
           setNodalToUpdate(parsed);
           reset({
             nodalname: parsed.nodalname || "",
-            motherlab: String(parsed.motherlab),
-            isactive: String(parsed.isactive),
+            motherlab: motherlabValue,
+            isactive: isactiveValue,
           });
         } catch (err) {
           console.error("Failed to parse nodal from localStorage", err);
         }
       }
     } else {
+      // When context nodalToUpdate is present, reset form accordingly
+      const motherlabValue = nodalToUpdate.motherlab === "Yes" ? "true" : "false";
+      const isactiveValue = nodalToUpdate.isactive === true || nodalToUpdate.isactive === "true" ? "true" : "false";
+
       reset({
         nodalname: nodalToUpdate.nodalname || "",
-        motherlab: String(nodalToUpdate.motherlab),
-        isactive: String(nodalToUpdate.isactive),
+        motherlab: motherlabValue,
+        isactive: isactiveValue,
       });
     }
   }, [nodalToUpdate, reset, setNodalToUpdate]);
@@ -62,8 +71,8 @@ const UpdateNodal = () => {
         `https://asrlabs.asrhospitalindia.in/lims/master/update-nodal/${nodalToUpdate.id}`,
         {
           nodalname: data.nodalname,
-          motherlab: data.motherlab === "true",
-          isactive: data.isactive === "true",
+          motherlab: data.motherlab === "true" ? "Yes" : "No", // convert back to "Yes"/"No"
+          isactive: data.isactive === "true", // boolean
         },
         {
           headers: {
@@ -97,8 +106,9 @@ const UpdateNodal = () => {
         minLength: { value: 2, message: "Minimum 2 characters" },
         maxLength: { value: 50, message: "Maximum 50 characters" },
         pattern: {
-          value: /^[A-Za-z\s]+$/i,
-          message: "Only alphabets allowed",
+          // Allow alphabets, numbers, underscore (_), comma (,), and spaces
+          value: /^[A-Za-z0-9_,\s]+$/i,
+          message: "Only alphabets, numbers, underscore (_) and comma (,) allowed",
         },
       },
     },
@@ -138,23 +148,42 @@ const UpdateNodal = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex gap-2 items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem>
-            <Link to="/" className="hover:text-blue-600">
-              🏠︎ Home /
-            </Link>
-          </CBreadcrumbItem>
-          <CBreadcrumbItem>
-            <Link to="/view-nodal" className="hover:text-blue-600">
-              Nodal /
-            </Link>
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-nodal"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Nodal
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              Update Nodal
+            </li>
+          </ol>
+        </nav>
       </div>
+
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
@@ -226,6 +255,7 @@ const UpdateNodal = () => {
                 onClick={() => {
                   reset();
                   setNodalToUpdate(null);
+                  localStorage.removeItem("nodalToUpdate");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >
