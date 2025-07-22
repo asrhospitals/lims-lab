@@ -22,7 +22,7 @@ const AddSpecimenType = () => {
 
     try {
       await axios.post(
-        "http://srv913743.hstgr.cloud:2000/lims/master/add-specimen",
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-specimen",
         {
           specimenname: data.specimenname,
           specimendes: data.specimendes,

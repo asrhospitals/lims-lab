@@ -21,7 +21,7 @@ const ViewHospital = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-hospital",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-hospital",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,

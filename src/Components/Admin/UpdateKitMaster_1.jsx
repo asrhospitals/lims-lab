@@ -30,7 +30,7 @@ const UpdateKitMaster = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          `http://srv913743.hstgr.cloud:2000/lims/master/get-kit/${id}`,
+          `https://asrlabs.asrhospitalindia.in/lims/master/get-kit/${id}`,
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -50,7 +50,7 @@ const UpdateKitMaster = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-profile",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-profile",
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
@@ -88,7 +88,7 @@ const UpdateKitMaster = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-kit/${id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-kit/${id}`,
         payload,
         {
           headers: {

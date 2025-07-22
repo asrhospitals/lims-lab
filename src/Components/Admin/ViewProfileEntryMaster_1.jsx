@@ -20,7 +20,7 @@ const ViewProfileEntryMaster = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-profileentry",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-profileentry",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,

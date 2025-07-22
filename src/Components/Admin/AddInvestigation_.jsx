@@ -29,11 +29,11 @@ const AddInvestigation = () => {
     const fetchData = async () => {
       try {
         const [dept, subDept, role, hosp, spec] = await Promise.all([
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-department", { headers }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-subdepartment", { headers }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-role", { headers }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-hsptltype", { headers }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-specimen", { headers })
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-department", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-subdepartment", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-specimen", { headers })
         ]);
 
         setDepartments(dept.data.filter((d) => d.isActive));
@@ -94,7 +94,7 @@ const AddInvestigation = () => {
 
     try {
       await axios.post(
-        "http://srv913743.hstgr.cloud:2000/lims/master/add-test",
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-test",
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );

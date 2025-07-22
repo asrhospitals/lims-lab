@@ -70,7 +70,7 @@ const UpdateTechnician = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-nodal",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodal",
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         setNodalCenters(response.data || []);
@@ -83,7 +83,7 @@ const UpdateTechnician = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-role",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-role",
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         const activeRoles = response.data.filter((r) => r.isactive);
@@ -97,7 +97,7 @@ const UpdateTechnician = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-instrument",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-instrument",
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         const activeInstruments = response.data.filter((r) => r.isactive);
@@ -128,7 +128,7 @@ const UpdateTechnician = () => {
       };
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-tech/${technicianToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-tech/${technicianToUpdate.id}`,
         payload,
         {
           headers: {

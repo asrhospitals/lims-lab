@@ -21,7 +21,7 @@ const ViewInvestigation = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-test",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-test",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,

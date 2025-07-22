@@ -65,7 +65,7 @@ const UpdateReception = () => {
     const fetchData = async () => {
       try {
         const [nodalRes] = await Promise.all([
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-nodal", {
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);
@@ -96,7 +96,7 @@ const UpdateReception = () => {
       };
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-recep/${receptionToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-recep/${receptionToUpdate.id}`,
         payload,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );

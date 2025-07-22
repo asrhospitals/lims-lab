@@ -15,7 +15,7 @@ const ViewSpecimenType = () => {
       try {
         const token = localStorage.getItem("authToken");
         const res = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-specimen",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

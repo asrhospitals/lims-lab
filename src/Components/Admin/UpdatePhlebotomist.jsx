@@ -69,10 +69,10 @@ useEffect(() => {
   const fetchData = async () => {
     try {
       const [nodalRes, hospitalRes] = await Promise.all([
-        axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-nodal", {
+        axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
-        axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-hospital", {
+        axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hospital", {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
       ]);
@@ -112,7 +112,7 @@ const onSubmit = async (data) => {
     };
 
     await axios.put(
-      `http://srv913743.hstgr.cloud:2000/lims/master/update-phlebo/${phlebotomistToUpdate.id}`,
+      `https://asrlabs.asrhospitalindia.in/lims/master/update-phlebo/${phlebotomistToUpdate.id}`,
       payload,
       {
         headers: {

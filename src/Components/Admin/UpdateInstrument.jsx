@@ -60,7 +60,7 @@ const UpdateInstrument = () => {
       const authToken = localStorage.getItem("authToken");
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-instrument/${instrumentToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-instrument/${instrumentToUpdate.id}`,
         {
           ...data,
           isactive: data.isactive === "true",

@@ -28,13 +28,13 @@ const AddPhlebotomist = () => {
 
         const [nodalRes, hospitalRes] = await Promise.all([
           axios.get(
-            "http://srv913743.hstgr.cloud:2000/lims/master/get-nodal",
+            "https://asrlabs.asrhospitalindia.in/lims/master/get-nodal",
             {
               headers: { Authorization: `Bearer ${authToken}` },
             }
           ),
           axios.get(
-            "http://srv913743.hstgr.cloud:2000/lims/master/get-hospital",
+            "https://asrlabs.asrhospitalindia.in/lims/master/get-hospital",
             {
               headers: { Authorization: `Bearer ${authToken}` },
             }
@@ -67,7 +67,7 @@ const AddPhlebotomist = () => {
       };
 
       await axios.post(
-        "http://srv913743.hstgr.cloud:2000/lims/master/add-phlebo",
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-phlebo",
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

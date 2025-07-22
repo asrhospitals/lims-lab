@@ -31,13 +31,13 @@ const AddInvestigation = () => {
     const fetchData = async () => {
       try {
         const [deptRes, subDeptRes, roleRes, hospRes, specRes, nodalRes, instrRes] = await Promise.all([
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-department", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-subdepartment", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-role", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-hsptltype", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-specimen", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-nodalcenter", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-instrument", { headers: { Authorization: `Bearer ${authToken}` } })
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-department", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-subdepartment", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-specimen", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodalcenter", { headers: { Authorization: `Bearer ${authToken}` } }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-instrument", { headers: { Authorization: `Bearer ${authToken}` } })
         ]);
 
         setDepartments(deptRes.data.filter((d) => d.isActive));
@@ -75,7 +75,7 @@ const AddInvestigation = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.post(
-        "http://srv913743.hstgr.cloud:2000/lims/master/add-technician",
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-technician",
         payload,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );

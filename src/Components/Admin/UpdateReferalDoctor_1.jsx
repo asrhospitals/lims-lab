@@ -25,7 +25,7 @@ const UpdateReferalDoctor = () => {
     const fetchHospitals = async () => {
       try {
         const authToken = localStorage.getItem("authToken");
-        const response = await axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-hospital", {
+        const response = await axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hospital", {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         setHospitalList(response.data || []);
@@ -71,7 +71,7 @@ const UpdateReferalDoctor = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-refdoc/${referalDoctorToUpdate?.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-refdoc/${referalDoctorToUpdate?.id}`,
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

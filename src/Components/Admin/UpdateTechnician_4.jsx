@@ -71,13 +71,13 @@ const UpdateTechnician = () => {
     const fetchData = async () => {
       try {
         const [nodalRes, roleRes, instrRes] = await Promise.all([
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-nodal", {
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-role", {
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("http://srv913743.hstgr.cloud:2000/lims/master/get-instrument", {
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-instrument", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);
@@ -109,7 +109,7 @@ const UpdateTechnician = () => {
       };
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-tech/${technicianToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-tech/${technicianToUpdate.id}`,
         payload,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );

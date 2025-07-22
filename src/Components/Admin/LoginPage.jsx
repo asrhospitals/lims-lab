@@ -15,10 +15,10 @@ const LoginPage = () => {
   });
 
   const OTP_SENDER =
-    "http://srv913743.hstgr.cloud:2000/lims/authentication/signin" ;
+    "https://asrlabs.asrhospitalindia.in/lims/authentication/signin" ;
     
   // const OTP_VERIFIER =
-  //   "http://srv913743.hstgr.cloud:2000/lims/authentication/verifyotp" ;
+  //   "https://asrlabs.asrhospitalindia.in/lims/authentication/verifyotp" ;
 
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
@@ -63,7 +63,7 @@ const LoginPage = () => {
     console.log(payload);
     try {
       const response = await axios.post(
-        "http://srv913743.hstgr.cloud:2000/lims/authentication/verifyotp",
+        "https://asrlabs.asrhospitalindia.in/lims/authentication/verifyotp",
         payload
       );
       toast.success("OTP verified! Redirecting...");

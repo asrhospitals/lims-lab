@@ -76,7 +76,7 @@ const UpdateReportTypeMaster = () => {
     }
 
     const response = await axios.put(
-      `http://srv913743.hstgr.cloud:2000/lims/master/update-report/${reportId}`,
+      `https://asrlabs.asrhospitalindia.in/lims/master/update-report/${reportId}`,
       payload,
       {
         headers: {

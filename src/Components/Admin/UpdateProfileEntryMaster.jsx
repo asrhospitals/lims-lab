@@ -75,7 +75,7 @@ const UpdateProfileEntryMaster = () => {
       };
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-profileentry/${profileEntryMasterToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-profileentry/${profileEntryMasterToUpdate.id}`,
         payload,
         {
           headers: {

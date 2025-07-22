@@ -22,7 +22,7 @@ const ViewRole = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-role",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-role",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,

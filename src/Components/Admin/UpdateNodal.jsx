@@ -59,7 +59,7 @@ const UpdateNodal = () => {
       const authToken = localStorage.getItem("authToken");
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-nodal/${nodalToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-nodal/${nodalToUpdate.id}`,
         {
           nodalname: data.nodalname,
           motherlab: data.motherlab === "true",

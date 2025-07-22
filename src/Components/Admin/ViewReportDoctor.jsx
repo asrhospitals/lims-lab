@@ -20,7 +20,7 @@ const ViewReportDoctor = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-reportdoctor",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-reportdoctor",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,

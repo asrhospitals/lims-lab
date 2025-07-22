@@ -64,7 +64,7 @@ const UpdateLabToLab = () => {
       const authToken = localStorage.getItem("authToken");
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-labtolab/${labToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-labtolab/${labToUpdate.id}`,
         {
           ...data,
           isactive: data.isactive === "true",

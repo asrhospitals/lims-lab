@@ -99,7 +99,7 @@ const AddProfileMaster = () => {
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.post(
-        "http://srv913743.hstgr.cloud:2000/lims/master/add-profile",
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-profile",
         payload,
         {
           headers: {

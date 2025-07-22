@@ -62,7 +62,7 @@ const UpdateColor = () => {
       const token = localStorage.getItem("authToken");
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-color/${colorToUpdate.color_id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-color/${colorToUpdate.color_id}`,
         {
           color_code: data.color_code,
           color_status: data.color_status,

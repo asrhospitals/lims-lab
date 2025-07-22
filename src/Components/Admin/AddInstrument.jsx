@@ -27,7 +27,7 @@ const AddInstrument = () => {
       };
 
       await axios.post(
-        "http://srv913743.hstgr.cloud:2000/lims/master/add-instrument",
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-instrument",
         payload,
         {
           headers: { Authorization: `Bearer ${authToken}` },

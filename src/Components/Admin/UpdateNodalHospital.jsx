@@ -65,7 +65,7 @@ const UpdateNodalHospital = () => {
       const authToken = localStorage.getItem("authToken");
 
       await axios.put(
-        `http://srv913743.hstgr.cloud:2000/lims/master/update-nodalhospital/${nodalHospitalToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-nodalhospital/${nodalHospitalToUpdate.id}`,
         {
           ...data,
           isactive: data.isActive === "true",

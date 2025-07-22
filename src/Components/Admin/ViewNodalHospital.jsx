@@ -22,7 +22,7 @@ const ViewNodalHospital = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const resp = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-nodalhospital",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodalhospital",
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         const data = resp.data || [];

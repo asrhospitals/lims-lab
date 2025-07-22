@@ -21,7 +21,7 @@ const ViewNodalInstrument = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const resp = await axios.get(
-          "http://srv913743.hstgr.cloud:2000/lims/master/get-nodalinstrument",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodalinstrument",
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         const data = resp.data || [];
