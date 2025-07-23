@@ -21,13 +21,13 @@ const UpdateLabToLab = () => {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      labName: "",
-      addressLine: "",
+      labname: "",
+      addressline: "",
       city: "",
       state: "",
-      pinCode: "",
-      contactPerson: "",
-      contactNo: "",
+      pincode: "",
+      contactperson: "",
+      contactno: "",
       email: "",
       isactive: "true",
     },
@@ -57,14 +57,14 @@ const UpdateLabToLab = () => {
   }, [labToUpdate, reset, setLabToUpdate]);
 
   const onSubmit = async (data) => {
-    if (!labToUpdate?.id) return;
+    if (!labToUpdate?.labid) return;
 
     setIsSubmitting(true);
     try {
       const authToken = localStorage.getItem("authToken");
 
       await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-labtolab/${labToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-labtolab/${labToUpdate.labid}`,
         {
           ...data,
           isactive: data.isactive === "true",
@@ -77,7 +77,7 @@ const UpdateLabToLab = () => {
       );
 
       toast.success("✅ Lab updated successfully!");
-      navigate("/view-labs");
+      navigate("/view-labtolab");
       setLabToUpdate(null);
       localStorage.removeItem("labToUpdate");
     } catch (error) {
@@ -91,37 +91,78 @@ const UpdateLabToLab = () => {
     }
   };
 
+  const alphaNumericPattern = /^[a-zA-Z0-9\s\-_]+$/;
+
   const fields = [
     {
-      name: "labName",
+      name: "labname",
       label: "Lab Name",
+      validation: {
+        required: "Lab name is required",
+        pattern: {
+          value: alphaNumericPattern,
+          message: "Only letters, numbers, spaces, -, _ allowed",
+        },
+      },
     },
     {
-      name: "addressLine",
+      name: "addressline",
       label: "Address",
+      validation: {
+        required: "Address is required",
+        pattern: {
+          value: alphaNumericPattern,
+          message: "Only letters, numbers, spaces, -, _ allowed",
+        },
+      },
     },
     {
       name: "city",
       label: "City",
+      validation: {
+        required: "City is required",
+        pattern: {
+          value: alphaNumericPattern,
+          message: "Only letters, numbers, spaces, -, _ allowed",
+        },
+      },
     },
     {
       name: "state",
       label: "State",
-    },
-    {
-      name: "pinCode",
-      label: "Pin Code",
-    },
-    {
-      name: "contactPerson",
-      label: "Contact Person",
       validation: {
-        required: "Contact person is required",
-        minLength: { value: 2, message: "Minimum 2 characters" },
+        required: "State is required",
+        pattern: {
+          value: alphaNumericPattern,
+          message: "Only letters, numbers, spaces, -, _ allowed",
+        },
       },
     },
     {
-      name: "contactNo",
+      name: "pincode",
+      label: "Pin Code",
+      type: "number",
+      validation: {
+        required: "Pincode is required",
+        pattern: {
+          value: /^[0-9]{5,6}$/,
+          message: "Enter a valid 5 or 6 digit pin code",
+        },
+      },
+    },
+    {
+      name: "contactperson",
+      label: "Contact Person",
+      validation: {
+        required: "Contact person is required",
+        pattern: {
+          value: alphaNumericPattern,
+          message: "Only letters, numbers, spaces, -, _ allowed",
+        },
+      },
+    },
+    {
+      name: "contactno",
       label: "Contact Number",
       validation: {
         required: "Contact number is required",
@@ -137,7 +178,7 @@ const UpdateLabToLab = () => {
       validation: {
         required: "Email is required",
         pattern: {
-          value: /^\S+@\S+$/i,
+          value: /^\S+@\S+\.\S+$/,
           message: "Enter a valid email address",
         },
       },
@@ -178,7 +219,7 @@ const UpdateLabToLab = () => {
             Lab To Lab /
           </CBreadcrumbItem>
           <CBreadcrumbItem active className="text-gray-500">
-            Library
+            Update Lab
           </CBreadcrumbItem>
         </CBreadcrumb>
       </div>

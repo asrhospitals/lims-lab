@@ -8,368 +8,264 @@ import AdminContext from "../../context/adminContext";
 
 const UpdatePhlebotomist = () => {
   const { phlebotomistToUpdate, setPhlebotomistToUpdate } = useContext(AdminContext);
-const [isSubmitting, setIsSubmitting] = useState(false);
-const [nodalCenters, setNodalCenters] = useState([]);
-const [hospital, setHospital] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nodalCenters, setNodalCenters] = useState([]);
+  const [hospitalList, setHospitalList] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const navigate = useNavigate();
 
-const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
-const {
-  register,
-  handleSubmit,
-  reset,
-  formState: { errors },
-} = useForm({
-  mode: "onBlur",
-  defaultValues: {
-    phleboName: "",
-    nodal: "",
-    hospital: "",
-    addressLine: "",
-    city: "",
-    state: "",
-    pinCode: "",
-    dob: "",
-    gender: "",
-    contactNo: "",
-    isActive: "true",
-  },
-});
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const authToken = localStorage.getItem("authToken");
 
-useEffect(() => {
-  const stored = localStorage.getItem("phlebotomistToUpdate");
+        const [nodalRes, hospitalRes] = await Promise.all([
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hospital", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+        ]);
 
-  if (!phlebotomistToUpdate && stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      setPhlebotomistToUpdate(parsed);
-    } catch {
-      console.error("Invalid phlebotomistToUpdate in localStorage");
-    }
-  } else if (phlebotomistToUpdate) {
+        setNodalCenters(nodalRes.data || []);
+        setHospitalList((hospitalRes.data || []).filter(h => h.isactive));
+
+        const stored = localStorage.getItem("phlebotomistToUpdate");
+        if (!phlebotomistToUpdate && stored) {
+          const parsed = JSON.parse(stored);
+          setPhlebotomistToUpdate(parsed);
+          resetForm(parsed);
+        } else if (phlebotomistToUpdate) {
+          resetForm(phlebotomistToUpdate);
+        }
+
+        setLoadingData(false);
+      } catch {
+        toast.error("❌ Failed to load master data");
+        setLoadingData(false);
+      }
+    };
+
+    fetchData();
+  }, [phlebotomistToUpdate, reset, setPhlebotomistToUpdate]);
+
+  const resetForm = (data) => {
     reset({
-      phleboName: phlebotomistToUpdate.phleboName || "",
-      nodal: phlebotomistToUpdate.nodal || "",
-      hospital: phlebotomistToUpdate.hospital || "",
-      addressLine: phlebotomistToUpdate.addressLine || "",
-      city: phlebotomistToUpdate.city || "",
-      state: phlebotomistToUpdate.state || "",
-      pinCode: phlebotomistToUpdate.pinCode || "",
-      dob: phlebotomistToUpdate.dob || "",
-      gender: phlebotomistToUpdate.gender || "",
-      contactNo: phlebotomistToUpdate.contactNo || "",
-      isActive: String(phlebotomistToUpdate.isActive ?? "true"),
+      phleboname: data.phleboname || "",
+      nodal: data.nodal || "",
+      hospital: data.hospital || "",
+      addressline: data.addressline || "",
+      city: data.city || "",
+      state: data.state || "",
+      pincode: data.pincode || "",
+      dob: data.dob || "",
+      gender: data.gender || "",
+      contactno: data.contactno || "",
+      isactive: String(data.isactive ?? "true"),
     });
-  }
-}, [phlebotomistToUpdate, reset, setPhlebotomistToUpdate]);
+  };
 
-useEffect(() => {
-  const authToken = localStorage.getItem("authToken");
+  const onSubmit = async (data) => {
+    if (!phlebotomistToUpdate?.phleboid) {
+      toast.error("❌ Phlebotomist ID not found.");
+      return;
+    }
 
-  const fetchData = async () => {
+    setIsSubmitting(true);
     try {
-      const [nodalRes, hospitalRes] = await Promise.all([
-        axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }),
-        axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hospital", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }),
-      ]);
+      const authToken = localStorage.getItem("authToken");
 
-      setNodalCenters(nodalRes.data || []);
-      setHospital(hospitalRes.data.filter((h) => h.isactive));
-    } catch (error) {
-      toast.error("❌ Failed to fetch master data.");
+      const payload = {
+        phleboname: data.phleboname,
+        addressline: data.addressline,
+        city: data.city,
+        state: data.state,
+        pincode: Number(data.pincode),
+        dob: data.dob,
+        contactno: data.contactno,
+        gender: data.gender,
+        nodal: data.nodal,
+        hospital: data.hospital,
+        isactive: data.isactive === "true",
+      };
+
+      await axios.put(
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-phlebo/${phlebotomistToUpdate.phleboid}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      toast.success("✅ Phlebotomist updated successfully!");
+      setTimeout(() => {
+        setPhlebotomistToUpdate(null);
+        localStorage.removeItem("phlebotomistToUpdate");
+        navigate("/view-phlebotomist");
+      }, 2000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "❌ Failed to update phlebotomist.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  fetchData();
-}, []);
+  const textValidation = {
+    required: "This field is required.",
+    pattern: {
+      value: /^[A-Za-z0-9\s\-_]+$/,
+      message: "Only letters, numbers, spaces, hyphens, and underscores are allowed.",
+    },
+  };
 
-const onSubmit = async (data) => {
-  if (!phlebotomistToUpdate?.id) {
-    toast.error("❌ Phlebotomist ID not found.");
-    return;
+  if (loadingData) {
+    return <div className="text-center py-10 text-gray-500">Loading data...</div>;
   }
 
-  setIsSubmitting(true);
-  try {
-    const authToken = localStorage.getItem("authToken");
-
-    const payload = {
-      phleboName: data.phleboName,
-      addressLine: data.addressLine,
-      city: data.city,
-      state: data.state,
-      pinCode: Number(data.pinCode),
-      dob: data.dob,
-      contactNo: data.contactNo,
-      gender: data.gender,
-      nodal: data.nodal,
-      hospital: data.hospital,
-      isActive: data.isActive === "true",
-    };
-
-    await axios.put(
-      `https://asrlabs.asrhospitalindia.in/lims/master/update-phlebo/${phlebotomistToUpdate.id}`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    toast.success("Phlebotomist updated successfully!", { autoClose: 2000 });
-
-    setTimeout(() => {
-      setPhlebotomistToUpdate(null);
-      localStorage.removeItem("phlebotomistToUpdate");
-      navigate("/view-phlebotomist");
-    }, 2000);
-  } catch (error) {
-    toast.error(
-      error?.response?.data?.message || "❌ Failed to update phlebotomist. Please try again."
-    );
-  } finally {
-    setIsSubmitting(false);
+  if (!phlebotomistToUpdate) {
+    return <div className="text-center py-10 text-gray-500">No phlebotomist selected for update.</div>;
   }
-};
-
-if (!phlebotomistToUpdate) {
-  return (
-    <div className="text-center py-10 text-gray-500">
-      No phlebotomist selected for update.
-    </div>
-  );
-}
-
 
   return (
-  <>
-    {/* Breadcrumb Navigation */}
-    <div className="fixed top-[61px] w-full z-10">
-      <nav className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-        <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-          <li>
-            <Link to="/" className="text-gray-700 hover:text-teal-600">🏠︎ Home</Link>
-          </li>
-          <li className="text-gray-400">/</li>
-          <li>
-            <Link to="/view-phlebotomist" className="text-gray-700 hover:text-teal-600">Phlebotomist</Link>
-          </li>
-          <li className="text-gray-400">/</li>
-          <li className="text-gray-500">Update Phlebotomist</li>
-        </ol>
-      </nav>
-    </div>
-
-    {/* Main Form */}
-    <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
-      <ToastContainer />
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
-        
-        {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
-          <h4 className="text-white font-semibold">Update Phlebotomist</h4>
+    <>
+      <div className="fixed top-[61px] w-full z-10">
+        <div className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg text-sm">
+          <Link to="/" className="text-gray-700 hover:text-teal-600">🏠 Home</Link>
+          <span className="mx-2 text-gray-400">/</span>
+          <Link to="/view-phlebotomist" className="text-gray-700 hover:text-teal-600">Phlebotomist</Link>
+          <span className="mx-2 text-gray-400">/</span>
+          <span className="text-gray-500">Update Phlebotomist</span>
         </div>
+      </div>
 
-        {/* Form Fields */}
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-            {/* Phlebotomist Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Phlebotomist Name</label>
-              <input
-                type="text"
-                placeholder="Full Name"
-                defaultValue={phlebotomistToUpdate?.phleboName}
-                {...register("phleboName", { required: "Phlebotomist Name is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.phleboName ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.phleboName && <p className="text-red-500 text-xs mt-1">{errors.phleboName.message}</p>}
-            </div>
-
-            {/* Nodal Center */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Nodal Center</label>
-              <select
-                defaultValue={phlebotomistToUpdate?.nodal}
-                {...register("nodal", { required: "Nodal Center is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.nodal ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              >
-                <option value="">Select Nodal Center</option>
-                {nodalCenters.map(n => (
-                  <option key={n.nodalname} value={n.nodalname} selected={phlebotomistToUpdate.nodal === n.nodalname ? true : false}  >{n.nodalname}</option>
-                ))}
-              </select>
-              {errors.nodal && <p className="text-red-500 text-xs mt-1">{errors.nodal.message}</p>}
-            </div>
-
-            {/* Hospital */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Hospital Type</label>
-              <select
-                defaultValue={phlebotomistToUpdate?.hospital}
-                {...register("hospital", { required: "Role Type is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.hospital ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              >
-                <option value="">Select Hospital</option>
-                {hospital.map(h => (
-                  <option key={h.hospital_name} value={h.hospital_name} selected={phlebotomistToUpdate.hospital === h.hospital_name ? true : false}  >{h.hospital_name}</option>
-                ))}
-              </select>
-              {errors.hospital_name && <p className="text-red-500 text-xs mt-1">{errors.hospital_name.message}</p>}
-            </div>
-
-            {/* Address Line */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Address</label>
-              <input
-                type="text"
-                placeholder="Address Line"
-                defaultValue={phlebotomistToUpdate?.addressLine}
-                {...register("addressLine", { required: "Address is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.addressLine ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.addressLine && <p className="text-red-500 text-xs mt-1">{errors.addressLine.message}</p>}
-            </div>
-
-            {/* City */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">City</label>
-              <input
-                type="text"
-                placeholder="City"
-                defaultValue={phlebotomistToUpdate?.city}
-                {...register("city", { required: "City is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.city ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
-            </div>
-
-            {/* State */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">State</label>
-              <input
-                type="text"
-                placeholder="State"
-                defaultValue={phlebotomistToUpdate?.state}
-                {...register("state", { required: "State is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.state ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state.message}</p>}
-            </div>
-
-            {/* Pin Code */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Pin Code</label>
-              <input
-                type="number"
-                placeholder="PIN"
-                defaultValue={phlebotomistToUpdate?.pinCode}
-                {...register("pinCode", { required: "Pin Code is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.pinCode ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.pinCode && <p className="text-red-500 text-xs mt-1">{errors.pinCode.message}</p>}
-            </div>
-
-            {/* Date of Birth */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
-              <input
-                type="text"
-                defaultValue={phlebotomistToUpdate?.dob}
-                {...register("dob", { required: "Date of Birth is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.dob ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.dob && <p className="text-red-500 text-xs mt-1">{errors.dob.message}</p>}
-            </div>
-
-            {/* Contact No. */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Contact No.</label>
-              <input
-                type="tel"
-                placeholder="Phone"
-                defaultValue={phlebotomistToUpdate?.contactNo}
-                {...register("contactNo", { required: "Contact No. is required." })}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.contactNo ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.contactNo && <p className="text-red-500 text-xs mt-1">{errors.contactNo.message}</p>}
-            </div>
-
-            {/* Gender */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Gender</label>
-              <div className="flex space-x-4 pt-2">
-                {["Male", "Female", "Other"].map(gender => (
-                  <label key={gender} className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      value={gender}
-                      {...register("gender", { required: "Gender is required." })}
-                      defaultChecked={phlebotomistToUpdate?.gender === gender}
-                      className="h-4 w-4 text-teal-600"
-                    />
-                    <span className="ml-2">{gender}</span>
-                  </label>
-                ))}
-              </div>
-              {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender.message}</p>}
-            </div>
-
-            {/* Is Active */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Is Active?</label>
-              <div className="flex space-x-4 pt-2">
-                {[
-                  { value: "true", label: "Yes" },
-                  { value: "false", label: "No" }
-                ].map(opt => (
-                  <label key={opt.value} className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      value={opt.value}
-                      {...register("isActive", { required: "Status is required." })}
-                      defaultChecked={phlebotomistToUpdate?.isActive === opt.value}
-                      className="h-4 w-4 text-teal-600"
-                    />
-                    <span className="ml-2">{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-              {errors.isActive && <p className="text-red-500 text-xs mt-1">{errors.isActive.message}</p>}
-            </div>
-
+      <div className="w-full mt-14 px-2 md:px-6">
+        <ToastContainer />
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+          <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
+            <h4 className="text-white font-semibold">Update Profile Entry</h4>
           </div>
-        </div>
 
-        {/* Footer Actions */}
-        <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={() => navigate("/view-phlebotomist")}
-            className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-60"
-          >
-            {isSubmitting ? "Updating..." : "Update Phlebotomist"}
-          </button>
-        </div>
-      </form>
-    </div>
-  </>
-);
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Full Name */}
+              <div>
+                <label className="block mb-1 font-medium">Full Name</label>
+                <input type="text" {...register("phleboname", textValidation)} className="input-style border border-gray-300 rounded px-3 py-2 w-full" />
+                {errors.phleboname && <p className="text-red-500 text-xs">{errors.phleboname.message}</p>}
+              </div>
 
+              {/* Address Line */}
+              <div>
+                <label className="block mb-1 font-medium">Address Line</label>
+                <input type="text" {...register("addressline", textValidation)} className="input-style border border-gray-300 rounded px-3 py-2 w-full" />
+                {errors.addressline && <p className="text-red-500 text-xs">{errors.addressline.message}</p>}
+              </div>
+
+              {/* City */}
+              <div>
+                <label className="block mb-1 font-medium">City</label>
+                <input type="text" {...register("city", textValidation)} className="input-style border border-gray-300 rounded px-3 py-2 w-full" />
+                {errors.city && <p className="text-red-500 text-xs">{errors.city.message}</p>}
+              </div>
+
+              {/* State */}
+              <div>
+                <label className="block mb-1 font-medium">State</label>
+                <input type="text" {...register("state", textValidation)} className="input-style border border-gray-300 rounded px-3 py-2 w-full" />
+                {errors.state && <p className="text-red-500 text-xs">{errors.state.message}</p>}
+              </div>
+
+              {/* Pincode */}
+              <div>
+                <label className="block mb-1 font-medium">Pincode</label>
+                <input type="number" {...register("pincode", { required: "Pincode is required." })} className="input-style border border-gray-300 rounded px-3 py-2 w-full" />
+                {errors.pincode && <p className="text-red-500 text-xs">{errors.pincode.message}</p>}
+              </div>
+
+              {/* Date of Birth */}
+              <div>
+                <label className="block mb-1 font-medium">Date of Birth</label>
+                <input type="text" {...register("dob", { required: "DOB is required." })} className="input-style border border-gray-300 rounded px-3 py-2 w-full" />
+                {errors.dob && <p className="text-red-500 text-xs">{errors.dob.message}</p>}
+              </div>
+
+              {/* Contact Number */}
+              <div>
+                <label className="block mb-1 font-medium">Contact No</label>
+                <input type="text" {...register("contactno", {
+                  required: "Contact No is required.",
+                  pattern: { value: /^[0-9]{10}$/, message: "Must be a valid 10-digit number." },
+                })} className="input-style border border-gray-300 rounded px-3 py-2 w-full" />
+                {errors.contactno && <p className="text-red-500 text-xs">{errors.contactno.message}</p>}
+              </div>
+
+              {/* Gender */}
+              <div>
+                <label className="block mb-1 font-medium">Gender</label>
+                <select {...register("gender", { required: "Gender is required." })} className="input-style border border-gray-300 rounded px-3 py-2 w-full">
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+                {errors.gender && <p className="text-red-500 text-xs">{errors.gender.message}</p>}
+              </div>
+
+              {/* Nodal Center */}
+              <div>
+                <label className="block mb-1 font-medium">Nodal Center</label>
+                <select {...register("nodal", { required: "Nodal Center is required." })} className="input-style border border-gray-300 rounded px-3 py-2 w-full">
+                  <option value="">Select Nodal Center</option>
+                  {nodalCenters.map((n, i) => (
+                    <option key={i} value={n.nodalname}>{n.nodalname}</option>
+                  ))}
+                </select>
+                {errors.nodal && <p className="text-red-500 text-xs">{errors.nodal.message}</p>}
+              </div>
+
+              {/* Hospital */}
+              <div>
+                <label className="block mb-1 font-medium">Hospital</label>
+                <select {...register("hospital", { required: "Hospital is required." })} className="input-style border border-gray-300 rounded px-3 py-2 w-full">
+                  <option value="">Select Hospital</option>
+                  {hospitalList.map((h, i) => (
+                    <option key={i} value={h.hospitalname}>{h.hospitalname}</option>
+                  ))}
+                </select>
+                {errors.hospital && <p className="text-red-500 text-xs">{errors.hospital.message}</p>}
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block mb-1 font-medium">Status</label>
+                <select {...register("isactive", { required: "Status is required." })} className="input-style border border-gray-300 rounded px-3 py-2 w-full">
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="text-right pt-4">
+              <button type="submit" disabled={isSubmitting} className="bg-teal-600 text-white px-6 py-2 rounded hover:bg-teal-700 disabled:opacity-50">
+                {isSubmitting ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </>
+  );
 };
 
 export default UpdatePhlebotomist;

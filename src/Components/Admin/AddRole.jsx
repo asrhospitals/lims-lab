@@ -27,11 +27,10 @@ const AddRole = () => {
     try {
       const authToken = localStorage.getItem("authToken");
 
-      // Prepare payload
       const payload = {
-        roleType: data.roleType,
-        roleDescription: data.roleDescription,
-        isactive: data.isactive === "true", // Convert string to boolean
+        roletype: data.roletype,
+        roledescription: data.roledescription,
+        isactive: data.isactive === "true",
       };
 
       await axios.post(
@@ -64,28 +63,36 @@ const AddRole = () => {
 
   const fields = [
     {
-      name: "roleType",
+      name: "roletype",
       label: "Role Type",
       placeholder: "Enter Role Type",
       validation: {
         required: "Role type is required",
         minLength: { value: 2, message: "Minimum 2 characters" },
         maxLength: { value: 30, message: "Maximum 30 characters" },
+        pattern: {
+          value: /^[A-Za-z0-9 _-]+$/,
+          message: "Only letters, numbers, spaces, hyphens (-), and underscores (_) allowed",
+        },
       },
     },
     {
-      name: "roleDescription",
+      name: "roledescription",
       label: "Role Description",
       placeholder: "Enter Role Description",
       validation: {
         required: "Role description is required",
         minLength: { value: 5, message: "Minimum 5 characters" },
         maxLength: { value: 100, message: "Maximum 100 characters" },
+        pattern: {
+          value: /^[A-Za-z0-9 _-]+$/,
+          message: "Only letters, numbers, spaces, hyphens (-), and underscores (_) allowed",
+        },
       },
     },
     {
       name: "isactive",
-      label: "Is Active ?",
+      label: "Is Active?",
       type: "radio",
       options: [
         { value: "true", label: "True" },
@@ -99,7 +106,7 @@ const AddRole = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
+      <div className="fixed top-[61px] w-full z-10">
         <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
           <CBreadcrumbItem href="#" className="hover:text-blue-600">
             🏠︎ Home /
@@ -114,17 +121,7 @@ const AddRole = () => {
       </div>
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
+        <ToastContainer />
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -146,7 +143,7 @@ const AddRole = () => {
                 }) => (
                   <div key={name} className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">
-                      {label}{" "}
+                      {label}
                       {validation?.required && (
                         <span className="text-red-500">*</span>
                       )}
@@ -209,9 +206,7 @@ const AddRole = () => {
             <div className="mt-8 flex justify-end">
               <button
                 type="button"
-                onClick={() => {
-                  reset();
-                }}
+                onClick={() => reset()}
                 className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
               >
                 Reset

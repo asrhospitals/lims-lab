@@ -21,14 +21,13 @@ const UpdateRole = () => {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      roleType: "",
-      roleDescription: "",
+      roletype: "",
+      roledescription: "",
       isactive: "true",
     },
   });
 
   useEffect(() => {
-    console.log(roleToUpdate);
     if (!roleToUpdate) {
       const stored = localStorage.getItem("roleToUpdate");
       if (stored) {
@@ -36,8 +35,8 @@ const UpdateRole = () => {
           const parsed = JSON.parse(stored);
           setRoleToUpdate(parsed);
           reset({
-            roleType: parsed.roleType || "",
-            roleDescription: parsed.roleDescription || "",
+            roletype: parsed.roletype || "",
+            roledescription: parsed.roledescription || "",
             isactive: String(parsed.isactive),
           });
         } catch (err) {
@@ -46,8 +45,8 @@ const UpdateRole = () => {
       }
     } else {
       reset({
-        roleType: roleToUpdate.roleType || "",
-        roleDescription: roleToUpdate.roleDescription || "",
+        roletype: roleToUpdate.roletype || "",
+        roledescription: roleToUpdate.roledescription || "",
         isactive: String(roleToUpdate.isactive),
       });
     }
@@ -90,21 +89,31 @@ const UpdateRole = () => {
 
   const fields = [
     {
-      name: "roleType",
+      name: "roletype",
       label: "Role Type",
       placeholder: "Enter Role Type",
       validation: {
         required: "Role type is required",
+        pattern: {
+          value: /^[A-Za-z0-9 _-]+$/,
+          message:
+            "Only alphabets, numbers, space, dash (-), and underscore (_) allowed",
+        },
         minLength: { value: 2, message: "Minimum 2 characters" },
         maxLength: { value: 20, message: "Maximum 20 characters" },
       },
     },
     {
-      name: "roleDescription",
+      name: "roledescription",
       label: "Role Description",
       placeholder: "Enter Role Description",
       validation: {
         required: "Role description is required",
+        pattern: {
+          value: /^[A-Za-z0-9 _-]+$/,
+          message:
+            "Only alphabets, numbers, space, dash (-), and underscore (_) allowed",
+        },
         minLength: { value: 2, message: "Minimum 2 characters" },
         maxLength: { value: 100, message: "Maximum 100 characters" },
       },
@@ -133,7 +142,7 @@ const UpdateRole = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
+      <div className="fixed top-[61px] w-full z-10">
         <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
           <CBreadcrumbItem href="#" className="hover:text-blue-600">
             🏠︎ Home /

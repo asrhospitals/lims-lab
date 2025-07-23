@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -24,13 +24,13 @@ const AddLabToLab = () => {
       const authToken = localStorage.getItem("authToken");
 
       const payload = {
-        labName: data.labName,
-        addressLine: data.addressLine,
+        labname: data.labname,
+        addressline: data.addressline,
         city: data.city,
         state: data.state,
-        pinCode: Number(data.pinCode),
-        contactPerson: data.contactPerson,
-        contactNo: Number(data.contactNo),
+        pincode: Number(data.pincode),
+        contactperson: data.contactperson,
+        contactno: data.contactno,
         email: data.email,
         isactive: data.isactive === "true",
       };
@@ -56,53 +56,97 @@ const AddLabToLab = () => {
     }
   };
 
+  const alphanumericRegex = /^[a-zA-Z0-9\s\-_]+$/;
+  const numberRegex = /^\d+$/;
+  const pinCodeRegex = /^\d{6}$/;
+  const phoneRegex = /^[6-9]\d{9}$/;
+
   const fields = [
     {
-      name: "labName",
+      name: "labname",
       label: "Lab Name",
       placeholder: "Enter Lab Name",
-      validation: { required: "Lab name is required" },
+      validation: {
+        required: "Lab name is required",
+        pattern: {
+          value: alphanumericRegex,
+          message: "Only letters, numbers, space, - and _ are allowed",
+        },
+      },
     },
     {
-      name: "addressLine",
+      name: "addressline",
       label: "Address",
       placeholder: "Enter Address",
-      validation: { required: "Address is required" },
+      validation: {
+        required: "Address is required",
+        pattern: {
+          value: alphanumericRegex,
+          message: "Only letters, numbers, space, - and _ are allowed",
+        },
+      },
     },
     {
       name: "city",
       label: "City",
       placeholder: "Enter City",
-      validation: { required: "City is required" },
+      validation: {
+        required: "City is required",
+        pattern: {
+          value: alphanumericRegex,
+          message: "Only letters, numbers, space, - and _ are allowed",
+        },
+      },
     },
     {
       name: "state",
       label: "State",
       placeholder: "Enter State",
-      validation: { required: "State is required" },
-    },
-    {
-      name: "pinCode",
-      label: "PIN Code",
-      placeholder: "Enter PIN Code",
-      type: "number",
       validation: {
-        required: "PIN code is required",
-        pattern: { value: /^\d{6}$/, message: "PIN must be 6 digits" },
+        required: "State is required",
+        pattern: {
+          value: alphanumericRegex,
+          message: "Only letters, numbers, space, - and _ are allowed",
+        },
       },
     },
     {
-      name: "contactPerson",
-      label: "Contact Person",
-      placeholder: "Enter Contact Person",
-      validation: { required: "Contact person is required" },
+      name: "pincode",
+      label: "PIN Code",
+      placeholder: "Enter PIN Code",
+      type: "text",
+      validation: {
+        required: "PIN code is required",
+        pattern: {
+          value: pinCodeRegex,
+          message: "PIN must be exactly 6 digits",
+        },
+      },
     },
     {
-      name: "contactNo",
+      name: "contactperson",
+      label: "Contact Person",
+      placeholder: "Enter Contact Person",
+      validation: {
+        required: "Contact person is required",
+        pattern: {
+          value: alphanumericRegex,
+          message: "Only letters, numbers, space, - and _ are allowed",
+        },
+      },
+    },
+    {
+      name: "contactno",
       label: "Contact Number",
-      type: "number",
+      type: "text",
       placeholder: "Enter Contact Number",
-      validation: { required: "Contact number is required" },
+      validation: {
+        required: "Contact number is required",
+        pattern: {
+          value: phoneRegex,
+          message: "Enter valid 10-digit mobile number",
+        },
+      },
     },
     {
       name: "email",
@@ -110,7 +154,10 @@ const AddLabToLab = () => {
       placeholder: "Enter Email",
       validation: {
         required: "Email is required",
-        pattern: { value: /^\S+@\S+$/i, message: "Invalid email" },
+        pattern: {
+          value: /^\S+@\S+\.\S+$/,
+          message: "Invalid email format",
+        },
       },
     },
     {
@@ -121,7 +168,9 @@ const AddLabToLab = () => {
         { value: "true", label: "Yes" },
         { value: "false", label: "No" },
       ],
-      validation: { required: "Status is required" },
+      validation: {
+        required: "Status is required",
+      },
     },
   ];
 
@@ -139,10 +188,11 @@ const AddLabToLab = () => {
             Lab To Lab /
           </CBreadcrumbItem>
           <CBreadcrumbItem active className="text-gray-500">
-            Library
+            Add Lab
           </CBreadcrumbItem>
         </CBreadcrumb>
       </div>
+
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
@@ -156,15 +206,11 @@ const AddLabToLab = () => {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
-                ({
-                  name,
-                  label,
-                  placeholder,
-                  type = "text",
-                  options,
-                  validation,
-                }) => (
-                  <div key={name} className="space-y-1">
+                (
+                  { name, label, placeholder, type = "text", options, validation },
+                  index
+                ) => (
+                  <div key={index} className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">
                       {label}
                       {validation?.required && (

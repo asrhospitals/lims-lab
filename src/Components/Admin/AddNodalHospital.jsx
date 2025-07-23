@@ -170,7 +170,7 @@ const AddNodalHospital = () => {
           <p className="text-red-500 text-sm mb-4">{fetchError}</p>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add Nodal Hospital</h4>
           </div>
