@@ -8,6 +8,7 @@ const LoginPage = () => {
   const [loginClicked, SetLoginClicked] = useState(false);
   const [otp, SetOtp] = useState("");
   const [responseData, setResponseData] = useState({ userid: "", otp: "" });
+  const [role, setRole] = useState("");
 
   const OTP_SENDER = "https://asrlabs.asrhospitalindia.in/lims/authentication/signin";
 
@@ -21,9 +22,21 @@ const LoginPage = () => {
     SetLoginClicked(true);
     try {
       const response = await axios.post(OTP_SENDER, loginData);
+      
+      // Skip OTP for non-admin users
+      if (response.data.role !== 'admin') {
+        toast.success(`Login successful as ${response.data.role}! Redirecting...`);
+        localStorage.setItem("authToken", response.data.token);
+        localStorage.setItem("role", response.data.role);
+        localStorage.setItem("userid", response.data.id);
+        window.location.reload();
+        return;
+      }
+      
       toast.success("OTP sent to your email/phone.");
       setResponseData({ userid: response.data.id, otp: "" });
       SetOtp(response.data.otp);
+      setRole(response.data.role);
       localStorage.setItem("role", response.data.role);
       localStorage.setItem("userid", response.data.id);
     } catch (err) {
@@ -111,9 +124,13 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loginClicked}
-            className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 text-white py-3 rounded-md font-medium hover:from-cyan-400 hover:to-blue-500 transition duration-300 disabled:opacity-50 text-sm"
+            className={`w-full py-3 px-4 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition duration-200 ease-in-out text-sm font-medium ${
+              loginClicked
+                ? 'bg-blue-400 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-400'
+            }`}
           >
-            {loginClicked ? "Sending OTP..." : "Login"}
+            {loginClicked && loginData.role === 'admin' ? 'Sending OTP...' : 'Sign In'}
           </button>
         </form>
 
@@ -126,39 +143,40 @@ const LoginPage = () => {
           </a>
         </div>
 
-        {otp && (
-          <p className="text-center mt-4 text-green-600 text-sm">
-            <strong>Debug OTP:</strong> {otp}
-          </p>
+        {localStorage.getItem('role') === 'admin' && otp && (
+          <div className="mt-4 text-center text-sm text-gray-600">
+            <p>Debug OTP: <span className="font-mono font-bold">{otp}</span></p>
+          </div>
         )}
-
-        {loginClicked && (
-          <div className="mt-6">
-            <label className="block text-sm mb-1 text-gray-600 font-medium">
-              Enter OTP
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-3.5 text-gray-400">
-                <FiMail />
-              </span>
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                value={responseData.otp}
-                onChange={(e) =>
-                  setResponseData((prev) => ({
-                    ...prev,
-                    otp: e.target.value,
-                  }))
-                }
-                className="w-full pl-10 pr-4 py-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-400 transition duration-200 text-sm"
-              />
+        
+        {localStorage.getItem('role') === 'admin' && (
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm mb-1 text-gray-600 font-medium">
+                OTP
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-3.5 text-gray-400">
+                  <FiLock />
+                </span>
+                <input
+                  type="text"
+                  name="otp"
+                  placeholder="Enter OTP"
+                  value={responseData.otp}
+                  onChange={(e) => setResponseData({...responseData, otp: e.target.value})}
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-400 transition duration-200 ease-in-out text-sm"
+                />
+              </div>
             </div>
+
             <button
+              type="button"
               onClick={handleOtpSubmit}
-              className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-400 text-white py-3 rounded-md hover:from-emerald-400 hover:to-green-500 transition duration-300 text-sm"
+              className="w-full bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition duration-200 ease-in-out text-sm font-medium"
             >
-              Submit OTP
+              Verify OTP
             </button>
           </div>
         )}

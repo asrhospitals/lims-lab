@@ -12,6 +12,8 @@
   "dependencies": {
     "@coreui/react": "^5.7.0",
     "@coreui/react-pro": "^5.17.0",
+    "@headlessui/react": "^2.2.7",
+    "@heroicons/react": "^2.2.0",
     "@radix-ui/react-slider": "^1.2.2",
     "@tanstack/react-table": "^8.21.3",
     "ag-grid-community": "^33.3.2",
@@ -37,6 +39,7 @@
     "react-markdown": "^10.1.0",
     "react-modal": "^3.16.3",
     "react-quill": "^2.0.0",
+    "react-responsive": "^10.0.1",
     "react-router-dom": "^7.1.1",
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.0",
@@ -56,6 +59,7 @@
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
     "postcss": "^8.4.49",
+    "tailwind-scrollbar": "^3.1.0",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.5"
   }

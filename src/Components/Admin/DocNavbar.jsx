@@ -1,180 +1,206 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { IoIosLogOut } from "react-icons/io";
-import { FaBell } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from "@headlessui/react";
+import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { RiSearchLine } from "react-icons/ri";
+import { IoIosLogOut } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
 
-const DocNavbar = ({ isCollapsed, isHovered, sidebarWidth }) => {
+const navigation = [];
+
+function classNames(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+export default function DocNavbar({ isCollapsed, isHovered, sidebarWidth, setIsCollapsed }) {
   const [showDropdown, setShowDropdown] = useState(null);
   const navigate = useNavigate();
 
-  const sidebarExpanded = !isCollapsed || isHovered;
+  useEffect(() => {
+    console.log(`Sidebar is now ${isCollapsed ? "collapsed" : "expanded"}`);
+  }, [isCollapsed]);
 
-  const handleToggle = (index) => {
-    if (transitioning) return;
-    setTransitioning(true);
-    setExpandedItem(expandedItem === index ? null : index);
-    setTimeout(() => setTransitioning(false), 300);
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userid");
     localStorage.removeItem("role");
-
     sessionStorage.clear();
     navigate("/");
     window.location.reload();
   };
 
-  const toggleDropdown = (menu) => {
-    setShowDropdown((prev) => (prev === menu ? null : menu));
-  };
-
   return (
-    <header
-      className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b shadow-lg fixed top-0 right-0 "
+    <Disclosure
+      as="nav"
+      className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 shadow-md fixed top-0 right-0 z-50"
       style={{
         left: sidebarWidth,
         width: `calc(100% - ${sidebarWidth}px)`,
         transition: "left 0.3s ease, width 0.3s ease",
         height: "64px",
-        
       }}
     >
-      {/* Search */}
-      <div className="flex-grow max-w-md relative">
-        <input
-          type="text"
-          placeholder="Type here to search..."
-          className="w-full pl-10 pr-4 py-2 text-gray-700 border rounded-lg focus:outline-none bg-[#CEEBEE]"
-        />
-        <RiSearchLine className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500" />
-      </div>
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 h-full">
+        <div className="flex items-center justify-between h-full">
+          {/* Left side */}
+          <div className="flex items-center gap-3 flex-1">
+            {/* Sidebar toggle */}
+            <DisclosureButton
+              onClick={toggleSidebar}
+              className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-blue-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-300"
+            >
+              <Bars3Icon className="block size-5" />
+              <XMarkIcon className="hidden size-5" />
+            </DisclosureButton>
 
-      {/* Actions */}
-      <div className="ml-auto flex items-center gap-4">
-        {/* Country Dropdown */}
-        {/* <div className="relative">
-          <button
-            onClick={() => toggleDropdown("country")}
-            className="p-2 rounded-full hover:bg-gray-100"
-          >
-            <FaGlobe className="text-lg" />
-          </button>
-          {showDropdown === "country" && (
-            <div className="absolute right-0 mt-2 w-40 bg-white shadow-md rounded-md p-2">
-              {["fr", "us", "in", "br", "gb"].map((code) => (
-                <a href="/" key={code} className="block p-1 hover:bg-gray-100">
-                  <img
-                    src={`https://flagcdn.com/w40/${code}.png`}
-                    className="h-5 w-5"
-                    alt={code}
-                  />
+            <button
+              onClick={toggleSidebar}
+              className="hidden sm:flex p-2 rounded-md hover:bg-blue-100 text-gray-700 transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <Bars3Icon className={`size-5 ${isCollapsed ? "rotate-90" : "rotate-0"} transition-transform`} />
+            </button>
+
+            {/* Search bar */}
+            <div className="hidden sm:flex relative w-full max-w-md">
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-full h-10 pl-8 pr-2 text-sm text-gray-800 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+              />
+              <RiSearchLine className="absolute top-2.5 left-2.5 text-gray-500 size-4" />
+            </div>
+          </div>
+
+          {/* Right side */}
+          <div className="flex items-center gap-2">
+            {/* Notification button */}
+            <button
+              onClick={() => setShowDropdown(showDropdown === "notifications" ? null : "notifications")}
+              className="relative p-2 rounded-full text-gray-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <BellIcon className="w-5 h-5" />
+            </button>
+
+            {showDropdown === "notifications" && (
+              <div className="absolute top-16 right-4 bg-white shadow-xl rounded-xl w-72 max-h-80 overflow-auto p-4 z-20">
+                <h5 className="text-blue-600 font-semibold text-sm mb-2">Notifications</h5>
+                <ul className="space-y-3 text-sm">
+                  <li className="border-b pb-1.5">
+                    <strong className="text-gray-800">New Message:</strong> Document #23
+                    <p className="text-xs text-gray-500">10:20 AM Today</p>
+                  </li>
+                  <li className="border-b pb-1.5">
+                    <strong className="text-gray-800">New Message:</strong> Document #28
+                    <p className="text-xs text-gray-500">04:30 PM Today</p>
+                  </li>
+                </ul>
+                <a
+                  href="/"
+                  className="block text-center mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  View all
                 </a>
-              ))}
-            </div>
-          )}
-        </div> */}
-
-        {/* Notifications */}
-        <div className="relative">
-          <button
-            onClick={() => toggleDropdown("notifications")}
-            className="p-2 rounded-full hover:bg-gray-100"
-          >
-            <FaBell className="text-lg" />
-          </button>
-          {showDropdown === "notifications" && (
-            <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-auto bg-white shadow-md rounded-md p-4">
-              <h5 className="text-blue-500 font-semibold mb-2">Activity</h5>
-              <ul className="space-y-4 text-sm">
-                <li>
-                  <strong>New Massage:</strong> 23
-                  <p className="text-xs text-gray-400">10:20 AM Today</p>
-                </li>
-                <li>
-                  <strong>New Massage:</strong> 28
-                  <p className="text-xs text-gray-400">04:30 PM Today</p>
-                </li>
-              </ul>
-              <a
-                href="/"
-                className="block text-center mt-3 text-blue-600 hover:underline"
-              >
-                View all
-              </a>
-            </div>
-          )}
-        </div>
-
-        {/* Messages */}
-        {/* <div className="relative">
-          <button
-            onClick={() => toggleDropdown("messages")}
-            className="p-2 rounded-full hover:bg-gray-100"
-          >
-            <FaEnvelope className="text-lg" />
-          </button>
-          {showDropdown === "messages" && (
-            <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-auto bg-white shadow-md rounded-md p-4">
-              <h5 className="text-blue-500 font-semibold mb-2">Messages</h5>
-              <div className="space-y-3 text-sm">
-                {["Albert Winters", "Van Robinson", "Mara Coffey"].map(
-                  (name, i) => (
-                    <div key={i} className="flex gap-3 items-start">
-                      <img
-                        src={`/assets/images/doctor${i + 1}.png`}
-                        alt={name}
-                        className="h-10 w-10 rounded-full"
-                      />
-                      <div>
-                        <p className="font-semibold">{name}</p>
-                        <p className="text-xs text-gray-600">
-                          Today, {7 + i}:30PM
-                        </p>
-                      </div>
-                    </div>
-                  )
-                )}
               </div>
-              <a
-                href="/"
-                className="block text-center mt-3 text-blue-600 hover:underline"
-              >
-                View all
-              </a>
-            </div>
-          )}
-        </div> */}
+            )}
 
-        {/* User Profile */}
-        <div className="relative" >
-          <button
-            onClick={() => toggleDropdown("user")}
-            className="relative flex items-center space-x-2"
-          >
-            <img
-              // src="https://i.pravatar.cc/40"
-              src="/doctor_assets/default user.jpg"
-              alt="User"
-              className="h-10 w-10 rounded-full"
-            />
-            <span className="absolute top-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
-          </button>
-          {showDropdown === "user" && (
-            <div className="absolute right-0 mt-2 bg-white shadow-md rounded-md w-48 p-3" >
-              <p className="text-sm text-gray-500">Admin</p>
-              <h6 className="font-semibold">DrReddy</h6>
-              <button onClick={handleLogout}>
-                <IoIosLogOut className="text-lg mr-1" /> Logout
-              </button>
-            </div>
-          )}
+            {/* Profile dropdown */}
+            <Menu as="div" className="relative">
+              <MenuButton className="relative flex items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
+                <img
+                  src="/lims-lab/doctor_assets/default user.jpg"
+                  alt="User"
+                  className="w-8 h-8 rounded-full border border-gray-200"
+                />
+                <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-green-400 border-2 border-white rounded-full" />
+              </MenuButton>
+
+              <MenuItems className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg ring-1 ring-black/5 z-20 focus:outline-none">
+                <div className="px-3 py-2">
+                  <p className="text-sm text-gray-600 font-medium">Admin</p>
+                  <h6 className="text-base font-semibold text-gray-800">Dr. Reddy</h6>
+                </div>
+                <MenuItem>
+                  {({ active }) => (
+                    <a
+                      href="#"
+                      className={`block px-3 py-1.5 text-sm ${active ? "bg-blue-100" : "text-gray-700"}`}
+                    >
+                      Your Profile
+                    </a>
+                  )}
+                </MenuItem>
+                <MenuItem>
+                  {({ active }) => (
+                    <a
+                      href="#"
+                      className={`block px-3 py-1.5 text-sm ${active ? "bg-blue-100" : "text-gray-700"}`}
+                    >
+                      Settings
+                    </a>
+                  )}
+                </MenuItem>
+                <MenuItem>
+                  {({ active }) => (
+                    <button
+                      onClick={handleLogout}
+                      className={`flex items-center w-full px-3 py-1.5 text-sm ${
+                        active ? "bg-blue-100" : "text-red-600"
+                      }`}
+                    >
+                      <IoIosLogOut className="mr-2 text-base" />
+                      Logout
+                    </button>
+                  )}
+                </MenuItem>
+              </MenuItems>
+            </Menu>
+          </div>
         </div>
       </div>
-    </header>
-  );
-};
 
-export default DocNavbar;
+      {/* Mobile Search & Nav */}
+      <DisclosurePanel className="sm:hidden bg-white shadow-lg">
+        <div className="px-4 py-2">
+          {/* Mobile search */}
+          <div className="relative w-full mb-2">
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-full h-10 pl-8 pr-2 text-sm text-gray-800 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+            />
+            <RiSearchLine className="absolute top-2.5 left-2.5 text-gray-500 size-4" />
+          </div>
+
+          {/* Mobile nav links */}
+          {navigation.map((item) => (
+            <DisclosureButton
+              key={item.name}
+              as="a"
+              href={item.href}
+              aria-current={item.current ? "page" : undefined}
+              className={classNames(
+                item.current
+                  ? "bg-blue-100 text-blue-900"
+                  : "text-gray-700 hover:bg-blue-100 hover:text-blue-900",
+                "block rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-200"
+              )}
+            >
+              {item.name}
+            </DisclosureButton>
+          ))}
+        </div>
+      </DisclosurePanel>
+    </Disclosure>
+  );
+}

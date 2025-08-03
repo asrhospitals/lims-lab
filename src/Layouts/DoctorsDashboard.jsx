@@ -8,10 +8,8 @@ import AdminContextProvider from "../context/AdminContextProvider";
 
 const DoctorsDashboard = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
-  const sidebarExpanded = !isCollapsed || isHovered;
-  const sidebarWidth = sidebarExpanded ? 256 : 74;
+  const sidebarWidth = isCollapsed ? 74 : 256;
 
   return (
     <AdminContextProvider>
@@ -20,8 +18,6 @@ const DoctorsDashboard = () => {
         <DoctorSidebar
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
-          isHovered={isHovered}
-          setIsHovered={setIsHovered}
         />
 
         {/* Main Section */}
@@ -37,7 +33,11 @@ const DoctorsDashboard = () => {
             className="fixed top-0 left-0 right-0 z-20"
             style={{ marginLeft: sidebarWidth }}
           >
-            <DocNavbar sidebarWidth={sidebarWidth} />
+            <DocNavbar 
+              isCollapsed={isCollapsed}
+              sidebarWidth={sidebarWidth}
+              setIsCollapsed={setIsCollapsed}
+            />
             {/* <DocHeroHeader sidebarWidth={sidebarWidth} /> */}
           </div>
 
