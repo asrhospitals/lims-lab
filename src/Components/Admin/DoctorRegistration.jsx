@@ -299,6 +299,7 @@ const App = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Fetch departments on mount
   useEffect(() => {
@@ -441,7 +442,10 @@ const App = () => {
       const result = await doctorResponse.json();
       
       if (result.success) {
-        alert(`Registration submitted successfully!\nDoctor ID: ${result.doctorId}\nStatus: Pending Approval`);
+        // Show success message in UI
+        setSuccessMessage(`Doctor registered successfully! ID: ${result.doctorId}`);
+        
+        // Reset form
         setFormData({
           fullName: '',
           dateOfBirth: '',
@@ -458,6 +462,7 @@ const App = () => {
           digitalSignature: null,
         });
         setErrors({});
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error('Registration failed:', error);
@@ -722,6 +727,11 @@ const App = () => {
                 </button>
               </div>
             </form>
+            {successMessage && (
+              <div className="bg-green-100 p-4 rounded-lg border border-green-200 mt-4">
+                <p className="text-green-600 text-sm">{successMessage}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

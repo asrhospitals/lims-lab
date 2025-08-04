@@ -238,45 +238,41 @@ const DoctorReportDetail = () => {
         <div className="p-4 sm:p-5 bg-white rounded-lg shadow-sm">
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Report Detail Section</h2>
             
-            {/* Search Controls - Matched to image */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6 w-full">
-                {/* Left side - Search inputs */}
-                <div className="flex-1 flex flex-col sm:flex-row gap-2 min-w-0">
-                    <div className="w-full sm:w-48">
-                        <input 
-                            type="text" 
-                            placeholder="Search by Hospital" 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                    </div>
-                    <div className="w-full sm:w-48">
-                        <input 
-                            type="text" 
-                            placeholder="Search by Test" 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                    </div>
+            {/* Search Controls - Updated for mobile */}
+            <div className="flex flex-col gap-3 mb-6 w-full">
+                {/* Search inputs - Stack on mobile */}
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
+                    <input 
+                        type="text" 
+                        placeholder="Search by Hospital" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <input 
+                        type="text" 
+                        placeholder="Search by Test" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                 </div>
                 
-                {/* Right side - Date inputs and button */}
-                <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
+                {/* Date inputs and button - Full width on mobile */}
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
                     <input 
                         type="date" 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <input 
                         type="date" 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium whitespace-nowrap">
+                    <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium whitespace-nowrap">
                         Search
                     </button>
                 </div>
             </div>
             
-            {/* Table - Make horizontally scrollable on mobile */}
-            <div className="overflow-x-auto">
-                <div className="min-w-[800px] md:min-w-full">
+            {/* Table Container */}
+            <div className="relative h-[60vh] w-full overflow-hidden">
+                <div className="absolute inset-0 overflow-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -399,13 +395,12 @@ const DoctorReportDetail = () => {
                 </div>
             </div>
             
-            {/* Pagination - Adjust for mobile */}
+            {/* Pagination - Stacked on mobile */}
             <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-1 gap-3">
                 <button 
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-4 py-2 border border-gray-300 rounded-md text-sm font-medium w-full sm:w-auto text-center ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`
-                }
+                    className={`px-4 py-2 border border-gray-300 rounded-md text-sm font-medium w-full sm:w-auto text-center ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                 >
                     Previous
                 </button>
@@ -417,8 +412,7 @@ const DoctorReportDetail = () => {
                 <button 
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className={`px-4 py-2 border border-gray-300 rounded-md text-sm font-medium w-full sm:w-auto text-center ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`
-                }
+                    className={`px-4 py-2 border border-gray-300 rounded-md text-sm font-medium w-full sm:w-auto text-center ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                 >
                     Next
                 </button>
