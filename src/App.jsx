@@ -89,7 +89,11 @@ import UpdateColor from "./Components/Admin/UpdateColor";
 
 import AddInvestigation1 from "./Components/Admin/AddInvestigation1";
 
-
+//doctor admin approval
+import AdminApproval from "./Components/Admin/AdminApproval";
+import DoctorRegistration from "./Components/Admin/DoctorRegistration";
+import DoctorReportDetail from "./Components/Doctor/DoctorReportDetail";
+import DoctorReporteditDetail from "./Components/Doctor/DoctorReporteditDetail";
 
 
 
@@ -344,7 +348,22 @@ function App() {
         },
 
 
-
+        {
+          path: "approval",
+          element: <AdminApproval />,
+        },
+        {
+          path: "doctor-registration",
+          element: <DoctorRegistration />,
+        },
+        {
+          path: "doctorreport",
+          element: <DoctorReportDetail />,
+        },
+        {
+          path: "doctorreportedit",
+          element: <DoctorReporteditDetail />,
+        },
 
         {
           path: "add-report-type-master",

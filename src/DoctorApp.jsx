@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
-import DoctorSidebar from "../Components/Admin/DoctorSidebar";
-import DocHeroHeader from "../Components/Admin/DocHeroHeader";
-import DocNavbar from "../Components/Admin/DocNavbar";
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import { useState } from 'react';
+import DoctorReport from './Components/Doctor/DoctorReportDetail';
+import DoctorReportEdit from './Components/Doctor/DoctorReporteditDetail';
+import DoctorSidebar from './Components/Admin/DoctorSidebar';
+import DoctorNavbar from './Components/Doctor/DoctorNavbar';
+import AdminContextProvider from './context/AdminContextProvider';
 
-import AdminContextProvider from "../context/AdminContextProvider";
-
-const DoctorsDashboard = () => {
+function DoctorLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -16,7 +16,6 @@ const DoctorsDashboard = () => {
   return (
     <AdminContextProvider>
       <div className="flex h-screen overflow-hidden font-sans">
-        {/* Sidebar */}
         <DoctorSidebar
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
@@ -24,7 +23,6 @@ const DoctorsDashboard = () => {
           setIsHovered={setIsHovered}
         />
 
-        {/* Main Section */}
         <div
           className="flex flex-col flex-grow"
           style={{
@@ -32,34 +30,49 @@ const DoctorsDashboard = () => {
             transition: "margin-left 0.3s ease",
           }}
         >
-          {/* Fixed Navbar + HeroHeader */}
           <div
             className="fixed top-0 left-0 right-0 z-20"
             style={{ marginLeft: sidebarWidth }}
           >
-            <DocNavbar 
+            <DoctorNavbar
               sidebarWidth={sidebarWidth}
               isCollapsed={isCollapsed}
               setIsCollapsed={setIsCollapsed}
               isHovered={isHovered}
             />
-            {/* <DocHeroHeader sidebarWidth={sidebarWidth} /> */}
           </div>
 
-          {/* Main Content */}
-          <main
-            className="overflow-y-auto bg-[#EFF7F8] py-6"
-            style={{
-              marginTop: "40px",
-              height: "calc(100vh - 40px)",
-            }}
-          >
+          <main className="flex-1 overflow-auto mt-16">
             <Outlet />
           </main>
         </div>
       </div>
     </AdminContextProvider>
   );
-};
+}
 
-export default DoctorsDashboard;
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <DoctorLayout />,
+    errorElement: <div>Page not found</div>,
+    children: [
+      {
+        path: "doctorreport",
+        element: <DoctorReport />,
+      },
+      {
+        path: "doctorreportedit",
+        element: <DoctorReportEdit />,
+      },
+      {
+        index: true,
+        element: <DoctorReport />,
+      },
+    ],
+  },
+]);
+
+export default function DoctorApp() {
+  return <RouterProvider router={router} />;
+}

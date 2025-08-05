@@ -1,0 +1,45 @@
+[33m4616788[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mnirmal[m[33m, [m[1;31morigin/nirmal[m[33m)[m changes
+[33md7c2d8f[m[33m ([m[1;32mmain[m[33m)[m changes
+[33m86857d1[m[33m ([m[1;31morigin/rajesh1[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/anand[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;31morigin/Anand[m[33m)[m Refactored Admin components for LabToLab, Phlebotomist, and Role management
+[33m1135196[m Merge branch 'main' of https://github.com/asrhospitals/lims-lab
+[33m3c8c65e[m Updated multiple admin components including AddDept, AddHospital, UpdateDept and others, plus styling changes in index.css
+[33m93b5c2a[m Add files via upload
+[33me958b7f[m Updated multiple Admin components - UI fixes, API links, and improved form handling
+[33m67d6968[m Updated multiple Admin components - UI fixes, API links, and improved form handling
+[33mbe4671e[m Added AddProfileMaster.jsx component and updated App.jsx routing
+[33me552f20[m Updated LoginPage.jsx: revised login logic and updated API endpoint
+[33m3b9630a[m Updated LoginPage.jsx in Admin component - modified login logic and API link
+[33m2dac3f9[m Updated Admin components structure and modified API endpoint links
+[33mdf2e369[m Merge pull request #1 from asrhospitals/nirmalraj
+[33m993aace[m Update vite.config.js
+[33m01a8690[m Update static.yml
+[33mf70996b[m Create static.yml
+[33m15ace99[m Add fields: Derived Test, Short Name, Sub-Department, Role Type, Report Type, Separate Barcode, Suffixed Barcodes
+[33m949517a[m feat: Add DataTable component with sorting, pagination, and expandable rows
+[33m8cba4c0[m[33m ([m[1;31morigin/nirmalraj[m[33m)[m doctorreport
+[33md1f61c4[m reg_app
+[33me1c9885[m reg_app
+[33m70a927f[m Initial commit
+[33mf540912[m Delete dist.zip
+[33m2d6b02b[m Delete ViewReportTypeMaster.jsx
+[33m93cd7ac[m Delete ViewProfileEntryMaster.jsx
+[33m4485594[m Delete ViewKitMaster.jsx
+[33m8540ae2[m Delete UpdateTechnician.jsx
+[33mc93e432[m Delete UpdateReception.jsx
+[33m369a9e5[m Delete UpdateProfileEntryMaster.jsx
+[33m92af53b[m Delete UpdatePhlebotomist.jsx
+[33ma76190a[m Delete UpdateKitMaster.jsx
+[33mb34f140[m Delete UpdateInvestigation.jsx
+[33m96e9b80[m Delete LoginPage.jsx
+[33md0d70cc[m Delete AdminHome.jsx
+[33m18387a8[m Delete AddReportTypeMaster.jsx
+[33ma9afd0f[m Delete AddKitMaster.jsx
+[33md00bcfb[m Delete ASRLabDevelopment.rar
+[33m563c673[m Delete AddInvestigation.jsx
+[33m445c3ce[m Add files via upload
+[33m0d990eb[m Add files via upload
+[33m075b176[m Add files via upload
+[33mfb07e31[m login page, admin dashboard
+[33mb20340d[m UpdateTechnician.jsx UpdatePhlebotomist.jsx
+[33m65d018f[m Complete upload of hardcoded ASR Lab Admin Panel.
+[33m31098db[m Add files via upload

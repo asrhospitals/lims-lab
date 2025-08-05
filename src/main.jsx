@@ -5,6 +5,7 @@ import "./index.css";
 import App from "./App.jsx";
 import PhlebotomistApp from "./PhlebotomistApp.jsx";
 import ReceptionApp from "./ReceptionApp.jsx";
+import DoctorApp from "./DoctorApp.jsx";
 
 // Get the stored role from localStorage
 const role = localStorage.getItem("role");
@@ -21,6 +22,9 @@ switch (role) {
     break;
   case "reception":
     RootComponent = ReceptionApp;
+    break;
+  case "doctor":
+    RootComponent = DoctorApp;
     break;
   default:
     RootComponent = App; // fallback, could also be a LoginPage or ErrorPage
