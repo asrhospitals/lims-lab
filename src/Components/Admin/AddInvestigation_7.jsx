@@ -10,7 +10,7 @@ import InvestigationDetails from './InvestigationDetails';
 import AddInvestigationResult from './AddInvestigationResult';
 
 
-const AddInvestigation1 = () => {
+const AddInvestigation = () => {
   const [departments, setDepartments] = useState([]);
   const [subDepartments, setSubDepartments] = useState([]);
   const [roleTypes, setRoleTypes] = useState([]);
@@ -35,11 +35,11 @@ const AddInvestigation1 = () => {
     const fetchData = async () => {
       try {
         const [dept, subDept, role, hosp, spec] = await Promise.all([
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-department", { headers }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-subdepartment", { headers }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", { headers }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype", { headers }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-specimen", { headers })
+          axios.get("https://asrlab-production.up.railway.app/lims/master/get-department", { headers }),
+          axios.get("https://asrlab-production.up.railway.app/lims/master/get-subdepartment", { headers }),
+          axios.get("https://asrlab-production.up.railway.app/lims/master/get-role", { headers }),
+          axios.get("https://asrlab-production.up.railway.app/lims/master/get-hsptltype", { headers }),
+          axios.get("https://asrlab-production.up.railway.app/lims/master/get-specimen", { headers })
         ]);
 
         setDepartments(dept.data.filter((d) => d.isActive));
@@ -98,7 +98,7 @@ const AddInvestigation1 = () => {
 
     try {
       await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-test",
+        "https://asrlab-production.up.railway.app/lims/master/add-test",
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -801,4 +801,4 @@ const [dependencyTests, setDependencyTests] = useState([]);
 
 };
 
-export default AddInvestigation1;
+export default AddInvestigation;

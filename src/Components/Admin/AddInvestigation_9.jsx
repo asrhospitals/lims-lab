@@ -17,7 +17,6 @@ const AddInvestigation = () => {
   const [specimens, setSpecimens] = useState([]);
   const [instruments, setInstruments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [results, setResults] = useState([]); // State to hold results from AddInvestigationResult
 
   const {
     register,
@@ -64,17 +63,39 @@ const AddInvestigation = () => {
     setIsSubmitting(true);
 
     const payload = {
-      testname: data.testName,
-      testcategory: data.testCategory,
       department: data.department,
-      shortname: data.shortName,
-      unit: data.unit,
-      reportType: data.reportType,
-      remarks: data.remarks,
-      status: data.isactive ? "Active" : "Inactive",
-      barcodelngt: parseInt(data.barcodelngt),
-      tat: `${data.tatHour || "0"} ${data.tatUnit || "hours"}`,
-      results: results, // Use the results collected from AddInvestigationResult
+      subdepartment: data.subdepartment,
+      testname: data.testName,
+      aliasname: data.aliasname,
+      testcode: parseInt(data.testcode),
+      shortcode: parseInt(data.shortcode),
+      roletype: data.roletype,
+      sequencecode: data.sequencecode,
+      reporttype: data.reportType,
+      measuringunit: data.measuringunit,
+      refrange: data.refrange,
+      tat: `${data.tatHour || "0"} hour ${data.tatMin || "0"} min`,
+      techtat: `${data.tatHour || "0"} hour ${data.tatMin || "0"} min`,
+      diseases: data.diseases,
+      testdone: data.testdone,
+      specimenType: data.specimenType || 'test data',
+      volume: data.volume,
+      tubecolor: data.tubecolor,
+      hospitaltype: Array.isArray(data.hospitaltype) ? data.hospitaltype : [data.hospitaltype],
+      testcategory: data.testcategory,
+      testcollectioncenter: data.testcollectioncenter,
+      processingcenter: data.processingcenter,
+      samplecollection: data.samplecollection || null,
+      reportprint: data.reportprint || null,
+      resultentryby: data.resultentryby || null,
+      allowselecttestcode: data.allowselecttestcode ?? true,
+      reportattachment: data.reportattachment ?? false,
+      printinreport: data.printinreport ?? true,
+      uploadimage: data.uploadimage ?? true,
+      isactive: data.isactive ?? true,
+      addbarcode: data.addbarcode ?? false,
+      accreditationname: data.accreditationname || null,
+      accreditationdate: data.accreditationdate || null,
     };
 
     try {
@@ -85,7 +106,6 @@ const AddInvestigation = () => {
       );
       toast.success("✅ Investigation added successfully");
       reset();
-      setResults([]); // Clear results after submission
       navigate("/view-investigation");
     } catch (err) {
       toast.error("❌ Failed to add investigation");
@@ -129,6 +149,27 @@ const AddInvestigation = () => {
   const [interpretation, setInterpretation] = useState("");
   const [remarks, setRemarks] = useState("");
 
+  const derivedTests = [
+    {
+      name: "Indirect Bilirubin",
+      formula: "Total Bilirubin – Direct Bilirubin",
+      dependencies: ["total_bilirubin", "direct_bilirubin"],
+    },
+    {
+      name: "LDL Cholesterol",
+      formula: "Total Cholesterol – HDL – (TG / 5)",
+      dependencies: ["total_cholesterol", "HDL", "TG"],
+    },
+    {
+      name: "BMI",
+      formula: "Weight / (Height × Height)",
+      dependencies: ["weight", "height"],
+    },
+  ];
+
+  const [selectedDerived, setSelectedDerived] = useState("");
+  const [dependencyTests, setDependencyTests] = useState([]);
+
   return (
     <>
       <div className="fixed top-[61px] w-full z-10">
@@ -156,6 +197,18 @@ const AddInvestigation = () => {
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div>
+              <label className="block text-sm font-medium text-gray-700">LOINC CODE</label>
+              <input {...register("loincCode")} placeholder="LOINC CODE" className="w-full border px-3 py-2 rounded" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">CPT CODE</label>
+              <input {...register("cptCode")} placeholder="CPT CODE" className="w-full border px-3 py-2 rounded" />
+            </div>
+
+            <div className="col-span-full"></div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700">Test Name <span className="text-red-500">*</span></label>
               <input {...register("testName", { required: true })} placeholder="Test Name" className="w-full border px-3 py-2 rounded" />
               {errors.testName && <p className="text-red-600 text-xs mt-1">Test Name is required</p>}
@@ -173,6 +226,11 @@ const AddInvestigation = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-700">Short Code</label>
+              <input {...register("shortCode")} className="w-full border px-3 py-2 rounded" />
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700">Department</label>
               <select {...register("department")} className="w-full border px-3 py-2 rounded">
                 <option value="">Select Department</option>
@@ -183,58 +241,89 @@ const AddInvestigation = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Units</label>
-              <input {...register("unit")} placeholder="Units" className="w-full border px-3 py-2 rounded" />
+              <label className="block text-sm font-medium text-gray-700">Sub-Department</label>
+              <select {...register("subdepartment")} className="w-full border px-3 py-2 rounded">
+                <option value="">Select Sub-Department</option>
+                {subDepartments.map((d, i) => (
+                  <option key={i} value={d.subdptname}>{d.subdptname}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Barcode Length */}
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700">Barcode Length<span className="text-red-500">*</span></label>
-              <input {...register("barcodelngt", { required: true })} type="number" placeholder="Enter length" className="w-full border px-3 py-2 rounded" />
-              {errors.barcodelngt && <p className="text-red-600 text-xs mt-1">Barcode Length is required</p>}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Role Type</label>
+              <select {...register("roletype")} className="w-full border px-3 py-2 rounded">
+                <option value="">Select Role Type</option>
+                {roleTypes.map((r, i) => (
+                  <option key={i} value={r.roletype}>{r.roletype}</option>
+                ))}
+              </select>
             </div>
 
-            {/* TAT (Turnaround Time) */}
-            <div className="mb-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">TAT (Turnaround Time)<span className="text-red-500">*</span></label>
-              <div className="flex gap-0">
-                <input
-                  {...register("tatHour", { required: true })}
-                  type="number"
-                  placeholder="Enter value"
-                  className="w-1/2 border px-3 py-2 rounded"
-                />
-                <select {...register("tatUnit")} className="w-1/2 border px-3 py-2 rounded">
-                  <option value="">Select Unit</option>
-                  <option value="minutes">Minutes</option>
-                  <option value="hours">Hours</option>
-                  <option value="days">Days</option>
-                </select>
-              </div>
-              {errors.tatHour && <p className="text-red-600 text-xs mt-1">TAT is required</p>}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Report Type</label>
+              <select {...register("reportType")} className="w-full border px-3 py-2 rounded">
+                <option value="">Select Report Type</option>
+                <option value="Range">Range</option>
+                <option value="Format">Format</option>
+                <option value="Positive/Negative">Positive/Negative</option>
+                <option value="Reactive/Non-reactive">Reactive/Non-reactive</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Sample Type</label>
+              <select {...register("specimenType")} className="w-full border px-3 py-2 rounded">
+                <option value="">Select Sample Type</option>
+                {specimens.map((s, i) => (
+                  <option key={i} value={s.specimenname}>{s.specimenname}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Sample Quantity</label>
+              <input {...register("sampleQuantity")} type="number" placeholder="Enter quantity" className="w-full border px-3 py-2 rounded" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Sample Temperature</label>
+              <input {...register("sampleTemperature")} type="number" placeholder="Enter temperature" className="w-full border px-3 py-2 rounded" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Test Method</label>
+              <input {...register("method")} placeholder="Method" className="w-full border px-3 py-2 rounded" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Instrument Type</label>
+              <select {...register("instrumentType")} className="w-full border px-3 py-2 rounded">
+                <option value="">Select Instrument Type</option>
+                {instruments.map((inst, i) => (
+                  <option key={i} value={inst.instrumentname}>{inst.instrumentname}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <input {...register("description")} placeholder="Description" className="w-full border px-3 py-2 rounded" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">SAC</label>
+              <input {...register("sac")} placeholder="SAC" className="w-full border px-3 py-2 rounded" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Order</label>
+              <input {...register("order")} placeholder="100000" className="w-full border px-3 py-2 rounded" />
             </div>
           </div>
 
-          <AddInvestigationResult setResults={setResults} /> {/* Pass setResults to AddInvestigationResult */}
-
-          {/* Remarks */}
-          <div className="col-span-full grid grid-cols-6 items-start gap-4 mx-20 mb-4">
-            <div className="col-span-1 font-bold mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
-                Remarks :
-              </label>
-            </div>
-            <div className="col-span-5">
-              <ReactQuill
-                value={remarks}
-                onChange={setRemarks}
-                theme="snow"
-                className="mt-2 bg-white"
-                modules={modules}
-                formats={formats}
-              />
-            </div>
-          </div>
+          <AddInvestigationResult />
 
           <div className="px-6 py-4 border-t bg-gray-50 text-right">
             <button type="submit" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded">

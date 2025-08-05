@@ -368,7 +368,7 @@ const AddHospital = () => {
               disabled={isSubmitting}
               className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-md text-white transition"
             >
-              {isSubmitting ? "Saving..." : "Save Hospital"}
+              {isSubmitting ? "Saving..." : "Add Hospital"}
             </button>
           </div>
         </form>

@@ -8,7 +8,7 @@ import { FaRegCircle } from "react-icons/fa";
 
 import { FaUserDoctor } from "react-icons/fa6";
 
-const DoctorSidebar = ({
+const Sidebar = ({
   isCollapsed,
   setIsCollapsed,
   isHovered,
@@ -19,13 +19,13 @@ const DoctorSidebar = ({
   const user = {
     name: "DrReddy",
     shortName: "DrReddy",
-    department: "Doctor",
-    shortDept: "Doctor",
+    department: "Phlebotomist",
+    shortDept: "Phlebotomist",
     avatar: "/doctor_assets/user.jpg",
   };
 
   const menuItems = [
-    { type: "label", label: "Admin Panel" },
+    { type: "label", label: "Phlebotomist Panel" },
     { name: "Dashboard", icon: <FaHome />, link: "" },
     // {
     //   name: "Appointments",
@@ -39,29 +39,25 @@ const DoctorSidebar = ({
       name: "Master",
       icon: <FaUserDoctor />,
       children: [
-        // { name: "Add Department", link: "add-department" },
-        { name: "Department", link: "view-departments" },
-        // { name: "Add Sub-Department", link: "add-subdpt" },
-        { name: "Sub-Department", link: "view-subdpt" },
-        // { name: "Add Hos. Type", link: "add-hospitaltype" },
-        { name: "Hospital Type", link: "view-hospitaltype" },
-        // { name: "Add Hospital", link: "add-hospital" },
-        { name: "Hospital", link: "view-hospital" },
-        { name: "Nodal", link: "view-nodal" },
-        { name: "Lab", link: "/view-labtolab" },
-        { name: "Nodal Hospital", link: "/view-nodal-hospitals" },
-        { name: "Instrument", link: "/view-instruments" },
-        { name: "Nodal Instrument", link: "/view-nodal-instruments" },
-        { name: "Role", link: "/view-roles" },
-        { name: "Phelobomist", link: "/view-phelobotomist" },
 
-        { name: "Add Color ", link: "/add-color" },
-        { name: "Color Master", link: "/view-colors" },
-        { name: "Add Specimen Type ", link: "/add-specimen-type" },
+        { name: "Patient", link: "view-patient" },
 
-        { name: "Specimen Type Master", link: "/view-specimen-types" },
         
+        // { name: "Hospital", link: "view-hospital" },
+        // { name: "Nodal", link: "view-nodal" },
+        
+        // { name: "Nodal Hospital", link: "/view-nodal-hospitals" },
+        // { name: "Instrument", link: "/view-instruments" },
+        // { name: "Nodal Instrument", link: "/view-nodal-instruments" },
 
+        // { name: "Lab", link: "/view-labtolab" },
+        // { name: "Role", link: "/view-roles" },
+
+
+      
+
+
+        
 
 
 
@@ -103,47 +99,128 @@ const DoctorSidebar = ({
 
   // ScrollbarStyles component for reusable scrollbar styling
   // ScrollbarStyles component for reusable scrollbar styling
+  // const ScrollbarStyles = () => (
+  //   <style jsx>{`
+
+  //     .custom-scrollbar {
+  //       overflow-y: auto;
+  //       max-height: 100vh; /* Allow full viewport height scroll */
+  //     }
+
+  //     .custom-scrollbar::-webkit-scrollbar {
+  //       width: 8px; /* Overall scrollbar width */
+  //       height: 8px; /* Overall scrollbar height (for horizontal scrollbars) */
+  //     }
+
+  //     /* Track styling */
+  //     .custom-scrollbar::-webkit-scrollbar-track {
+  //       background: transparent;
+  //       border-radius: 10px;
+  //       margin: 4px 0; /* Creates space at top/bottom of track */
+  //       width: 6px; /* Track width */
+  //     }
+
+  //     /* Thumb styling */
+  //     .custom-scrollbar::-webkit-scrollbar-thumb {
+  //       background: transparent;
+  //       border-radius: 10px;
+  //       min-height: 40px; /* Minimum thumb height */
+  //       width: 6px; /* Thumb width */
+  //     }
+
+  //     /* Hover states */
+  //     .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  //       background: #cbd5e1;
+  //       height: 60px; /* You can set specific height on hover if needed */
+  //     }
+
+  //     .custom-scrollbar:hover::-webkit-scrollbar-track {
+  //       background: #f1f5f9;
+  //     }
+  //   `}
+    
+    
+    
+    
+    
+  //   </style>
+
+
+
+    
+  // );
+
+
+
+
   const ScrollbarStyles = () => (
-    <style jsx>{`
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 8px; /* Overall scrollbar width */
-        height: 8px; /* Overall scrollbar height (for horizontal scrollbars) */
-      }
+  <style jsx>{`
+    .custom-scrollbar {
+      overflow-y: auto;
+      max-height: 100vh; /* Allow full viewport height scroll */
+    }
 
-      /* Track styling */
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-        border-radius: 10px;
-        margin: 4px 0; /* Creates space at top/bottom of track */
-        width: 6px; /* Track width */
-      }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px; /* Overall scrollbar width */
+      height: 8px; /* Overall scrollbar height (for horizontal scrollbars) */
+    }
 
-      /* Thumb styling */
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: transparent;
-        border-radius: 10px;
-        min-height: 40px; /* Minimum thumb height */
-        width: 6px; /* Thumb width */
-      }
+    /* Track styling */
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+      border-radius: 10px;
+      margin: 4px 0; /* Creates space at top/bottom of track */
+      width: 6px; /* Track width */
+    }
 
-      /* Hover states */
-      .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        height: 60px; /* You can set specific height on hover if needed */
-      }
+    /* Thumb styling */
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: transparent;
+      border-radius: 10px;
+      min-height: 40px; /* Minimum thumb height */
+      width: 6px; /* Thumb width */
+    }
 
-      .custom-scrollbar:hover::-webkit-scrollbar-track {
-        background: #f1f5f9;
-      }
-    `}</style>
-  );
+    /* Hover states */
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      height: 60px; /* You can set specific height on hover if needed */
+    }
+
+    .custom-scrollbar:hover::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    .sidebar-scroll-container {
+      height: 100vh;       /* full viewport height */
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;    /* enable scroll */
+      scrollbar-width: thin;
+      scrollbar-color: #238781 #e0e0e0;
+    }
+
+    /* Nested scrollable master section */
+    .master-scroll-section {
+      max-height: 400px;   /* or any height you want */
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #238781 #e0e0e0;
+      margin-top: 10px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+  `}</style>
+);
+
 
   return (
     <nav
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-sm z-40 flex flex-col
-        ${transitionClass} ${sidebarExpanded ? "w-64" : "w-20"}`}
+      className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 shadow-sm z-40 flex flex-col
+      ${transitionClass} ${sidebarExpanded ? "w-64" : "w-20"}`}
+
     >
       {/* Header Section */}
       <div className="flex flex-col">
@@ -212,7 +289,7 @@ const DoctorSidebar = ({
       </div>
       {/* Navigation Items */}
       <ScrollbarStyles />
-      <div className="custom-scrollbar flex-1 overflow-y-auto py-3 px-2">
+      <div className="sidebar-scroll-container custom-scrollbar flex-1 min-h-0 overflow-y-auto py-3 px-2">
         {menuItems.map((item, index) => (
           <div key={index} className="mb-1">
             {item.type === "label" ? (
@@ -257,7 +334,7 @@ const DoctorSidebar = ({
                 </button>
 
                 <div
-                  className={`${transitionClass} overflow-hidden ${
+                  className={`${transitionClass} master-scroll-section overflow-hidden ${
                     expandedItem === index ? "mt-1" : ""
                   }`}
                   style={{
@@ -337,5 +414,5 @@ const DoctorSidebar = ({
   );
 };
 
-export default DoctorSidebar;
+export default Sidebar;
 

@@ -22,13 +22,13 @@ const UpdateReception = () => {
     defaultValues: {
       receptionistName: "",
       nodal: "",
-      addressLine: "",
+      addressline: "",
       city: "",
       state: "",
-      pinCode: "",
+      pincode: "",
       dob: "",
       gender: "",
-      contactNo: "",
+      contactno: "",
       isactive: "true",
     },
   });
@@ -47,13 +47,13 @@ const UpdateReception = () => {
       reset({
         receptionistName: receptionToUpdate.receptionistName || "",
         nodal: receptionToUpdate.nodal || "",
-        addressLine: receptionToUpdate.addressLine || "",
+        addressline: receptionToUpdate.addressline || "",
         city: receptionToUpdate.city || "",
         state: receptionToUpdate.state || "",
-        pinCode: receptionToUpdate.pinCode || "",
+        pincode: receptionToUpdate.pincode || "",
         dob: receptionToUpdate.dob || "",
         gender: receptionToUpdate.gender || "",
-        contactNo: receptionToUpdate.contactNo || "",
+        contactno: receptionToUpdate.contactno || "",
         isactive: String(receptionToUpdate.isactive ?? "true"),
       });
     }
@@ -188,10 +188,10 @@ const UpdateReception = () => {
                     <input
                         type="text"
                         placeholder="Address Line"
-                        {...register("addressLine", { required: "Address is required." })}
-                        className={`w-full px-4 py-2 rounded-lg border ${errors.addressLine ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                        {...register("addressline", { required: "Address is required." })}
+                        className={`w-full px-4 py-2 rounded-lg border ${errors.addressline ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     />
-                    {errors.addressLine && <p className="text-red-500 text-xs mt-1">{errors.addressLine.message}</p>}
+                    {errors.addressline && <p className="text-red-500 text-xs mt-1">{errors.addressline.message}</p>}
                     </div>
 
                     {/* City */}
@@ -224,10 +224,10 @@ const UpdateReception = () => {
                     <input
                         type="number"
                         placeholder="PIN"
-                        {...register("pinCode", { required: "Pin Code is required." })}
-                        className={`w-full px-4 py-2 rounded-lg border ${errors.pinCode ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                        {...register("pincode", { required: "Pin Code is required." })}
+                        className={`w-full px-4 py-2 rounded-lg border ${errors.pincode ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     />
-                    {errors.pinCode && <p className="text-red-500 text-xs mt-1">{errors.pinCode.message}</p>}
+                    {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode.message}</p>}
                     </div>
 
                     {/* Date of Birth */}
@@ -249,10 +249,10 @@ const UpdateReception = () => {
                     <input
                         type="tel"
                         placeholder="Phone"
-                        {...register("contactNo", { required: "Contact No. is required." })}
-                        className={`w-full px-4 py-2 rounded-lg border ${errors.contactNo ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                        {...register("contactno", { required: "Contact No. is required." })}
+                        className={`w-full px-4 py-2 rounded-lg border ${errors.contactno ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     />
-                    {errors.contactNo && <p className="text-red-500 text-xs mt-1">{errors.contactNo.message}</p>}
+                    {errors.contactno && <p className="text-red-500 text-xs mt-1">{errors.contactno.message}</p>}
                     </div>
 
                     {/* Gender (radio) */}

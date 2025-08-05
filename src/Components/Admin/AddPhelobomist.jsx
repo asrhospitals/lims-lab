@@ -264,7 +264,7 @@ const AddPhlebotomist = () => {
                 disabled={isSubmitting}
                 className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-2 rounded-md transition disabled:opacity-60"
               >
-                {isSubmitting ? "Submitting..." : "Submit"}
+                {isSubmitting ? "Submitting..." : "Add Phlebotomist"}
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import  { useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -15,10 +15,12 @@ const LoginPage = () => {
   });
 
   const OTP_SENDER =
-    "https://asrlabs.asrhospitalindia.in/lims/authentication/signin" ;
+    "https://asrlabs.asrhospitalindia.in/lims/authentication/signin" ||
+    "http://localhost:3000";
     
-  // const OTP_VERIFIER =
-  //   "https://asrlabs.asrhospitalindia.in/lims/authentication/verifyotp" ;
+  const OTP_VERIFIER =
+    "https://asrlabs.asrhospitalindia.in/lims/authentication/verifyotp" ||
+    "http://localhost:3000";
 
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
@@ -152,7 +154,7 @@ const LoginPage = () => {
 
         {/* For dev-only testing — store the OTP to display (for display only) */}
         {otp && (
-          <p className="text-center mt-4 text-green-600 text-xl">
+          <p className="text-center mt-4 text-sm text-green-600 text-xl">
             <strong>Debug OTP:</strong> {otp}
           </p>
         )}
@@ -180,6 +182,5 @@ const LoginPage = () => {
     </div>
   );
 };
-
 
 export default LoginPage;

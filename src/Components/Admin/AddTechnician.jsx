@@ -82,22 +82,23 @@ const AddTechnician = () => {
   }, []);
 
   const onSubmit = async (data) => {
-    setIsSubmitting(true);
+      setIsSubmitting(true);
 
-    const payload = {
-      technicianName: data.technicianName,
-      nodal: data.nodal,
-      roleType: data.roleType,
-      instrument: data.instrument,
-      addressLine: data.addressLine,
-      city: data.city,
-      state: data.state,
-      pinCode: Number(data.pinCode),
-      dob: data.dob,
-      gender: data.gender,
-      contactNo: data.contactNo,
-      isactive: data.isactive === "true" || data.isactive === true,
-    };
+      const payload = {
+    technicianname: data.technicianname,
+    nodal: data.nodal,
+    roletype: data.roletype,
+    instrument: data.instrument,
+    addressline: data.addressline,
+    city: data.city,
+    state: data.state,
+    pincode: Number(data.pincode),
+    dob: data.dob,
+    gender: data.gender,
+    contactno: data.contactno,
+    isactive: data.isactive === "true" || data.isactive === true,
+  };
+
 
     try {
       const authToken = localStorage.getItem("authToken");
@@ -134,115 +135,116 @@ const AddTechnician = () => {
   };
 
   const fields = [
-    {
-      name: "technicianName",
-      label: "Technician Name",
-      placeholder: "Enter Technician Name",
-      validation: { required: "Technician name is required" },
-    },
-    {
-      name: "nodal",
-      label: "Nodal Center",
-      type: "select",
-      options: nodalCenters.map((n) => ({
-        value: n.nodalname,
-        label: n.nodalname,
-      })),
-      validation: { required: "Nodal center is required" },
-    },
-    {
-      name: "roleType",
-      label: "Role Type",
-      type: "select",
-      options: roleTypes.map((n) => ({
-        value: n.roleType,
-        label: n.roleDescription,
-      })),
-      validation: { required: "Role Type is required" },
-    },
-    {
+  {
+    name: "technicianname",
+    label: "Technician Name",
+    placeholder: "Enter Technician Name",
+    validation: { required: "Technician name is required" },
+  },
+  {
+    name: "nodal",
+    label: "Nodal Center",
+    type: "select",
+    options: nodalCenters.map((n) => ({
+      value: n.nodalname,
+      label: n.nodalname,
+    })),
+    validation: { required: "Nodal center is required" },
+  },
+  {
+    name: "roletype",
+    label: "Role Type",
+    type: "select",
+    options: roleTypes.map((n) => ({
+      value: n.roletype,
+      label: n.roledescription,
+    })),
+    validation: { required: "Role Type is required" },
+  },
+  {
     name: "instrument",
     label: "Instrument",
     type: "select",
     options: instruments.map((n) => ({
-        value: n.instrumentname,
-        label: n.instrumentname,
+      value: n.instrumentname,
+      label: n.instrumentname,
     })),
-    validation: { required: "Instrument is required" },
-    },
-    {
-      name: "addressLine",
-      label: "Address",
-      placeholder: "Enter Address",
-      validation: { required: "Address is required" },
-    },
-    {
-      name: "city",
-      label: "City",
-      placeholder: "Enter City",
-      validation: { required: "City is required" },
-    },
-    {
-      name: "state",
-      label: "State",
-      placeholder: "Enter State",
-      validation: { required: "State is required" },
-    },
-    {
-      name: "pinCode",
-      label: "PIN Code",
-      type: "number",
-      placeholder: "Enter PIN Code",
-      validation: {
-        required: "PIN code is required",
-        pattern: {
-          value: /^\d{6}$/,
-          message: "PIN code must be exactly 6 digits",
-        },
+    // validation: { required: "Instrument is required" },
+  },
+  {
+    name: "addressline",
+    label: "Address",
+    placeholder: "Enter Address",
+    validation: { required: "Address is required" },
+  },
+  {
+    name: "city",
+    label: "City",
+    placeholder: "Enter City",
+    validation: { required: "City is required" },
+  },
+  {
+    name: "state",
+    label: "State",
+    placeholder: "Enter State",
+    validation: { required: "State is required" },
+  },
+  {
+    name: "pincode",
+    label: "PIN Code",
+    type: "number",
+    placeholder: "Enter PIN Code",
+    validation: {
+      required: "PIN code is required",
+      pattern: {
+        value: /^\d{6}$/,
+        message: "PIN code must be exactly 6 digits",
       },
     },
-    {
-      name: "dob",
-      label: "Date of Birth",
-      type: "date",
-      placeholder: "Select DOB",
-      validation: { required: "Date of birth is required" },
-    },
-    {
-      name: "contactNo",
-      label: "Contact Number",
-      type: "number",
-      placeholder: "Enter Contact Number",
-      validation: {
-        required: "Contact number is required",
-        pattern: {
-          value: /^\d{10}$/,
-          message: "Contact number must be 10 digits",
-        },
+  },
+  {
+    name: "dob",
+    label: "Date of Birth",
+    type: "date",
+    placeholder: "Select DOB",
+    validation: { required: "Date of birth is required" },
+  },
+  {
+    name: "contactno",
+    label: "Contact Number",
+    type: "number",
+    placeholder: "Enter Contact Number",
+    validation: {
+      required: "Contact number is required",
+      pattern: {
+        value: /^\d{10}$/,
+        message: "Contact number must be 10 digits",
       },
     },
-    {
-      name: "gender",
-      label: "Gender",
-      type: "radio",
-      options: [
-        { value: "Male", label: "Male" },
-        { value: "Female", label: "Female" },
-        { value: "Other", label: "Other" },
-      ],
-      validation: { required: "Gender is required" },
-    },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Status is required" },
-    },
-  ];
+  },
+  {
+    name: "gender",
+    label: "Gender",
+    type: "radio",
+    options: [
+      { value: "Male", label: "Male" },
+      { value: "Female", label: "Female" },
+      { value: "Other", label: "Other" },
+    ],
+    validation: { required: "Gender is required" },
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+    validation: { required: "Status is required" },
+  },
+];
+
 
   return (
     <>
@@ -376,7 +378,7 @@ const AddTechnician = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
               >
-                {isSubmitting ? "Saving..." : "Create Technician"}
+                {isSubmitting ? "Saving..." : "Add Technician"}
               </button>
             </div>
           </div>

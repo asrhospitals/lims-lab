@@ -10,7 +10,7 @@ const UpdateTechnician = () => {
   const { technicianToUpdate, setTechnicianToUpdate } = useContext(AdminContext);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [nodalCenters, setNodalCenters] = useState([]);
-  const [roleTypes, setRoleTypes] = useState([]);
+  const [roletypes, setroletypes] = useState([]);
   const [instruments, setInstruments] = useState([]);
   const navigate = useNavigate();
 
@@ -22,17 +22,17 @@ const UpdateTechnician = () => {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      technicianName: "",
+      technicianname: "",
       nodal: "",
-      roleType: "",
+      roletype: "",
       instrument: "",
-      addressLine: "",
+      addressline: "",
       city: "",
       state: "",
-      pinCode: "",
+      pincode: "",
       dob: "",
       gender: "",
-      contactNo: "",
+      contactno: "",
       isactive: "true",
     },
   });
@@ -49,17 +49,17 @@ const UpdateTechnician = () => {
       }
     } else if (technicianToUpdate) {
       reset({
-        technicianName: technicianToUpdate.technicianName || "",
+        technicianname: technicianToUpdate.technicianname || "",
         nodal: technicianToUpdate.nodal || "",
-        roleType: technicianToUpdate.roleType || "",
+        roletype: technicianToUpdate.roletype || "",
         instrument: technicianToUpdate.instrument || "",
-        addressLine: technicianToUpdate.addressLine || "",
+        addressline: technicianToUpdate.addressline || "",
         city: technicianToUpdate.city || "",
         state: technicianToUpdate.state || "",
-        pinCode: technicianToUpdate.pinCode || "",
+        pincode: technicianToUpdate.pincode || "",
         dob: technicianToUpdate.dob || "",
         gender: technicianToUpdate.gender || "",
-        contactNo: technicianToUpdate.contactNo || "",
+        contactno: technicianToUpdate.contactno || "",
         isactive: String(technicianToUpdate.isactive ?? "true"),
       });
     }
@@ -70,28 +70,51 @@ const UpdateTechnician = () => {
 
     const fetchData = async () => {
       try {
-        const [nodalRes, roleRes, instrRes] = await Promise.all([
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-instrument", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
+        const config = {
+          headers: { Authorization: `Bearer ${authToken}` },
+        };
+
+        const [nodalRes, roleRes, instrRes] = await Promise.allSettled([
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", config),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", config),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-instrument", config),
         ]);
 
-        setNodalCenters(nodalRes.data || []);
-        setRoleTypes(roleRes.data.filter((r) => r.isactive));
-        setInstruments(instrRes.data.filter((i) => i.isactive));
-      } catch (error) {
-        toast.error("❌ Failed to fetch master data.");
+        // Handle Nodal Centers
+        if (nodalRes.status === "fulfilled") {
+          setNodalCenters(nodalRes.value.data || []);
+        } else {
+          console.error("Nodal Center fetch error:", nodalRes.reason);
+          toast.error("❌ Failed to fetch nodal centers.");
+        }
+
+        // Handle Roles
+        if (roleRes.status === "fulfilled") {
+          const roles = roleRes.value.data || [];
+          setroletypes(roles.filter((r) => r?.isactive));
+        } else {
+          console.error("Role fetch error:", roleRes.reason);
+          toast.error("❌ Failed to fetch role types.");
+        }
+
+        // Handle Instruments
+        if (instrRes.status === "fulfilled") {
+          const instruments = instrRes.value.data || [];
+          setInstruments(instruments.filter((i) => i?.isactive));
+        } else {
+          console.error("Instrument fetch error:", instrRes.reason);
+          toast.error("❌ Failed to fetch instruments.");
+        }
+
+      } catch (err) {
+        console.error("Master data fetch failed:", err);
+        toast.error("❌ Unexpected error while fetching master data.");
       }
     };
 
     fetchData();
   }, []);
+
 
   const onSubmit = async (data) => {
     if (!technicianToUpdate?.id) {
@@ -105,7 +128,7 @@ const UpdateTechnician = () => {
       const payload = {
         ...data,
         isactive: data.isactive === "true",
-        pinCode: Number(data.pinCode),
+        pincode: Number(data.pincode),
       };
 
       await axios.put(
@@ -168,10 +191,10 @@ const UpdateTechnician = () => {
                     <input
                         type="text"
                         placeholder="Full Name"
-                        {...register("technicianName", { required: "Technician Name is required." })}
-                        className={`w-full px-4 py-2 rounded-lg border ${errors.technicianName ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                        {...register("technicianname", { required: "Technician Name is required." })}
+                        className={`w-full px-4 py-2 rounded-lg border ${errors.technicianname ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     />
-                    {errors.technicianName && <p className="text-red-500 text-xs mt-1">{errors.technicianName.message}</p>}
+                    {errors.technicianname && <p className="text-red-500 text-xs mt-1">{errors.technicianname.message}</p>}
                     </div>
 
                     {/* Nodal Center */}
@@ -199,25 +222,25 @@ const UpdateTechnician = () => {
                     <div>
                     <label className="block text-sm font-medium text-gray-700">Role Type</label>
                     <select
-                        {...register("roleType", { required: "Role Type is required." })}
-                        className={`w-full px-4 py-2 rounded-lg border ${errors.roleType ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                        {...register("roletype", { required: "Role Type is required." })}
+                        className={`w-full px-4 py-2 rounded-lg border ${errors.roletype ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     >
                         <option value="">Select Role Type</option>
-                        {roleTypes.map((r) => (
-                        <option key={r.roleType} 
-                                value={r.roleType} 
-                                selected={technicianToUpdate.roleType === r.roleType ? true : false} 
-                                >{r.roleDescription}</option>
+                        {roletypes.map((r) => (
+                        <option key={r.roletype} 
+                                value={r.roletype} 
+                                selected={technicianToUpdate.roletype === r.roletype ? true : false} 
+                                >{r.roledescription}</option>
                         ))}
                     </select>
-                    {errors.roleType && <p className="text-red-500 text-xs mt-1">{errors.roleType.message}</p>}
+                    {errors.roletype && <p className="text-red-500 text-xs mt-1">{errors.roletype.message}</p>}
                     </div>
 
                     {/* Instrument */}
                     <div>
                     <label className="block text-sm font-medium text-gray-700">Instrument</label>
                     <select
-                        {...register("instrument", { required: "Instrument is required." })}
+                        {...register("instrument")}
                         className={`w-full px-4 py-2 rounded-lg border ${errors.instrument ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     >
                         <option value="">Select Instrument</option>
@@ -236,10 +259,10 @@ const UpdateTechnician = () => {
                     <input
                         type="text"
                         placeholder="Address Line"
-                        {...register("addressLine", { required: "Address is required." })}
-                        className={`w-full px-4 py-2 rounded-lg border ${errors.addressLine ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                        {...register("addressline", { required: "Address is required." })}
+                        className={`w-full px-4 py-2 rounded-lg border ${errors.addressline ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     />
-                    {errors.addressLine && <p className="text-red-500 text-xs mt-1">{errors.addressLine.message}</p>}
+                    {errors.addressline && <p className="text-red-500 text-xs mt-1">{errors.addressline.message}</p>}
                     </div>
 
                     {/* City */}
@@ -272,10 +295,10 @@ const UpdateTechnician = () => {
                     <input
                         type="number"
                         placeholder="PIN"
-                        {...register("pinCode", { required: "Pin Code is required." })}
-                        className={`w-full px-4 py-2 rounded-lg border ${errors.pinCode ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                        {...register("pincode", { required: "Pin Code is required." })}
+                        className={`w-full px-4 py-2 rounded-lg border ${errors.pincode ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     />
-                    {errors.pinCode && <p className="text-red-500 text-xs mt-1">{errors.pinCode.message}</p>}
+                    {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode.message}</p>}
                     </div>
 
                     {/* Date of Birth */}
@@ -297,10 +320,10 @@ const UpdateTechnician = () => {
                     <input
                         type="tel"
                         placeholder="Phone"
-                        {...register("contactNo", { required: "Contact No. is required." })}
-                        className={`w-full px-4 py-2 rounded-lg border ${errors.contactNo ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                        {...register("contactno", { required: "Contact No. is required." })}
+                        className={`w-full px-4 py-2 rounded-lg border ${errors.contactno ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
                     />
-                    {errors.contactNo && <p className="text-red-500 text-xs mt-1">{errors.contactNo.message}</p>}
+                    {errors.contactno && <p className="text-red-500 text-xs mt-1">{errors.contactno.message}</p>}
                     </div>
 
                     {/* Gender (radio) */}

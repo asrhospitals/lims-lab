@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-// import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 import { useNavigate, Link } from "react-router-dom";
 
 const AddReceptionist = () => {
@@ -40,19 +39,18 @@ const AddReceptionist = () => {
     };
     fetchNodalCenters();
   }, []);
-  
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     const payload = {
       receptionistName: data.receptionistName,
-      addressLine: data.addressLine,
+      addressline: data.addressline,
       city: data.city,
       state: data.state,
-      pinCode: Number(data.pinCode),
+      pincode: Number(data.pincode),
       dob: data.dob,
-      contactNo: data.contactNo,
+      contactno: data.contactno,
       gender: data.gender,
       nodal: data.nodal,
       isactive: data.isactive === "true",
@@ -70,15 +68,13 @@ const AddReceptionist = () => {
 
       toast.success("Receptionist added successfully!", {
         position: "top-right",
-        autoClose: 2000, // show for 2 seconds
+        autoClose: 2000,
       });
 
       reset();
-
       setTimeout(() => {
         navigate("/view-reception");
-      }, 2000); // wait 2 seconds before navigating
-
+      }, 2000);
     } catch (error) {
       console.error("Submission error:", error?.response?.data);
       toast.error(
@@ -94,7 +90,6 @@ const AddReceptionist = () => {
     }
   };
 
-
   const fields = [
     {
       name: "receptionistName",
@@ -103,7 +98,7 @@ const AddReceptionist = () => {
       validation: { required: "Receptionist name is required" },
     },
     {
-      name: "addressLine",
+      name: "addressline",
       label: "Address",
       placeholder: "Enter Address",
       validation: { required: "Address is required" },
@@ -121,10 +116,10 @@ const AddReceptionist = () => {
       validation: { required: "State is required" },
     },
     {
-      name: "pinCode",
+      name: "pincode",
       label: "PIN Code",
       type: "number",
-      placeholder: "Enter PIN Code",
+      placeholder: "Enter 6-digit PIN Code",
       validation: {
         required: "PIN code is required",
         pattern: {
@@ -141,9 +136,9 @@ const AddReceptionist = () => {
       validation: { required: "Date of birth is required" },
     },
     {
-      name: "contactNo",
+      name: "contactno",
       label: "Contact Number",
-      type: "number",
+      type: "text",
       placeholder: "Enter Contact Number",
       validation: {
         required: "Contact number is required",
@@ -188,50 +183,38 @@ const AddReceptionist = () => {
 
   return (
     <>
-    
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-            <nav
-                className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
-                aria-label="Breadcrumb"
-            >
-                <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-      
-                <li>
-                    <Link
-                    to="/"
-                    className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
-                    >
-                    🏠︎ Home
-                    </Link>
-                </li>
-      
-                <li className="text-gray-400">/</li>
-      
-                <li>
-                    <Link
-                    to="/view-reception"
-                    className="text-gray-700 hover:text-teal-600 transition-colors"
-                    >
-                    Receptionist
-                    </Link>
-                </li>
-      
-                <li className="text-gray-400">/</li>
-      
-                <li aria-current="page" className="text-gray-500">
-                    Add Receptionist
-                </li>
-                </ol>
-            </nav>
+        <nav className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-reception"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Receptionist
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Add Receptionist
+            </li>
+          </ol>
+        </nav>
       </div>
-
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
-        {fetchError && (
-          <p className="text-red-500 text-sm mb-4">{fetchError}</p>
-        )}
+        {fetchError && <p className="text-red-500 text-sm mb-4">{fetchError}</p>}
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -317,16 +300,18 @@ const AddReceptionist = () => {
               <button
                 type="button"
                 onClick={() => reset()}
-                className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                className="mr-4 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
               >
                 Reset
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
+                className={`px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 ${
+                  isSubmitting && "opacity-50 cursor-not-allowed"
+                }`}
               >
-                {isSubmitting ? "Saving..." : "Create Receptionist"}
+                {isSubmitting ? "Submitting..." : "Add Receptionist"}
               </button>
             </div>
           </div>

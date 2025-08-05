@@ -1,11 +1,12 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 // import Cookies from "js-cookie";
 // import { Navigate } from "react-router-dom";
-import AdminsDashboard from "./Layouts/DoctorsDashboard";
-import AdminLogin from "./Components/Admin/LoginPage";
+import AdminLogin from "./LoginPage";
 import AdminHome from "./Components/Admin/DoctorHome";
+import AdminsDashboard from "./Layouts/DoctorsDashboard";
 
-import { DoctorRegistration } from "./Components/Admin/DoctorRegistration";
+
+
 import AddDept from "./Components/Admin/AddDept";
 import ViewDepartment from "./Components/Admin/ViewDepartments";
 import UpdateDept from "./Components/Admin/UpdateDept";
@@ -23,8 +24,6 @@ import ViewLabToLab from "./Components/Admin/ViewLabToLab";
 import AddNodalHospital from "./Components/Admin/AddNodalHospital";
 import ViewNodalHospital from "./Components/Admin/ViewNodalHospital";
 import AddInstrument from "./Components/Admin/AddInstrument";
-import AdminApproval from "./Components/Admin/AdminApproval";
-import AdminApprovalTest from "./Components/Admin/AdminApprovalTest";
 import ViewInstrument from "./Components/Admin/ViewInstrument";
 import UpdateLabToLab from "./Components/Admin/UpdateLabToLab";
 import UpdateInstrument from "./Components/Admin/UpdateInstrument";
@@ -58,7 +57,7 @@ import ViewSpecimenType from "./Components/Admin/ViewSpecimenType";
 import ViewColor from "./Components/Admin/ViewColor";
 
 
-import AddProfileMaster from "./Components/Admin/AddProfileMaster";
+
 import AddPhlebotomist from "./Components/Admin/AddPhelobomist";
 import AddReception from "./Components/Admin/AddReception";
 import AddTechnician from "./Components/Admin/AddTechnician";
@@ -71,6 +70,8 @@ import AddKitMaster from "./Components/Admin/AddKitMaster";
 import AddReportTypeMaster from "./Components/Admin/AddReportTypeMaster";
 import AddSpecimenType from "./Components/Admin/AddSpecimenType";
 import AddColor from "./Components/Admin/AddColor";
+import AddProfileMaster from "./Components/Admin/AddProfileMaster";
+
 
 
 import UpdatePhlebotomist from "./Components/Admin/UpdatePhlebotomist";
@@ -87,13 +88,6 @@ import UpdateSpecimenType from "./Components/Admin/UpdateSpecimenType";
 import UpdateColor from "./Components/Admin/UpdateColor";
 
 import AddInvestigation1 from "./Components/Admin/AddInvestigation1";
-
-
-
-import DocDoctorReportDetail from  "./Components/Admin/DoctorReportDetail"
-import DocDoctorReporteditDetail from  "./Components/Admin/DoctorReporteditDetail"
-
-
 
 
 
@@ -299,22 +293,6 @@ function App() {
           element: <AddReportDoctor />,
         },
         {
-          path: "doctor-registration",
-          element: <DoctorRegistration />,
-        },
-        {
-          path: "doctorreport",
-          element: <DocDoctorReportDetail />,
-        },
-        {
-          path: "doctorreportedit",
-          element: <DocDoctorReporteditDetail />,
-        },
-        {
-          path: "approval",
-          element: <AdminApproval />,
-        },
-        {
           path: "view-report-doctor",
           element: <ViewReportDoctor />,
         },
@@ -336,7 +314,8 @@ function App() {
           path: "update-profile-entry-master",
           element: <UpdateProfileEntryMaster />,
         },
-         {
+
+        {
           path: "add-profile-master",
           element: <AddProfileMaster />,
         },
@@ -344,6 +323,8 @@ function App() {
           path: "view-profile-master",
           element: <ViewProfileMaster />,
         },
+
+        
         {
           path: "add-investigation",
           element: <AddInvestigation />,

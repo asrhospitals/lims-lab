@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; 
+import { useState } from 'react';
 
 const AddInvestigationResultNormalValueModal = ({ showModal, handleClose }) => {
     const [formData, setFormData] = useState({
@@ -19,16 +19,7 @@ const AddInvestigationResultNormalValueModal = ({ showModal, handleClose }) => {
         avoidRangeInReport: false,
     });
 
-    const [normalValues, setNormalValues] = useState(() => {
-        // Load existing normal values from local storage
-        const storedValues = localStorage.getItem('normalValues');
-        return storedValues ? JSON.parse(storedValues) : [];
-    });
-
-    useEffect(() => {
-        // Store normal values in local storage whenever they change
-        localStorage.setItem('normalValues', JSON.stringify(normalValues));
-    }, [normalValues]);
+    const [normalValues, setNormalValues] = useState([]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -38,8 +29,7 @@ const AddInvestigationResultNormalValueModal = ({ showModal, handleClose }) => {
         });
     };
 
-    const handleAdd = (e) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         setNormalValues([...normalValues, formData]);
         setFormData({
             type: '',
@@ -60,6 +50,11 @@ const AddInvestigationResultNormalValueModal = ({ showModal, handleClose }) => {
         });
     };
 
+    const handleAdd = (e) => {
+        e.preventDefault();
+        handleSubmit();
+    };
+
     const handleEdit = (index) => {
         const valueToEdit = normalValues[index];
         setFormData(valueToEdit);
@@ -70,80 +65,21 @@ const AddInvestigationResultNormalValueModal = ({ showModal, handleClose }) => {
         setNormalValues(normalValues.filter((_, i) => i !== index));
     };
 
-const handleSubmit = () => {
-  try {
-    // Get existing results or initialize empty array
-    const storedResults = localStorage.getItem('investigationResults');
-    const results = storedResults ? JSON.parse(storedResults) : [];
-
-    // Prepare the updated normalValues
-    const updatedNormalValues = normalValues.map((value, index) => {
-      // Ensure all optional fields have fallback empty strings
-      const ageMinYear = value.ageMinYear || '';
-      const ageMinMonth = value.ageMinMonth || '';
-      const ageMinDay = value.ageMinDay || '';
-      const ageMaxYear = value.ageMaxYear || '';
-      const ageMaxMonth = value.ageMaxMonth || '';
-      const ageMaxDay = value.ageMaxDay || '';
-
-      return {
-        id: index + 1,
-        gender: value.type || '',
-        ageMin: `${ageMinYear}${ageMinYear ? 'Y ' : ''}${ageMinMonth}${ageMinMonth ? 'M ' : ''}${ageMinDay}${ageMinDay ? 'D' : ''}`.trim(),
-        ageMax: `${ageMaxYear}${ageMaxYear ? 'Y ' : ''}${ageMaxMonth}${ageMaxMonth ? 'M ' : ''}${ageMaxDay}${ageMaxDay ? 'D' : ''}`.trim(),
-        rangeMin: value.rangeMin || '',
-        rangeMax: value.rangeMax || '',
-        validRangeMin: value.validRangeMin || '',
-        validRangeMax: value.validRangeMax || '',
-        criticalLow: value.criticalRangeLow || '',
-        criticalHigh: value.criticalRangeHigh || '',
-        isRangeAbnormal: value.rangeAbnormal || false,
-        avoidInReport: value.avoidRangeInReport || false,
-      };
-    });
-
-    // Create new result object (without investigationId if not needed)
-    const newResult = {
-      id: Date.now(),
-      normalValues: updatedNormalValues,
-      // Add other required fields with empty/default values if needed
-      resultname: "",
-      unit: "",
-      valueType: "",
-      // ... other fields ...
-    };
-
-    // Add new result to the array
-    results.push(newResult);
-
-    // Save to localStorage
-    localStorage.setItem('investigationResults', JSON.stringify(results));
-
-    // Clear temp storage
-    localStorage.removeItem('normalValues');
-    setNormalValues([]);
-    handleClose();
-  } catch (error) {
-    console.error('Error saving investigation results:', error);
-    // Optionally show error to user
-  }
-};
-
-
     return (
         <div
             className={`${showModal ? 'block' : 'hidden'} fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75`}
         >
             <div className="bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-6xl p-1">
-                <div className="border-b border-green-400 p-3">
+                <div className="border bottom-5 border-green-400 p-3">
                     <h2 className="text-xl font-semibold text-center">Create Normal Values - New</h2>
                     <button className="text-gray-600 float-right" onClick={handleClose}>
                         ✖
                     </button>
                 </div>
-                <div className="p-6 overflow-auto max-h-80">
+                <div className="p-6 overflow-auto max-h-90"> {/* Set a max height for scrollable area */}
                     <form onSubmit={handleAdd}>
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6'>
+                            {/* Form Inputs */}
                             <div>
                                 <div className="mb-4">
                                     <label className="block text-gray-700">Type</label>
@@ -298,7 +234,7 @@ const handleSubmit = () => {
                         </div>
                     </form>
                 </div>
-                <div className="border-t border-gray-400 p-4 max-h-60 overflow-y-auto">
+                <div className="border-t border-gray-400 p-4 max-h-96 "> {/* Added for scrollable table */}
                     <h3 className="text-lg font-semibold">Edited Normal Value List</h3>
                     <table className="min-w-full mt-2">
                         <thead>
@@ -357,11 +293,7 @@ const handleSubmit = () => {
                     <button
                         type="button"
                         className="bg-green-500 text-white rounded-lg w-1/2 py-2 hover:bg-green-600"
-                        onClick={() => {
-                            handleSubmit(); // Call handleSubmit to save the results
-                            setNormalValues([]); // Clear normal values after submission
-                            localStorage.removeItem('normalValues'); // Clear local storage
-                        }}
+                        onClick={() => console.log('Submit functionality can be added here.')}
                     >
                         Submit
                     </button>

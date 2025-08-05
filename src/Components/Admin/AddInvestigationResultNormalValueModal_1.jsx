@@ -189,7 +189,7 @@ const AddInvestigationResultNormalValueModal = ({ showModal, handleClose }) => {
                             type="submit"
                             className="bg-orange-500 text-white rounded-lg  py-2  px-8 hover:bg-orange-600"
                         >
-                            Add
+                            Add Normal Value
                         </button>
                         </div>
                     </form>

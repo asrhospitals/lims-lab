@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import DoctorSidebar from "../Components/Admin/DoctorSidebar";
-import DocHeroHeader from "../Components/Admin/DocHeroHeader";
-import DocNavbar from "../Components/Admin/DocNavbar";
+import Sidebar from "./Sidebar";
+import HeroHeader from "./HeroHeader";
+import Navbar from "./Navbar";
 
-import AdminContextProvider from "../context/AdminContextProvider";
+import AdminContextProvider from "../../context/AdminContextProvider";
 
-const DoctorsDashboard = () => {
+const Dashboard = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -17,7 +17,7 @@ const DoctorsDashboard = () => {
     <AdminContextProvider>
       <div className="flex h-screen overflow-hidden font-sans">
         {/* Sidebar */}
-        <DoctorSidebar
+        <Sidebar
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
           isHovered={isHovered}
@@ -37,8 +37,8 @@ const DoctorsDashboard = () => {
             className="fixed top-0 left-0 right-0 z-20"
             style={{ marginLeft: sidebarWidth }}
           >
-            <DocNavbar sidebarWidth={sidebarWidth} />
-            {/* <DocHeroHeader sidebarWidth={sidebarWidth} /> */}
+            <Navbar sidebarWidth={sidebarWidth} />
+            {/* <HeroHeader sidebarWidth={sidebarWidth} /> */}
           </div>
 
           {/* Main Content */}
@@ -57,4 +57,4 @@ const DoctorsDashboard = () => {
   );
 };
 
-export default DoctorsDashboard;
+export default Dashboard;

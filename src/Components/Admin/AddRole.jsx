@@ -254,7 +254,7 @@ const AddRole = () => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Create new role
+                    Add new role
                   </span>
                 )}
               </button>

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine, RiCircleFill } from "react-icons/ri";
@@ -64,26 +64,26 @@ const ViewInstrument = () => {
   // const activeCount = instruments.filter((i) => i.isactive).length;
   // const inactiveCount = instruments.length - activeCount;
 
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "instrumentname", label: "Name" },
-    { key: "make", label: "Make" },
-    { key: "short_code", label: "Code" },
-    { key: "installDateFormatted", label: "Installed" },
-    { key: "status", label: "Status" },
-  ];
 
-  const mappedItems = filteredInstruments.map((inst) => ({
-    id: inst.id ?? Math.random().toString(36).substring(2, 9),
-    instrumentname: inst.instrumentname,
-    make: inst.make,
-    short_code: inst.short_code,
-    installDateFormatted: new Date(inst.installDate).toLocaleDateString(
-      "en-CA"
-    ),
-    isActive: inst.isactive,
-    status: inst.isactive ? "Active" : "Inactive",
-  }));
+
+const columns = [
+  { key: "id", label: "ID" },
+  { key: "instrumentname", label: "Name" },
+  { key: "make", label: "Make" },
+  { key: "short_code", label: "Code" },
+  { key: "installdate", label: "Installed" },
+  { key: "status", label: "Status" },
+];
+
+const mappedItems = filteredInstruments.map((inst) => ({
+  id: inst.id ?? Math.random().toString(36).substring(2, 9),
+  instrumentname: inst.instrumentname,
+  make: inst.make,
+  short_code: inst.short_code,
+  installdate: new Date(inst.installdate).toLocaleDateString("en-CA"),
+  status: inst.isactive ? "Active" : "Inactive",
+}));
+
 
   return (
     <>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -52,41 +52,45 @@ const AddInstrument = () => {
   };
 
   const fields = [
-    {
-      name: "instrumentname",
-      label: "Instrument Name",
-      placeholder: "Enter Instrument Name",
-      validation: { required: "Instrument name is required" },
-    },
-    {
-      name: "make",
-      label: "Make",
-      placeholder: "Enter Make",
-      validation: { required: "Make is required" },
-    },
-    {
-      name: "short_code",
-      label: "Short Code",
-      placeholder: "Enter Short Code",
-      validation: { required: "Short code is required" },
-    },
-    {
-      name: "installDate",
-      label: "Install Date",
-      type: "date",
-      validation: { required: "Install date is required" },
-    },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Status is required." },
-    },
-  ];
+  {
+    name: "instrumentname",
+    label: "Instrument Name",
+    type: "text",
+    placeholder: "Enter Instrument Name",
+    validation: { required: "Instrument name is required" },
+  },
+  {
+    name: "make",
+    label: "Make",
+    type: "text",
+    placeholder: "Enter Make",
+    validation: { required: "Make is required" },
+  },
+  {
+    name: "short_code",
+    label: "Short Code",
+    type: "text",
+    placeholder: "Enter Short Code",
+    validation: { required: "Short code is required" },
+  },
+  {
+    name: "installdate",
+    label: "Install Date",
+    type: "date",
+    validation: { required: "Install date is required" },
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: true, label: "Yes" },
+      { value: false, label: "No" },
+    ],
+    validation: { required: "Status is required." },
+  },
+];
+
 
   return (
     <>
@@ -117,7 +121,7 @@ const AddInstrument = () => {
           </div>
 
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
                 ({
                   name,
@@ -189,7 +193,7 @@ const AddInstrument = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
               >
-                {isSubmitting ? "Saving..." : "Create Instrument"}
+                {isSubmitting ? "Saving..." : "Add Instrument"}
               </button>
             </div>
           </div>

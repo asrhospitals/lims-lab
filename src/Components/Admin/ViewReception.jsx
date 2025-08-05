@@ -76,13 +76,14 @@ const ViewReception = () => {
   const columns = [
     { key: "id", label: "ID" },
     { key: "receptionistName", label: "Reception Name" },
-    { key: "contactNo", label: "Phone" },
+    { key: "contactno", label: "Phone" },
     { key: "nodal", label: "Nodal" },
     { key: "dob", label: "DOB" },
     { key: "gender", label: "Gender" },
-    { key: "pinCode", label: "Pin Code" },
+    { key: "pincode", label: "Pin Code" },
     { key: "city", label: "City" },
-    { key: "state", label: "State" },
+    // { key: "state", label: "State" },
+    { key: "status", label: "Status" },
     
     
     // status & action handled by DataTable
@@ -92,11 +93,11 @@ const ViewReception = () => {
     ...h,
     id: h.id,
     receptionistName: h.receptionistName,
-    contactNo: h.contactNo,
+    contactno: h.contactno,
     nodal: h.nodal,
     dob: new Date(h.dob).toLocaleDateString("en-IN") || "-",
     gender: h.gender,
-    pinCode: h.pinCode,
+    pincode: h.pincode,
     city: h.city,
     state: h.state,
     status: h.isactive ? "Active" : "Inactive",

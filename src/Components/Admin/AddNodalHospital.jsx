@@ -278,7 +278,7 @@ const AddNodalHospital = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
               >
-                {isSubmitting ? "Saving..." : "Create Nodal Hospital"}
+                {isSubmitting ? "Saving..." : "Add Nodal Hospital"}
               </button>
             </div>
           </div>

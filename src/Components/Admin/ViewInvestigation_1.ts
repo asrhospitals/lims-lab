@@ -6,22 +6,22 @@ import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
 // import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 
-const ViewTechnician = () => {
-  const [technicians, setTechnicians] = useState([]);
-  const [filteredTechnicians, setFilteredTechnicians] = useState([]);
+const ViewInvestigation = () => {
+  const [investigations, setInvestigations] = useState([]);
+  const [filteredInvestigations, setFilteredInvestigations] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const { setTechnicianToUpdate } = useContext(AdminContext);
+  const { setInvestigationToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTechnicians = async () => {
+    const fetchInvestigations = async () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-tech",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-test",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
@@ -30,83 +30,91 @@ const ViewTechnician = () => {
         );
         
         // const data = response.data.sort((a, b) => Number(a.id) - Number(b.id));
-        const data = (response.data || []).sort((a, b) => Number(a.id) - Number(b.id));
+        const data = (response.data || []).sort((a, b) => Number(a.investigation_id) - Number(b.investigation_id));
 
 
-        setTechnicians(data);
-        setFilteredTechnicians(data);
-        // console.log(filteredTechnicians[0].isactive);
+        setInvestigations(data);
+        setFilteredInvestigations(data);
+        // console.log(filteredInvestigations[0].isactive);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch Technicians.");
+        setError(err.response?.data?.message || "Failed to fetch Investigations.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTechnicians();
+    fetchInvestigations();
   }, []);
 
 
-  useEffect(() => {
-  if (!search.trim()) {
-    setFilteredTechnicians(technicians);
-  } else {
-    const lower = search.toLowerCase();
-    const filtered = (technicians || []).filter((h) =>
-      (h.technicianname || "").toLowerCase().includes(lower) ||
-      (h.addressline || "").toLowerCase().includes(lower) ||
-      (h.city || "").toLowerCase().includes(lower) ||
-      (h.state || "").toLowerCase().includes(lower) ||
-      (h.contactno || "").toLowerCase().includes(lower) ||
-      (h.nodal || "").toLowerCase().includes(lower)
-    );
-    setFilteredTechnicians(filtered);
-  }
-}, [search, technicians]);
+    useEffect(() => {
+    if (!search.trim()) {
+        setFilteredInvestigations(investigations);
+    } else {
+        const lower = search.toLowerCase();
+        const filtered = (investigations || []).filter((item) =>
+        (item.testname || "").toLowerCase().includes(lower) ||
+        (item.aliasname || "").toLowerCase().includes(lower) ||
+        (item.department || "").toLowerCase().includes(lower) ||
+        (item.subdepartment || "").toLowerCase().includes(lower) ||
+        (item.specimentyepe || "").toLowerCase().includes(lower)
+        );
+        setFilteredInvestigations(filtered);
+    }
+    }, [search, investigations]);
 
 
-  const handleUpdate = (technician) => {
-    // console.log(filteredtechnicians[0].isactive);
-    setTechnicianToUpdate(technician);
-    localStorage.setItem("technicianToUpdate", JSON.stringify(technician));
-    navigate("/update-technician");
-  };
 
-//   const activeCount = (technicians || []).filter((h) => h.isactive).length;
-//   const inactiveCount = (technicians || []).length - activeCount;
+
+const handleUpdate = (investigation) => {
+    setInvestigationToUpdate(investigation);
+    localStorage.setItem("investigationToUpdate", JSON.stringify(investigation));
+    navigate("/update-investigation");
+};
+
+
+//   const activeCount = (investigations || []).filter((h) => h.isactive).length;
+//   const inactiveCount = (investigations || []).length - activeCount;
 
   const columns = [
-    { key: "id", label: "ID" },
-    { key: "technicianname", label: "Technician Name" },
-    { key: "contactno", label: "Phone" },
-    { key: "nodal", label: "Nodal" },
-    { key: "roletype", label: "Role Type" },
-    { key: "instrument", label: "Instrument" },
-    { key: "dob", label: "DOB" },
-    { key: "gender", label: "Gender" },
-    { key: "pincode", label: "Pin Code" },
-    // { key: "city", label: "City" },
-    // { key: "state", label: "State" },
-    
-    
-    // status & action handled by DataTable
-  ];
+  { key: "investigation_id", label: "ID" },
+  { key: "testname", label: "Test Name" },
+  { key: "testcode", label: "Test Code" },
+  { key: "department", label: "Department" },
+  { key: "subdepartment", label: "Sub-Department" },
+  { key: "processingcenter", label: "Processing Center" },
+  { key: "hospitaltype", label: "Hospital Type" },
+  { key: "roletype", label: "Role Type" },
+  { key: "status", label: "Status" },
+];
 
-  const mappedItems = (filteredTechnicians || []).map((h) => ({
-    ...h,
-    id: h.id,
-    technicianname: h.technicianname,
-    contactno: h.contactno,
-    nodal: h.nodal,
-    roletype: h.roletype,
-    instrument: h.instrument,
-    dob: new Date(h.dob).toLocaleDateString("en-IN") || "-",
-    gender: h.gender,
-    pincode: h.pincode,
-    city: h.city,
-    state: h.state,
-    status: h.isactive ? "Active" : "Inactive",
-  }));
+
+
+  const mappedItems = (filteredInvestigations || []).map((item, index) => ({
+  ...item,
+  id: index +1,
+  investigation_id: item.investigation_id,
+  testcode: item.testcode,
+  testname: item.testname,
+  aliasname: item.aliasname,
+  department: item.department,
+  subdepartment: item.subdepartment,
+  specimentyepe: item.specimentyepe,
+  mesuringunit: item.mesuringunit,
+  tat: item.tat,
+  volume: item.volume,
+  tubecolor: item.tubecolor,
+  reporttype: item.reporttype,
+  processingcenter: item.processingcenter,
+  testdone: item.testdone,
+  roletype: item.roletype,
+  hospitaltype: Array.isArray(item.hospitaltype)
+    ? item.hospitaltype.join(", ")
+    : item.hospitaltype,
+  status: item.isactive ? "Active" : "Inactive",
+}));
+
+
 
   return (
     <>    
@@ -132,17 +140,17 @@ const ViewTechnician = () => {
 
         <li>
             <Link
-            to="/view-technician"
+            to="/view-investigation"
             className="text-gray-700 hover:text-teal-600 transition-colors"
             >
-            Technicians
+            Investigations
             </Link>
         </li>
 
         <li className="text-gray-400">/</li>
 
         <li aria-current="page" className="text-gray-500">
-            View Technicians
+            View Investigations
         </li>
         </ol>
     </nav>
@@ -157,7 +165,7 @@ const ViewTechnician = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-              Technician List
+              Investigation List
             </h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
@@ -166,7 +174,7 @@ const ViewTechnician = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
-                  placeholder="Search Technician..."
+                  placeholder="Search Investigation..."
                 />
                 <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
               </div>
@@ -176,12 +184,20 @@ const ViewTechnician = () => {
 
           {/* Add New */}
           <div className="flex  flex-wrap gap-2 mb-4">
-            <button
-              onClick={() => navigate("/add-technician")}
+            {/* <button
+              onClick={() => navigate("/add-investigation")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
+            </button> */}
+
+            <button
+              onClick={() => navigate("/add-investigation")}
+              className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
+            >
+              Add Investigation 
             </button>
+
           </div>
           
 
@@ -192,9 +208,9 @@ const ViewTechnician = () => {
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
-          ) : filteredTechnicians.length === 0 ? (
+          ) : filteredInvestigations.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
-              No Technicians found.
+              No Investigations found.
             </div>
           ) : (
             <DataTable
@@ -211,4 +227,4 @@ const ViewTechnician = () => {
   );
 };
 
-export default ViewTechnician;
+export default ViewInvestigation;

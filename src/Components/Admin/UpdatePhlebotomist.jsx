@@ -108,7 +108,7 @@ const UpdatePhlebotomist = () => {
         }
       );
 
-      toast.success("✅ Phlebotomist updated successfully!");
+      toast.success("Phlebotomist updated successfully!");
       setTimeout(() => {
         setPhlebotomistToUpdate(null);
         localStorage.removeItem("phlebotomistToUpdate");
@@ -153,11 +153,12 @@ const UpdatePhlebotomist = () => {
         <ToastContainer />
         <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
           <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
-            <h4 className="text-white font-semibold">Update Profile Entry</h4>
+            <h4 className="text-white font-semibold">Update Phlebotomist</h4>
           </div>
 
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
               {/* Full Name */}
               <div>
                 <label className="block mb-1 font-medium">Full Name</label>
@@ -200,7 +201,7 @@ const UpdatePhlebotomist = () => {
                 {errors.dob && <p className="text-red-500 text-xs">{errors.dob.message}</p>}
               </div>
 
-              {/* Contact Number */}
+              {/* Contact No */}
               <div>
                 <label className="block mb-1 font-medium">Contact No</label>
                 <input type="text" {...register("contactno", {
@@ -245,24 +246,27 @@ const UpdatePhlebotomist = () => {
                 {errors.hospital && <p className="text-red-500 text-xs">{errors.hospital.message}</p>}
               </div>
 
-              {/* Status */}
+              {/* Is Active */}
               <div>
                 <label className="block mb-1 font-medium">Status</label>
-                <select {...register("isactive", { required: "Status is required." })} className="input-style border border-gray-300 rounded px-3 py-2 w-full">
+                <select {...register("isactive")} className="input-style border border-gray-300 rounded px-3 py-2 w-full">
                   <option value="true">Active</option>
                   <option value="false">Inactive</option>
                 </select>
               </div>
             </div>
+          </div>
 
-            <div className="text-right pt-4">
-              <button type="submit" disabled={isSubmitting} className="bg-teal-600 text-white px-6 py-2 rounded hover:bg-teal-700 disabled:opacity-50">
-                {isSubmitting ? "Updating..." : "Update"}
-              </button>
-            </div>
+          <div className="px-6 py-4 border-t text-right bg-gray-50">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded shadow-md disabled:opacity-50"
+            >
+              {isSubmitting ? "Updating..." : "Update Phlebotomist"}
+            </button>
           </div>
         </form>
-
       </div>
     </>
   );

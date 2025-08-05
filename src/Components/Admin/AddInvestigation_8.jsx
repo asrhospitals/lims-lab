@@ -9,13 +9,13 @@ import 'react-quill/dist/quill.snow.css';
 import InvestigationDetails from './InvestigationDetails';
 import AddInvestigationResult from './AddInvestigationResult';
 
-
-const AddInvestigation1 = () => {
+const AddInvestigation = () => {
   const [departments, setDepartments] = useState([]);
   const [subDepartments, setSubDepartments] = useState([]);
   const [roleTypes, setRoleTypes] = useState([]);
   const [hospitalTypes, setHospitalTypes] = useState([]);
   const [specimens, setSpecimens] = useState([]);
+  const [instruments, setInstruments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -34,19 +34,21 @@ const AddInvestigation1 = () => {
 
     const fetchData = async () => {
       try {
-        const [dept, subDept, role, hosp, spec] = await Promise.all([
+        const [dept, subDept, role, hosp, spec, instrument] = await Promise.all([
           axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-department", { headers }),
           axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-subdepartment", { headers }),
           axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", { headers }),
           axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype", { headers }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-specimen", { headers })
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-specimen", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-instrument", { headers })
         ]);
 
-        setDepartments(dept.data.filter((d) => d.isActive));
-        setSubDepartments(subDept.data.filter((d) => d.isActive));
+        setDepartments(dept.data.filter((d) => d.isactive));
+        setSubDepartments(subDept.data.filter((d) => d.isactive));
         setRoleTypes(role.data.filter((r) => r.isactive));
-        setHospitalTypes(hosp.data.filter((h) => h.isActive));
+        setHospitalTypes(hosp.data.filter((h) => h.isactive));
         setSpecimens(spec.data.filter((s) => s.isactive));
+        setInstruments(instrument.data.filter((i) => i.isactive));
       } catch (err) {
         toast.error("❌ Failed to load master data");
         console.error(err);
@@ -63,13 +65,13 @@ const AddInvestigation1 = () => {
     const payload = {
       department: data.department,
       subdepartment: data.subdepartment,
-      testname: data.testname,
+      testname: data.testName,
       aliasname: data.aliasname,
       testcode: parseInt(data.testcode),
       shortcode: parseInt(data.shortcode),
       roletype: data.roletype,
-      sequencecode: data.sequencecode,   
-      reporttype: data.reporttype,
+      sequencecode: data.sequencecode,
+      reporttype: data.reportType,
       measuringunit: data.measuringunit,
       refrange: data.refrange,
       tat: `${data.tatHour || "0"} hour ${data.tatMin || "0"} min`,
@@ -147,50 +149,48 @@ const AddInvestigation1 = () => {
   const [interpretation, setInterpretation] = useState("");
   const [remarks, setRemarks] = useState("");
 
+  const derivedTests = [
+    {
+      name: "Indirect Bilirubin",
+      formula: "Total Bilirubin – Direct Bilirubin",
+      dependencies: ["total_bilirubin", "direct_bilirubin"],
+    },
+    {
+      name: "LDL Cholesterol",
+      formula: "Total Cholesterol – HDL – (TG / 5)",
+      dependencies: ["total_cholesterol", "HDL", "TG"],
+    },
+    {
+      name: "BMI",
+      formula: "Weight / (Height × Height)",
+      dependencies: ["weight", "height"],
+    },
+  ];
 
-const derivedTests = [
-  {
-    name: "Indirect Bilirubin",
-    formula: "Total Bilirubin – Direct Bilirubin",
-    dependencies: ["total_bilirubin", "direct_bilirubin"],
-  },
-  {
-    name: "LDL Cholesterol",
-    formula: "Total Cholesterol – HDL – (TG / 5)",
-    dependencies: ["total_cholesterol", "HDL", "TG"],
-  },
-  {
-    name: "BMI",
-    formula: "Weight / (Height × Height)",
-    dependencies: ["weight", "height"],
-  },
-];
-
-const [selectedDerived, setSelectedDerived] = useState("");
-const [dependencyTests, setDependencyTests] = useState([]);
- 
+  const [selectedDerived, setSelectedDerived] = useState("");
+  const [dependencyTests, setDependencyTests] = useState([]);
 
   return (
-  <>
-    <div className="fixed top-[61px] w-full z-10">
-      <nav className="flex items-center text-sm font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
-        <ol className="inline-flex items-center space-x-1 md:space-x-3">
-          <li>
-            <Link to="/" className="text-gray-700 hover:text-teal-600">🏠 Home</Link>
-          </li>
-          <li className="text-gray-400">/</li>
-          <li>
-            <Link to="/view-investigation" className="text-gray-700 hover:text-teal-600">Investigations</Link>
-          </li>
-          <li className="text-gray-400">/</li>
-          <li className="text-gray-500">Add Investigation</li>
-        </ol>
-      </nav>
-    </div>
+    <>
+      <div className="fixed top-[61px] w-full z-10">
+        <nav className="flex items-center text-sm font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
+          <ol className="inline-flex items-center space-x-1 md:space-x-3">
+            <li>
+              <Link to="/" className="text-gray-700 hover:text-teal-600">🏠 Home</Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link to="/view-investigation" className="text-gray-700 hover:text-teal-600">Investigations</Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-500">Add Investigation</li>
+          </ol>
+        </nav>
+      </div>
 
-    <div className="w-full mt-16 px-4 space-y-4 text-sm">
-      <ToastContainer />
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+      <div className="w-full mt-16 px-4 space-y-4 text-sm">
+        <ToastContainer />
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add Investigation</h4>
           </div>
@@ -208,8 +208,6 @@ const [dependencyTests, setDependencyTests] = useState([]);
 
             <div className="col-span-full"></div>
 
-            
-
             <div>
               <label className="block text-sm font-medium text-gray-700">Test Name <span className="text-red-500">*</span></label>
               <input {...register("testName", { required: true })} placeholder="Test Name" className="w-full border px-3 py-2 rounded" />
@@ -222,15 +220,14 @@ const [dependencyTests, setDependencyTests] = useState([]);
               {errors.testCategory && <p className="text-red-600 text-xs mt-1">Test Category is required</p>}
             </div>
 
-
             <div>
               <label className="block text-sm font-medium text-gray-700">Short Name</label>
-              <input {...register("shortCode")} type="number" className="w-full border px-3 py-2 rounded" />
+              <input {...register("shortName")} className="w-full border px-3 py-2 rounded" />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Short Code</label>
-              <input {...register("shortCode")} type="number" className="w-full border px-3 py-2 rounded" />
+              <input {...register("shortCode")} className="w-full border px-3 py-2 rounded" />
             </div>
 
             <div>
@@ -238,35 +235,31 @@ const [dependencyTests, setDependencyTests] = useState([]);
               <select {...register("department")} className="w-full border px-3 py-2 rounded">
                 <option value="">Select Department</option>
                 {departments.map((d, i) => (
-                  <option key={i} value={d.dptName}>{d.dptName}</option>
+                  <option key={i} value={d.dptname}>{d.dptname}</option>
                 ))}
               </select>
             </div>
-
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Sub-Department</label>
-              <select {...register("department")} className="w-full border px-3 py-2 rounded">
+              <select {...register("subdepartment")} className="w-full border px-3 py-2 rounded">
                 <option value="">Select Sub-Department</option>
-                {departments.map((d, i) => (
-                  <option key={i} value={d.dptName}>{d.dptName}</option>
+                {subDepartments.map((d, i) => (
+                  <option key={i} value={d.subdptname}>{d.subdptname}</option>
                 ))}
               </select>
             </div>
-
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Role Type</label>
-              <select {...register("department")} className="w-full border px-3 py-2 rounded">
+              <select {...register("roletype")} className="w-full border px-3 py-2 rounded">
                 <option value="">Select Role Type</option>
-                {departments.map((d, i) => (
-                  <option key={i} value={d.dptName}>{d.dptName}</option>
+                {roleTypes.map((r, i) => (
+                  <option key={i} value={r.roletype}>{r.roletype}</option>
                 ))}
               </select>
             </div>
 
-
-            {/* Report Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Report Type</label>
               <select {...register("reportType")} className="w-full border px-3 py-2 rounded">
@@ -277,46 +270,26 @@ const [dependencyTests, setDependencyTests] = useState([]);
                 <option value="Reactive/Non-reactive">Reactive/Non-reactive</option>
                 <option value="Others">Others</option>
               </select>
-              <p className="text-xs text-gray-500">Defines the nature of report</p>
             </div>
-
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Sample Type</label>
               <select {...register("specimenType")} className="w-full border px-3 py-2 rounded">
                 <option value="">Select Sample Type</option>
-                {specimens.map((d) => (
-                  <option key={d.specimenname} value={d.specimenname}>{d.specimenname}</option>
+                {specimens.map((s, i) => (
+                  <option key={i} value={s.specimenname}>{s.specimenname}</option>
                 ))}
               </select>
             </div>
 
-            {/* Sample Quantity */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sample Quantity</label>
-              <div className="flex gap-0">
-                <input {...register("sampleQuantity")} type="number" placeholder="Enter quantity" className="w-1/2 border px-3 py-2 rounded" />
-                <select {...register("sampleQuantityUnit")} className="w-1/2 border px-3 py-2 rounded">
-                  <option value="">Select Unit</option>
-                  <option value="ml">ml</option>
-                  <option value="l">liters</option>
-                  <option value="g">grams</option>
-                </select>
-              </div>
+              <label className="block text-sm font-medium text-gray-700">Sample Quantity</label>
+              <input {...register("sampleQuantity")} type="number" placeholder="Enter quantity" className="w-full border px-3 py-2 rounded" />
             </div>
 
-            {/* Sample Temperature */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sample Temperature</label>
-              <div className="flex gap-0">
-                <input {...register("sampleTemperature")} type="number" placeholder="Enter temperature" className="w-1/2 border px-3 py-2 rounded" />
-                <select {...register("temperatureUnit")} className="w-1/2 border px-3 py-2 rounded">
-                  <option value="">Select Unit</option>
-                  <option value="°C">°C</option>
-                  <option value="°F">°F</option>
-                  <option value="K">Kelvin</option>
-                </select>
-              </div>
+              <label className="block text-sm font-medium text-gray-700">Sample Temperature</label>
+              <input {...register("sampleTemperature")} type="number" placeholder="Enter temperature" className="w-full border px-3 py-2 rounded" />
             </div>
 
             <div>
@@ -328,8 +301,8 @@ const [dependencyTests, setDependencyTests] = useState([]);
               <label className="block text-sm font-medium text-gray-700">Instrument Type</label>
               <select {...register("instrumentType")} className="w-full border px-3 py-2 rounded">
                 <option value="">Select Instrument Type</option>
-                {specimens.map((d) => (
-                  <option key={d.specimenname} value={d.specimenname}>{d.specimenname}</option>
+                {instruments.map((inst, i) => (
+                  <option key={i} value={inst.instrumentname}>{inst.instrumentname}</option>
                 ))}
               </select>
             </div>
@@ -347,7 +320,6 @@ const [dependencyTests, setDependencyTests] = useState([]);
             <div>
               <label className="block text-sm font-medium text-gray-700">Order</label>
               <input {...register("order")} placeholder="100000" className="w-full border px-3 py-2 rounded" />
-              <p className="text-xs text-gray-500">Order of display in the printout for the Test</p>
             </div>
 
 
@@ -413,12 +385,8 @@ const [dependencyTests, setDependencyTests] = useState([]);
               <p className="text-xs text-gray-500">External ID for Test</p>
             </div>
 
-
+            
           </div>
-
-
-  
-
 
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -571,11 +539,8 @@ const [dependencyTests, setDependencyTests] = useState([]);
           </div>
 
 
- 
-
-
-
           <AddInvestigationResult />
+
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div className="col-span-full">
@@ -780,25 +745,16 @@ const [dependencyTests, setDependencyTests] = useState([]);
 
           </div>
 
-          
-
-          
 
           <div className="px-6 py-4 border-t bg-gray-50 text-right">
             <button type="submit" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded">
               {isSubmitting ? "Saving..." : "Add Investigation"}
             </button>
           </div>
-
         </form>
       </div>
-
-
-
     </>
   );
-
-
 };
 
-export default AddInvestigation1;
+export default AddInvestigation;
