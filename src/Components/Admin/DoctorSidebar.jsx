@@ -21,20 +21,12 @@ const DoctorSidebar = ({
     shortName: "DrReddy",
     department: "Doctor",
     shortDept: "Doctor",
-    avatar: "/doctor_assets/user.jpg",
+    avatar: "/user.jpg",
   };
 
   const menuItems = [
     { type: "label", label: "Admin Panel" },
     { name: "Dashboard", icon: <FaHome />, link: "" },
-    // {
-    //   name: "Appointments",
-    //   icon: <IoCalendarOutline />,
-    //   children: [
-    //     { name: "View Appointments", link: "view-appointments" },
-    //     { name: "Schedule Appointments", link: "schedule-appointments" },
-    //   ],
-    // },
     {
       name: "Master",
       icon: <FaUserDoctor />,
@@ -85,29 +77,6 @@ const DoctorSidebar = ({
       ],
     },
 
-
-
-
-
-    // {
-    //   name: "Color Master",
-    //   icon: <FaUserDoctor />,
-    //   children: [
-    //     { name: "Add Color", link: "add-color" },
-    //     { name: "View Colors", link: "view-colors" },
-    //   ],
-    // },
-
-    // {
-    //   name: "Specimen Type Master",
-    //   icon: <FaUserDoctor />,
-    //   children: [
-    //     { name: "Add Specimen Type", link: "add-specimen-type" },
-    //     { name: "View Specimen Types", link: "view-specimen-types" },
-    //   ],
-    // },
-
-    // { name: "Settings", icon: <FaCog />, link: "settings" },
     
   ];
 
@@ -118,61 +87,7 @@ const DoctorSidebar = ({
   const sidebarExpanded = !isCollapsed || isHovered;
   const transitionClass = "transition-all duration-300 ease-in-out";
 
-  // ScrollbarStyles component for reusable scrollbar styling
-  // ScrollbarStyles component for reusable scrollbar styling
-  // const ScrollbarStyles = () => (
-  //   <style jsx>{`
-
-  //     .custom-scrollbar {
-  //       overflow-y: auto;
-  //       max-height: 100vh; /* Allow full viewport height scroll */
-  //     }
-
-  //     .custom-scrollbar::-webkit-scrollbar {
-  //       width: 8px; /* Overall scrollbar width */
-  //       height: 8px; /* Overall scrollbar height (for horizontal scrollbars) */
-  //     }
-
-  //     /* Track styling */
-  //     .custom-scrollbar::-webkit-scrollbar-track {
-  //       background: transparent;
-  //       border-radius: 10px;
-  //       margin: 4px 0; /* Creates space at top/bottom of track */
-  //       width: 6px; /* Track width */
-  //     }
-
-  //     /* Thumb styling */
-  //     .custom-scrollbar::-webkit-scrollbar-thumb {
-  //       background: transparent;
-  //       border-radius: 10px;
-  //       min-height: 40px; /* Minimum thumb height */
-  //       width: 6px; /* Thumb width */
-  //     }
-
-  //     /* Hover states */
-  //     .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  //       background: #cbd5e1;
-  //       height: 60px; /* You can set specific height on hover if needed */
-  //     }
-
-  //     .custom-scrollbar:hover::-webkit-scrollbar-track {
-  //       background: #f1f5f9;
-  //     }
-  //   `}
-    
-    
-    
-    
-    
-  //   </style>
-
-
-
-    
-  // );
-
-
-
+  
 
   const ScrollbarStyles = () => (
   <style jsx>{`
@@ -254,7 +169,7 @@ const DoctorSidebar = ({
             <>
               <div className="flex items-center gap-3">
                 <img
-                  src="/img/Reddy.jpeg"
+                  src="/logo.png"
                   className="w-10 h-10 rounded-lg"
                   alt="Logo"
                 />
@@ -271,7 +186,7 @@ const DoctorSidebar = ({
             </>
           ) : (
             <img
-              src="/img/favicon.jpeg"
+              src="/logo.png"
               className="w-10 h-10 rounded-lg"
               alt="Logo"
             />

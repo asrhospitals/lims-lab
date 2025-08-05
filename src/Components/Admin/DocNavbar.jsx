@@ -156,7 +156,7 @@ const DocNavbar = ({ isCollapsed, isHovered, sidebarWidth }) => {
           >
             <img
               // src="https://i.pravatar.cc/40"
-              src="/doctor_assets/default user.jpg"
+              src="/user.jpg"
               alt="User"
               className="h-10 w-10 rounded-full"
             />
