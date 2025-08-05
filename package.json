@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --outDir build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --port 3000 --outDir build",
+    "serve": "vite preview --port 3000 --outDir build"
   },
   "dependencies": {
     "@coreui/react": "^5.7.0",

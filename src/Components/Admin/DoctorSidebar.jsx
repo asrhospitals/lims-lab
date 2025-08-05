@@ -23,7 +23,7 @@ const DoctorSidebar = ({
     shortName: "DrReddy",
     department: "Doctor",
     shortDept: "Doctor",
-    avatar: "/lims-lab/doctor_assets/user.jpg",
+    avatar: "/doctor_assets/user.jpg",
     role: userRole
   };
 
@@ -123,7 +123,7 @@ const DoctorSidebar = ({
             <>
               <div className="flex items-center gap-3">
                 <img
-                  src="/lims-lab/img/Reddy.jpeg"
+                  src="/img/Reddy.jpeg"
                   className="w-10 h-10 rounded-lg"
                   alt="Logo"
                 />
@@ -134,7 +134,7 @@ const DoctorSidebar = ({
             </>
           ) : (
             <img
-              src="/lims-lab/img/favicon.jpeg"
+              src="/img/favicon.jpeg"
               className="w-10 h-10 rounded-lg"
               alt="Logo"
             />

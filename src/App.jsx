@@ -460,7 +460,7 @@ function App() {
       ],
     },
   ], {
-    basename: "/lims-lab"
+    basename: "/"
   });
 
   return <RouterProvider router={router} />;

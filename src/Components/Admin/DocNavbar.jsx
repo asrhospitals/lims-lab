@@ -118,7 +118,7 @@ export default function DocNavbar({ isCollapsed, isHovered, sidebarWidth, setIsC
             <Menu as="div" className="relative">
               <MenuButton className="relative flex items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">
                 <img
-                  src="/lims-lab/doctor_assets/default user.jpg"
+                  src="/doctor_assets/default user.jpg"
                   alt="User"
                   className="w-8 h-8 rounded-full border border-gray-200"
                 />

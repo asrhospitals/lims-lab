@@ -254,7 +254,7 @@ const DoctorSidebar = ({
             <>
               <div className="flex items-center gap-3">
                 <img
-                  src="/lims-lab/img/Reddy.jpeg"
+                  src="/img/Reddy.jpeg"
                   className="w-10 h-10 rounded-lg"
                   alt="Logo"
                 />
