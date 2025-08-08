@@ -427,7 +427,8 @@ const App = () => {
         demail: formData.email,
         dphoto: profileData.fileUrl,
         dcrtf: certData.fileUrl,
-        dditsig: signatureData.fileUrl
+        dditsig: signatureData.fileUrl,
+        dstatus: 'pending'
       };
       
       const doctorResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/master/add-doctor', {
@@ -441,9 +442,9 @@ const App = () => {
       
       const result = await doctorResponse.json();
       
-      if (result.success) {
-        // Show success message in UI
-        setSuccessMessage(`Doctor registered successfully! ID: ${result.doctorId}`);
+      if (result.id) {
+        // Show success modal with doctor details
+        setSuccessMessage(result);
         
         // Reset form
         setFormData({
@@ -727,9 +728,91 @@ const App = () => {
                 </button>
               </div>
             </form>
+            {/* Success Modal */}
             {successMessage && (
-              <div className="bg-green-100 p-4 rounded-lg border border-green-200 mt-4">
-                <p className="text-green-600 text-sm">{successMessage}</p>
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-2xl font-bold text-green-600">Doctor Registered Successfully!</h3>
+                      <button 
+                        onClick={() => setSuccessMessage(null)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Doctor ID</p>
+                          <p className="text-gray-900">{successMessage.id}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Full Name</p>
+                          <p className="text-gray-900">{successMessage.dname}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Date of Birth</p>
+                          <p className="text-gray-900">{new Date(successMessage.ddob).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Qualification</p>
+                          <p className="text-gray-900">{successMessage.dqlf}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Specialty</p>
+                          <p className="text-gray-900">{successMessage.dspclty}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Department</p>
+                          <p className="text-gray-900">{successMessage.ddpt}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Registration Number</p>
+                          <p className="text-gray-900">{successMessage.dregno}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Council</p>
+                          <p className="text-gray-900">{successMessage.dregcnl}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Contact Number</p>
+                          <p className="text-gray-900">{successMessage.dcnt}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">WhatsApp Number</p>
+                          <p className="text-gray-900">{successMessage.dwhtsap}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <p className="text-sm font-medium text-gray-500">Email</p>
+                          <p className="text-gray-900">{successMessage.demail}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <p className="text-sm font-medium text-gray-500">Status</p>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            successMessage.dstatus === 'pending' 
+                              ? 'bg-yellow-100 text-yellow-800' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {successMessage.dstatus.charAt(0).toUpperCase() + successMessage.dstatus.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6 flex justify-end space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => setSuccessMessage(null)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
