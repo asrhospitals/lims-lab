@@ -1,6 +1,63 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Upload as UploadIcon, Calendar, User, Mail, Phone, FileText, Camera, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Upload as UploadIcon, X, User, Briefcase, Phone, Mail, FileText, Signature, ChevronDown } from 'lucide-react';
 
+// Custom Dropdown Component
+const CustomDropdown = ({ options, value, onChange, placeholder, disabled = false, className = '' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  const selectedOption = options.find(option => option.value === value);
+  
+  return (
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <button
+        type="button"
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border ${
+          disabled ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-700'
+        } border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+      >
+        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+        <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
+      </button>
+      
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+          {options.map((option) => (
+            <div
+              key={option.value}
+              className={`px-4 py-2 text-sm cursor-pointer hover:bg-blue-50 ${
+                value === option.value ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
+              }`}
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+            >
+              {option.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// FileUpload Component
 const FileUpload = ({ 
   id, 
   label, 
@@ -9,69 +66,63 @@ const FileUpload = ({
   maxSizeMB = 2, 
   value, 
   onChange, 
-  previewType = 'text' 
+  previewType = 'text',
+  icon
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState('');
-  const [fileUrls, setFileUrls] = useState({});
-
+  
+  // Validate file type and size
   const validateFile = (file) => {
     const validTypes = accept.split(',').map(type => type.trim());
     const fileType = file.type;
     const fileSizeMB = file.size / (1024 * 1024);
-    
-    if (!validTypes.some(type => {
+    const isAcceptedType = validTypes.some(type => {
       if (type.startsWith('.')) {
         return file.name.toLowerCase().endsWith(type);
       }
-      return fileType === type;
-    })) {
-      return `File type not supported. Accepted types: ${accept}`;
+      return fileType === type || fileType.startsWith(type.split('/')[0]);
+    });
+    if (!isAcceptedType) {
+      return `File type not supported. Accepted: ${accept}`;
     }
-    
     if (fileSizeMB > maxSizeMB) {
       return `File size exceeds ${maxSizeMB}MB limit`;
     }
-    
     return '';
   };
-
+  
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isDragging) setIsDragging(true);
-  }, [isDragging]);
-
+    setIsDragging(true);
+  }, []);
+  
   const handleDragLeave = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Check if the drag leave event is from the container itself
     if (e.target.id === id) {
       setIsDragging(false);
     }
   }, [id]);
-
+  
   const handleDrop = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    
     const droppedFiles = Array.from(e.dataTransfer.files);
     processFiles(droppedFiles);
   }, []);
-
+  
   const handleChange = (e) => {
     const files = Array.from(e.target.files);
     processFiles(files);
   };
-
+  
   const processFiles = useCallback((files) => {
     if (!files.length) return;
-
     const validFiles = [];
     const newErrors = [];
-
     files.forEach(file => {
       const error = validateFile(file);
       if (error) {
@@ -80,14 +131,12 @@ const FileUpload = ({
         validFiles.push(file);
       }
     });
-
     if (newErrors.length > 0) {
       setError(newErrors.join('\n'));
       setTimeout(() => setError(''), 5000);
     } else {
       setError('');
     }
-
     if (validFiles.length > 0) {
       if (multiple) {
         onChange([...(value || []), ...validFiles]);
@@ -95,8 +144,8 @@ const FileUpload = ({
         onChange(validFiles[0]);
       }
     }
-  }, [multiple, onChange, validateFile, value]);
-
+  }, [multiple, onChange, value, validateFile]);
+  
   const removeFile = (index) => {
     if (multiple) {
       const newFiles = [...value];
@@ -106,52 +155,37 @@ const FileUpload = ({
       onChange(null);
     }
   };
-
-  // Create URLs when files change
+  
+  // Create preview URLs
+  const [fileUrls, setFileUrls] = useState({});
   useEffect(() => {
     const urls = {};
-    if (value) {
-      const files = multiple ? value : [value];
-      files.forEach((file, index) => {
-        // Improved type checking
-        if (file && typeof File !== 'undefined' && file instanceof File) {
-          try {
-            urls[`${file.name}-${index}`] = URL.createObjectURL(file);
-          } catch (error) {
-            console.error('Failed to create object URL:', error);
-          }
+    const files = value ? (Array.isArray(value) ? value : [value]) : [];
+    files.forEach((file, index) => {
+      if (file && file instanceof File) {
+        try {
+          urls[`${file.name}-${index}`] = URL.createObjectURL(file);
+        } catch (err) {
+          console.error('Failed to create object URL:', err);
         }
-      });
-    }
-
+      }
+    });
     setFileUrls(urls);
-
-    // Cleanup function
     return () => {
-      Object.values(urls).forEach(url => {
-        URL.revokeObjectURL(url);
-      });
+      Object.values(urls).forEach(url => URL.revokeObjectURL(url));
     };
-  }, [value, multiple]);
-
+  }, [value]);
+  
   const renderPreview = () => {
     if (!value || (multiple && value.length === 0)) return null;
-    
-    const files = multiple ? value : [value];
-    
+    const files = Array.isArray(value) ? value : [value];
     return (
-      <div className="mt-2 space-y-2">
+      <div className="mt-3 space-y-2">
         {files.map((file, index) => {
-          if (!file) return null;
-          
-          // Improved type checking
-          if (!(typeof File !== 'undefined' && file instanceof File)) {
-            console.error('Invalid file object:', file);
+          if (!file || !(file instanceof File)) {
             return (
-              <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                <span className="text-sm text-red-500">
-                  Invalid file format
-                </span>
+              <div key={index} className="flex items-center justify-between bg-red-50 p-2 rounded-lg border border-red-200">
+                <span className="text-sm text-red-600">Invalid file</span>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -165,28 +199,22 @@ const FileUpload = ({
               </div>
             );
           }
-          
           const isImage = file.type.startsWith('image/');
           const fileUrl = fileUrls[`${file.name}-${index}`];
-          
           return (
-            <div key={`${file.name}-${index}`} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+            <div key={`${file.name}-${index}`} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
               <div className="flex items-center space-x-2 truncate">
                 {isImage && fileUrl ? (
-                  <img 
-                    src={fileUrl} 
-                    alt="Preview" 
-                    className="w-8 h-8 object-cover rounded"
-                  />
+                  <img src={fileUrl} alt="Preview" className="w-8 h-8 object-cover rounded-md" />
                 ) : (
-                  <FileText className="w-5 h-5 text-gray-500" />
+                  <div className="bg-gray-100 p-1.5 rounded-md">
+                    <FileText className="w-4 h-4 text-gray-500" />
+                  </div>
                 )}
-                <span className="text-sm text-gray-700 truncate max-w-xs">
-                  {file.name}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {(file.size / (1024 * 1024)).toFixed(2)}MB
-                </span>
+                <div className="truncate">
+                  <span className="text-sm text-gray-700 block truncate max-w-xs">{file.name}</span>
+                  <span className="text-xs text-gray-500">{(file.size / (1024 * 1024)).toFixed(2)}MB</span>
+                </div>
               </div>
               <button
                 type="button"
@@ -194,7 +222,7 @@ const FileUpload = ({
                   e.stopPropagation();
                   removeFile(index);
                 }}
-                className="text-red-500 hover:text-red-700"
+                className="text-gray-400 hover:text-red-500 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -204,16 +232,15 @@ const FileUpload = ({
       </div>
     );
   };
-
+  
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div 
+      <div
         id={id}
-        className={`relative border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-          isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-500'
+        className={`relative border-2 border-dashed rounded-xl p-5 text-center transition-all duration-300 ${
+          isDragging 
+            ? 'border-blue-500 bg-blue-50 shadow-md' 
+            : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
         }`}
         onDragEnter={handleDragOver}
         onDragOver={handleDragOver}
@@ -228,28 +255,31 @@ const FileUpload = ({
           onChange={handleChange}
           className="hidden"
         />
-        <label 
-          htmlFor={`${id}-input`} 
-          className="cursor-pointer flex flex-col items-center"
-        >
-          <UploadIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <span className="text-sm text-gray-600">
-            {multiple ? 'Drag & drop files here or click to select' : 'Drag & drop a file or click to select'}
+        <label htmlFor={`${id}-input`} className="cursor-pointer flex flex-col items-center">
+          <div className="bg-blue-100 p-3 rounded-full mb-3">
+            {icon || <UploadIcon className="w-6 h-6 text-blue-600" />}
+          </div>
+          <span className="text-sm font-medium text-gray-700 mb-1">{label}</span>
+          <span className="text-xs text-gray-500 mb-2">
+            {multiple ? 'Drag & drop files or click to select' : 'Drag & drop a file or click to select'}
           </span>
-          <span className="text-xs text-gray-500 mt-1">
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
             {accept.split(',').join(', ')}, max {maxSizeMB}MB
           </span>
         </label>
-        {error && (
-          <p className="text-red-500 text-xs mt-2">{error}</p>
-        )}
         {renderPreview()}
+        {error && (
+          <p className="mt-3 text-sm text-red-600 bg-red-50 p-2 rounded-lg border border-red-200 whitespace-pre-line">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
-export const DoctorRegistration = () => {
+// Main App Component
+const App = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     dateOfBirth: '',
@@ -265,46 +295,44 @@ export const DoctorRegistration = () => {
     certificates: [],
     digitalSignature: null,
   });
-
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [successMessage, setSuccessMessage] = useState('');
+  
+  // Fetch departments on mount
   useEffect(() => {
     const fetchDepartments = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('https://asrlab-production.up.railway.app/lims/master/get-department', {
+        const response = await fetch('https://asrlabs.asrhospitalindia.in/lims/master/get-department', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
             'accept': 'application/json'
           }
         });
+        if (!response.ok) throw new Error('Failed to fetch departments');
         const data = await response.json();
-        console.log('Fetched departments data:', data);  
         if (Array.isArray(data)) {
-          setDepartments(data.map(dept => dept.dptName));  
-        } else {
-          console.error('API response is not an array:', data);
+          setDepartments(data.map(dept => dept.dptname)); // Changed from dptName to dptname
         }
       } catch (error) {
         console.error('Error fetching departments:', error);
+        setDepartments([]);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchDepartments();
   }, []);
-
+  
   const qualifications = ['MD', 'DNB', 'DM', 'MCh', 'MBBS', 'MS', 'PhD'];
   const specialties = ['Cardiology', 'Neurology', 'Orthopedics', 'Radiology', 'Pathology', 'Pediatrics'];
   const councils = ['MCI', 'State Medical Council', 'Delhi Medical Council', 'Mumbai Medical Council'];
-
+  
   const validateForm = () => {
     const newErrors = {};
-    
     if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
     if (!formData.qualification) newErrors.qualification = 'Qualification is required';
@@ -316,22 +344,19 @@ export const DoctorRegistration = () => {
     if (!formData.whatsappNumber) newErrors.whatsappNumber = 'WhatsApp number is required';
     if (!formData.email) newErrors.email = 'Email is required';
     
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
     
-    // Phone validation
-    const phoneRegex = /^(\+\d{1,3}[\s-]?)?\d{10}$/;
-    if (formData.contactNumber && !phoneRegex.test(formData.contactNumber.replace(/\D/g, ''))) {
+    const cleanPhone = (num) => num.replace(/\D/g, '');
+    if (formData.contactNumber && cleanPhone(formData.contactNumber).length !== 10) {
       newErrors.contactNumber = 'Please enter a valid 10-digit phone number';
     }
-    if (formData.whatsappNumber && !phoneRegex.test(formData.whatsappNumber.replace(/\D/g, ''))) {
+    if (formData.whatsappNumber && cleanPhone(formData.whatsappNumber).length !== 10) {
       newErrors.whatsappNumber = 'Please enter a valid 10-digit WhatsApp number';
     }
-
-    // Document validations
+    
     if (!formData.photo) newErrors.photo = 'Profile photo is required';
     if (!formData.certificates || formData.certificates.length === 0) {
       newErrors.certificates = 'At least one certificate is required';
@@ -341,348 +366,377 @@ export const DoctorRegistration = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
-    
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Generate Doctor ID
-    const doctorId = `DOC${Date.now().toString().slice(-6)}`;
-    
-    alert(`Registration submitted successfully!\nDoctor ID: ${doctorId}\nStatus: Pending Approval`);
-    
-    // Reset form
-    setFormData({
-      fullName: '',
-      dateOfBirth: '',
-      qualification: '',
-      specialty: '',
-      parentDepartment: '',
-      registrationNumber: '',
-      registrationCouncil: '',
-      contactNumber: '',
-      whatsappNumber: '',
-      email: '',
-      photo: null,
-      certificates: [],
-      digitalSignature: null,
-    });
-    setErrors({}); // Clear errors
-    setIsSubmitting(false);
+    try {
+      // First upload signature
+      const signatureFormData = new FormData();
+      signatureFormData.append('digitalsignature', formData.digitalSignature);
+      
+      const signatureResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/signature/upload-signature', {
+        method: 'POST',
+        body: signatureFormData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      
+      const signatureData = await signatureResponse.json();
+      
+      // Then upload profile photo
+      const profileFormData = new FormData();
+      profileFormData.append('profile', formData.photo);
+      
+      const profileResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/profile/upload-profile', {
+        method: 'POST',
+        body: profileFormData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      
+      const profileData = await profileResponse.json();
+      
+      // Then upload certificate
+      const certFormData = new FormData();
+      certFormData.append('certificate', formData.certificates[0]);
+      
+      const certResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/certificate/upload-certificate', {
+        method: 'POST',
+        body: certFormData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      
+      const certData = await certResponse.json();
+      
+      // Finally submit doctor data with all file URLs
+      const doctorData = {
+        dname: formData.fullName,
+        ddob: formData.dateOfBirth,
+        dqlf: formData.qualification,
+        dspclty: formData.specialty,
+        ddpt: formData.parentDepartment,
+        dregno: formData.registrationNumber,
+        dregcnl: formData.registrationCouncil,
+        dcnt: formData.contactNumber,
+        dwhtsap: formData.whatsappNumber,
+        demail: formData.email,
+        dphoto: profileData.fileUrl,
+        dcrtf: certData.fileUrl,
+        dditsig: signatureData.fileUrl
+      };
+      
+      const doctorResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/master/add-doctor', {
+        method: 'POST',
+        body: JSON.stringify(doctorData),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      
+      const result = await doctorResponse.json();
+      
+      if (result.success) {
+        // Show success message in UI
+        setSuccessMessage(`Doctor registered successfully! ID: ${result.doctorId}`);
+        
+        // Reset form
+        setFormData({
+          fullName: '',
+          dateOfBirth: '',
+          qualification: '',
+          specialty: '',
+          parentDepartment: '',
+          registrationNumber: '',
+          registrationCouncil: '',
+          contactNumber: '',
+          whatsappNumber: '',
+          email: '',
+          photo: null,
+          certificates: [],
+          digitalSignature: null,
+        });
+        setErrors({});
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error('Registration failed:', error);
+    }
   };
-
+  
   const handleFileChange = (field, files) => {
-    if (!files) return;
-    
     setFormData(prev => ({
       ...prev,
       [field]: files
     }));
   };
-
+  
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 sm:p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Doctor Registration
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Please fill in the details to register a new doctor
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="p-6 sm:p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Doctor Registration</h1>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Please fill in the details to register a new doctor
+              </p>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Personal Information */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                <div className="flex items-center mb-4">
+                  <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                    <User className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800">Personal Information</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      id="fullName"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Enter full name"
+                    />
+                    {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      id="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      max={new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                    {errors.dateOfBirth && <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth}</p>}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Professional Information */}
+              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+                <div className="flex items-center mb-4">
+                  <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                    <Briefcase className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800">Professional Information</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label htmlFor="qualification" className="block text-sm font-medium text-gray-700 mb-1">
+                      Qualification
+                    </label>
+                    <CustomDropdown
+                      options={qualifications.map(qual => ({ value: qual, label: qual }))}
+                      value={formData.qualification}
+                      onChange={(value) => setFormData({ ...formData, qualification: value })}
+                      placeholder="Select qualification"
+                      className="mb-1"
+                    />
+                    {errors.qualification && <p className="mt-1 text-sm text-red-600">{errors.qualification}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="specialty" className="block text-sm font-medium text-gray-700 mb-1">
+                      Specialty
+                    </label>
+                    <CustomDropdown
+                      options={specialties.map(spec => ({ value: spec, label: spec }))}
+                      value={formData.specialty}
+                      onChange={(value) => setFormData({ ...formData, specialty: value })}
+                      placeholder="Select specialty"
+                      className="mb-1"
+                    />
+                    {errors.specialty && <p className="mt-1 text-sm text-red-600">{errors.specialty}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="parentDepartment" className="block text-sm font-medium text-gray-700 mb-1">
+                      Parent Department
+                    </label>
+                    <CustomDropdown
+                      options={departments.map(dept => ({ value: dept, label: dept }))}
+                      value={formData.parentDepartment}
+                      onChange={(value) => setFormData({ ...formData, parentDepartment: value })}
+                      placeholder={isLoading ? 'Loading...' : 'Select department'}
+                      disabled={isLoading || departments.length === 0}
+                      className="mb-1"
+                    />
+                    {errors.parentDepartment && <p className="mt-1 text-sm text-red-600">{errors.parentDepartment}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="registrationNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                      Registration Number
+                    </label>
+                    <input
+                      type="text"
+                      id="registrationNumber"
+                      value={formData.registrationNumber}
+                      onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Enter registration number"
+                    />
+                    {errors.registrationNumber && <p className="mt-1 text-sm text-red-600">{errors.registrationNumber}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="registrationCouncil" className="block text-sm font-medium text-gray-700 mb-1">
+                      Registration Council
+                    </label>
+                    <CustomDropdown
+                      options={councils.map(council => ({ value: council, label: council }))}
+                      value={formData.registrationCouncil}
+                      onChange={(value) => setFormData({ ...formData, registrationCouncil: value })}
+                      placeholder="Select council"
+                      className="mb-1"
+                    />
+                    {errors.registrationCouncil && <p className="mt-1 text-sm text-red-600">{errors.registrationCouncil}</p>}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Contact Information */}
+              <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl p-6 border border-green-100">
+                <div className="flex items-center mb-4">
+                  <div className="bg-green-100 p-2 rounded-lg mr-3">
+                    <Phone className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800">Contact Information</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                      Contact Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="contactNumber"
+                      value={formData.contactNumber}
+                      onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="e.g. 9876543210"
+                    />
+                    {errors.contactNumber && <p className="mt-1 text-sm text-red-600">{errors.contactNumber}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                      WhatsApp Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="whatsappNumber"
+                      value={formData.whatsappNumber}
+                      onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="e.g. 9876543210"
+                    />
+                    {errors.whatsappNumber && <p className="mt-1 text-sm text-red-600">{errors.whatsappNumber}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="doctor@example.com"
+                    />
+                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Documents */}
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100">
+                <div className="flex items-center mb-4">
+                  <div className="bg-amber-100 p-2 rounded-lg mr-3">
+                    <FileText className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800">Documents</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div>
+                    <FileUpload
+                      id="photo"
+                      label="Profile Photo"
+                      accept="image/*"
+                      value={formData.photo}
+                      onChange={(file) => handleFileChange('photo', file)}
+                      icon={<User className="w-6 h-6 text-blue-600" />}
+                    />
+                    {errors.photo && <p className="text-red-500 text-xs mt-1">{errors.photo}</p>}
+                  </div>
+                  <div>
+                    <FileUpload
+                      id="certificates"
+                      label="Certificates"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      multiple
+                      value={formData.certificates}
+                      onChange={(files) => handleFileChange('certificates', files)}
+                      icon={<FileText className="w-6 h-6 text-blue-600" />}
+                    />
+                    {errors.certificates && <p className="text-red-500 text-xs mt-1">{errors.certificates}</p>}
+                  </div>
+                  <div>
+                    <FileUpload
+                      id="digitalSignature"
+                      label="Digital Signature"
+                      accept="image/*"
+                      value={formData.digitalSignature}
+                      onChange={(file) => handleFileChange('digitalSignature', file)}
+                      icon={<Signature className="w-6 h-6 text-blue-600" />}
+                    />
+                    {errors.digitalSignature && <p className="text-red-500 text-xs mt-1">{errors.digitalSignature}</p>}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Submit Button */}
+              <div className="pt-4 flex justify-center">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </span>
+                  ) : 'Submit Registration'}
+                </button>
+              </div>
+            </form>
+            {successMessage && (
+              <div className="bg-green-100 p-4 rounded-lg border border-green-200 mt-4">
+                <p className="text-green-600 text-sm">{successMessage}</p>
+              </div>
+            )}
+          </div>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Personal Information Section */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Personal Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm transition duration-150 ease-in-out"
-                  placeholder="Enter full name"
-                />
-                {errors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
-                  Date of Birth
-                </label>
-                <input
-                  type="date"
-                  id="dateOfBirth"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                />
-                {errors.dateOfBirth && (
-                  <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Professional Information Section */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Professional Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="qualification" className="block text-sm font-medium text-gray-700">
-                  Qualification
-                </label>
-                <select
-                  id="qualification"
-                  value={formData.qualification}
-                  onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="">Select qualification</option>
-                  {qualifications.map((qual) => (
-                    <option key={qual} value={qual}>{qual}</option>
-                  ))}
-                </select>
-                {errors.qualification && (
-                  <p className="mt-1 text-sm text-red-600">{errors.qualification}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="specialty" className="block text-sm font-medium text-gray-700">
-                  Specialty
-                </label>
-                <select
-                  id="specialty"
-                  value={formData.specialty}
-                  onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="">Select specialty</option>
-                  {specialties.map((spec) => (
-                    <option key={spec} value={spec}>{spec}</option>
-                  ))}
-                </select>
-                {errors.specialty && (
-                  <p className="mt-1 text-sm text-red-600">{errors.specialty}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="parentDepartment" className="block text-sm font-medium text-gray-700">
-                  Parent Department
-                </label>
-                <select
-                  id="parentDepartment"
-                  value={formData.parentDepartment}
-                  onChange={(e) => setFormData({ ...formData, parentDepartment: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="">Select parent department</option>
-                  {departments.length === 0 ? (
-                    <option value="">No departments found</option>
-                  ) : (
-                    departments.map((dept) => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))
-                  )}
-                </select>
-                {errors.parentDepartment && (
-                  <p className="mt-1 text-sm text-red-600">{errors.parentDepartment}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="registrationNumber" className="block text-sm font-medium text-gray-700">
-                  Registration Number
-                </label>
-                <input
-                  type="text"
-                  id="registrationNumber"
-                  value={formData.registrationNumber}
-                  onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  placeholder="Enter registration number"
-                />
-                {errors.registrationNumber && (
-                  <p className="mt-1 text-sm text-red-600">{errors.registrationNumber}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="registrationCouncil" className="block text-sm font-medium text-gray-700">
-                  Registration Council
-                </label>
-                <select
-                  id="registrationCouncil"
-                  value={formData.registrationCouncil}
-                  onChange={(e) => setFormData({ ...formData, registrationCouncil: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="">Select registration council</option>
-                  {councils.map((council) => (
-                    <option key={council} value={council}>{council}</option>
-                  ))}
-                </select>
-                {errors.registrationCouncil && (
-                  <p className="mt-1 text-sm text-red-600">{errors.registrationCouncil}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Information Section */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Contact Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700">
-                  Contact Number
-                </label>
-                <input
-                  type="text"
-                  id="contactNumber"
-                  value={formData.contactNumber}
-                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  placeholder="Enter contact number"
-                />
-                {errors.contactNumber && (
-                  <p className="mt-1 text-sm text-red-600">{errors.contactNumber}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700">
-                  WhatsApp Number
-                </label>
-                <input
-                  type="text"
-                  id="whatsappNumber"
-                  value={formData.whatsappNumber}
-                  onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  placeholder="Enter WhatsApp number"
-                />
-                {errors.whatsappNumber && (
-                  <p className="mt-1 text-sm text-red-600">{errors.whatsappNumber}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  placeholder="Enter email address"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Documents Section */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Documents
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <FileUpload
-                  id="photo"
-                  label="Profile Photo"
-                  accept="image/jpeg,image/png"
-                  value={formData.photo}
-                  onChange={(files) => handleFileChange('photo', files)}
-                  maxSizeMB={5}
-                />
-                {errors.photo && (
-                  <p className="mt-1 text-sm text-red-600">{errors.photo}</p>
-                )}
-              </div>
-              <div>
-                <FileUpload
-                  id="certificates"
-                  label="Certificates"
-                  accept=".pdf,.doc,.docx"
-                  multiple={true}
-                  value={formData.certificates}
-                  onChange={(files) => handleFileChange('certificates', files)}
-                  maxSizeMB={10}
-                />
-                {errors.certificates && (
-                  <p className="mt-1 text-sm text-red-600">{errors.certificates}</p>
-                )}
-              </div>
-              <div>
-                <FileUpload
-                  id="digitalSignature"
-                  label="Digital Signature"
-                  accept="image/jpeg,image/png"
-                  value={formData.digitalSignature}
-                  onChange={(files) => handleFileChange('digitalSignature', files)}
-                  maxSizeMB={2}
-                />
-                {errors.digitalSignature && (
-                  <p className="mt-1 text-sm text-red-600">{errors.digitalSignature}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="mt-8">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                isSubmitting 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-              } transition-colors duration-200`}
-            >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Submitting...
-                </>
-              ) : (
-                'Submit Registration'
-              )}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );
 };
+
+export default App;

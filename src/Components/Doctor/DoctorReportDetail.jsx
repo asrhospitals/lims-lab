@@ -382,7 +382,7 @@ const DoctorReportDetail = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.regDate}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <button 
-                                            onClick={() => window.location.href='/lims-lab/doctorreportedit'}
+                                            onClick={() => window.location.href='/doctorreportedit'}
                                             className="text-indigo-600 hover:text-indigo-900"
                                         >
                                             Edit

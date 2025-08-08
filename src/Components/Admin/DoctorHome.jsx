@@ -12,11 +12,10 @@ import {
   RiFolderAddLine,
   RiFileSearchLine ,
   RiFileUserLine ,
-  RiFileList2Line ,
-  
+  RiFileList2Line 
 } from "react-icons/ri";
 
- 
+import { FaUserDoctor } from "react-icons/fa6";
 
 import { useNavigate } from "react-router-dom";
 
@@ -188,7 +187,14 @@ const sections = [
       { label: "View Color Master", route: "/view-color" },
     ],
   },
-  
+  {
+    title: "Doctor Registration",
+    icon: <FaUserDoctor  className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Doctor Registration", route: "/doctor-registration" },
+     
+    ],
+  },
 ];
 
 

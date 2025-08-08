@@ -113,10 +113,6 @@ const AddInvestigation1 = () => {
     }
   };
 
-
-
-
-
   // Toolbar and formats for ReactQuill
   const modules = {
     toolbar: [

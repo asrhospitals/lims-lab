@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
-import { FaChevronDown, FaChevronRight, FaHome } from "react-icons/fa";
+import { FaChevronDown, FaChevronRight, FaHome, FaCog } from "react-icons/fa";
 import { IoCalendarOutline } from "react-icons/io5";
 import { RiCellphoneLine } from "react-icons/ri";
 import { FaRegCircle } from "react-icons/fa";
+
 import { FaUserDoctor } from "react-icons/fa6";
 
 const DoctorSidebar = ({
@@ -14,84 +15,101 @@ const DoctorSidebar = ({
   setIsHovered,
 }) => {
   const [expandedItem, setExpandedItem] = useState(null);
-  
-  // Get user role from localStorage
-  const userRole = localStorage.getItem("role") || "";
-  
+
   const user = {
     name: "DrReddy",
     shortName: "DrReddy",
     department: "Doctor",
     shortDept: "Doctor",
     avatar: "/doctor_assets/user.jpg",
-    role: userRole
   };
 
-  // Define all possible menu items with their required roles
-  const allMenuItems = [
+  const menuItems = [
     { type: "label", label: "Admin Panel" },
-    { name: "Dashboard", icon: <FaHome />, link: "", roles: ["admin", "doctor"] },
-    { 
-      name: "Doctor Approval", 
-      icon: <FaUserDoctor />, 
-      link: "/approval",
-      roles: ["admin"] 
-    },
-    {
-      name: "Doctor Master",
-      icon: <FaUserDoctor />,
-      roles: ["admin", "doctor"],
-      children: [
-        { name: "Doctor Report", link: "/doctorreport", roles: ["admin", "doctor"] }
-      ]
-    },
+    { name: "Dashboard", icon: <FaHome />, link: "" },
+    // {
+    //   name: "Appointments",
+    //   icon: <IoCalendarOutline />,
+    //   children: [
+    //     { name: "View Appointments", link: "view-appointments" },
+    //     { name: "Schedule Appointments", link: "schedule-appointments" },
+    //   ],
+    // },
     {
       name: "Master",
       icon: <FaUserDoctor />,
-      roles: ["admin"],
       children: [
+        // { name: "Add Department", link: "add-department" },
         { name: "Department", link: "view-departments" },
+        // { name: "Add Sub-Department", link: "add-subdpt" },
         { name: "Sub-Department", link: "view-subdpt" },
+        // { name: "Add Hos. Type", link: "add-hospitaltype" },
         { name: "Hospital Type", link: "view-hospitaltype" },
+        // { name: "Add Hospital", link: "add-hospital" },
         { name: "Hospital", link: "view-hospital" },
         { name: "Nodal", link: "view-nodal" },
+        
         { name: "Nodal Hospital", link: "/view-nodal-hospitals" },
         { name: "Instrument", link: "/view-instruments" },
         { name: "Nodal Instrument", link: "/view-nodal-instruments" },
+
         { name: "Lab", link: "/view-labtolab" },
         { name: "Role", link: "/view-roles" },
+
+
         { name: "Phelobomist", link: "/view-phlebotomist" },
         { name: "Reception Master", link: "/view-reception" },
         { name: "Technician Master", link: "/view-technician" },
         { name: "Referal Doctor", link: "/view-referal-doctor" },
         { name: "Report Doctor", link: "/view-report-doctor" },
+
         { name: "Profile Entry Master", link: "/view-profile-entry-master" },
         { name: "Profile Master", link: "/view-profile-master" },
         { name: "Investigation Master", link: "/view-investigation" },
+
         { name: "Report Type Master", link: "/view-report-type-master" },
         { name: "Kit Master", link: "/view-kit-master" },
-        { name: "Specimen Type Master", link: "/view-specimen-types" },
+
+
+
+        // { name: "Add Color ", link: "/add-color" },
+        // { name: "Add Specimen Type ", link: "/add-specimen-type" },
+        { name: "Specimen Type Master", link: "/view-specimen-types" }, 
         { name: "Color Master", link: "/view-colors" },
-        { name: "Doctor Registration", link: "/doctor-registration" },
+
+
+        
+
+
+
       ],
     },
+
+
+
+
+
+    // {
+    //   name: "Color Master",
+    //   icon: <FaUserDoctor />,
+    //   children: [
+    //     { name: "Add Color", link: "add-color" },
+    //     { name: "View Colors", link: "view-colors" },
+    //   ],
+    // },
+
+    // {
+    //   name: "Specimen Type Master",
+    //   icon: <FaUserDoctor />,
+    //   children: [
+    //     { name: "Add Specimen Type", link: "add-specimen-type" },
+    //     { name: "View Specimen Types", link: "view-specimen-types" },
+    //   ],
+    // },
+
+    // { name: "Settings", icon: <FaCog />, link: "settings" },
+    
   ];
-
-  // Filter menu items based on user role
-  const filterMenuItems = (items) => {
-    return items.filter(item => {
-      if (item.roles && !item.roles.includes(user.role)) {
-        return false;
-      }
-      if (item.children) {
-        item.children = filterMenuItems(item.children);
-        return item.children.length > 0; // Only show parent if it has visible children
-      }
-      return true;
-    });
-  };
-
-  const menuItems = filterMenuItems(allMenuItems);
 
   const handleToggle = (index) => {
     setExpandedItem(expandedItem === index ? null : index);
@@ -100,18 +118,130 @@ const DoctorSidebar = ({
   const sidebarExpanded = !isCollapsed || isHovered;
   const transitionClass = "transition-all duration-300 ease-in-out";
 
-  // Reset expandedItem when sidebar is collapsed
-  if (isCollapsed && expandedItem !== null) {
-    setExpandedItem(null);
-  }
+  // ScrollbarStyles component for reusable scrollbar styling
+  // ScrollbarStyles component for reusable scrollbar styling
+  // const ScrollbarStyles = () => (
+  //   <style jsx>{`
+
+  //     .custom-scrollbar {
+  //       overflow-y: auto;
+  //       max-height: 100vh; /* Allow full viewport height scroll */
+  //     }
+
+  //     .custom-scrollbar::-webkit-scrollbar {
+  //       width: 8px; /* Overall scrollbar width */
+  //       height: 8px; /* Overall scrollbar height (for horizontal scrollbars) */
+  //     }
+
+  //     /* Track styling */
+  //     .custom-scrollbar::-webkit-scrollbar-track {
+  //       background: transparent;
+  //       border-radius: 10px;
+  //       margin: 4px 0; /* Creates space at top/bottom of track */
+  //       width: 6px; /* Track width */
+  //     }
+
+  //     /* Thumb styling */
+  //     .custom-scrollbar::-webkit-scrollbar-thumb {
+  //       background: transparent;
+  //       border-radius: 10px;
+  //       min-height: 40px; /* Minimum thumb height */
+  //       width: 6px; /* Thumb width */
+  //     }
+
+  //     /* Hover states */
+  //     .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  //       background: #cbd5e1;
+  //       height: 60px; /* You can set specific height on hover if needed */
+  //     }
+
+  //     .custom-scrollbar:hover::-webkit-scrollbar-track {
+  //       background: #f1f5f9;
+  //     }
+  //   `}
+    
+    
+    
+    
+    
+  //   </style>
+
+
+
+    
+  // );
+
+
+
+
+  const ScrollbarStyles = () => (
+  <style jsx>{`
+    .custom-scrollbar {
+      overflow-y: auto;
+      max-height: 100vh; /* Allow full viewport height scroll */
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px; /* Overall scrollbar width */
+      height: 8px; /* Overall scrollbar height (for horizontal scrollbars) */
+    }
+
+    /* Track styling */
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+      border-radius: 10px;
+      margin: 4px 0; /* Creates space at top/bottom of track */
+      width: 6px; /* Track width */
+    }
+
+    /* Thumb styling */
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: transparent;
+      border-radius: 10px;
+      min-height: 40px; /* Minimum thumb height */
+      width: 6px; /* Thumb width */
+    }
+
+    /* Hover states */
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      height: 60px; /* You can set specific height on hover if needed */
+    }
+
+    .custom-scrollbar:hover::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    .sidebar-scroll-container {
+      height: 100vh;       /* full viewport height */
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;    /* enable scroll */
+      scrollbar-width: thin;
+      scrollbar-color: #238781 #e0e0e0;
+    }
+
+    /* Nested scrollable master section */
+    .master-scroll-section {
+      max-height: 400px;   /* or any height you want */
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #238781 #e0e0e0;
+      margin-top: 10px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+  `}</style>
+);
+
 
   return (
     <nav
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 shadow-sm z-40 flex flex-col ${transitionClass} ${
-        sidebarExpanded ? "w-64" : "w-20"
-      }`}
+      className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 shadow-sm z-40 flex flex-col
+      ${transitionClass} ${sidebarExpanded ? "w-64" : "w-20"}`}
+
     >
       {/* Header Section */}
       <div className="flex flex-col">
@@ -132,6 +262,12 @@ const DoctorSidebar = ({
                   ASR Hospitals
                 </span>
               </div>
+              <button
+                onClick={() => setIsCollapsed((prev) => !prev)}
+                className="p-1 rounded-md hover:bg-gray-100"
+              >
+                <HiOutlineMenuAlt3 className="text-xl text-gray-600 hover:rotate-90 ${transitionClass}" />
+              </button>
             </>
           ) : (
             <img
@@ -163,7 +299,7 @@ const DoctorSidebar = ({
               <p className="text-gray-500 text-sm mt-1">{user.department}</p>
             </div>
           ) : (
-            <div className="mt-2 text-center">
+            <div className=" mt-2 text-center">
               <h6 className="font-semibold text-sm text-gray-800">
                 {user.shortName}
               </h6>
@@ -172,9 +308,9 @@ const DoctorSidebar = ({
           )}
         </div>
       </div>
-
       {/* Navigation Items */}
-      <div className="flex-1 min-h-0 overflow-y-auto py-3 px-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent scrollbar-thumb-rounded-full scrollbar-track-rounded-full hover:scrollbar-thumb-gray-400">
+      <ScrollbarStyles />
+      <div className="sidebar-scroll-container custom-scrollbar flex-1 min-h-0 overflow-y-auto py-3 px-2">
         {menuItems.map((item, index) => (
           <div key={index} className="mb-1">
             {item.type === "label" ? (
@@ -218,40 +354,41 @@ const DoctorSidebar = ({
                   )}
                 </button>
 
-                {/* Scrollable Master Section */}
                 <div
-                  className={`overflow-hidden ${transitionClass} ${
-                    expandedItem === index
-                      ? "max-h-[500px] opacity-100 mt-1"
-                      : "max-h-0 opacity-0"
+                  className={`${transitionClass} master-scroll-section overflow-hidden ${
+                    expandedItem === index ? "mt-1" : ""
                   }`}
+                  style={{
+                    maxHeight: expandedItem === index ? "500px" : "0px",
+                    opacity: expandedItem === index ? 1 : 0,
+                  }}
                 >
-                  <div className="max-h-[400px] overflow-y-auto pl-4 border-l border-gray-200 scrollbar-thin scrollbar-thumb-teal-700 scrollbar-track-gray-100 scrollbar-thumb-rounded-full scrollbar-track-rounded-full">
-                    {item.children.map((child, childIndex) => (
-                      <NavLink
-                        key={childIndex}
-                        to={child.link}
-                        className={({ isActive }) =>
-                          `block p-2 mx-1 text-sm rounded-lg ${transitionClass} ${
-                            sidebarExpanded ? "text-left px-3" : "text-center px-2"
-                          } ${
-                            isActive
-                              ? "bg-teal-700 text-white"
-                              : "text-gray-600 hover:bg-gray-100"
-                          }`
-                        }
-                      >
-                        {sidebarExpanded ? (
-                          <div className="flex flex-row items-center gap-2 text-md">
-                            <FaRegCircle className="text-xs" />
-                            <span>{child.name}</span>
-                          </div>
-                        ) : (
-                          <span className="flex justify-center">{child.name.charAt(0)}</span>
-                        )}
-                      </NavLink>
-                    ))}
-                  </div>
+                  {item.children.map((child, childIndex) => (
+                    <NavLink
+                      key={childIndex}
+                      to={child.link}
+                      className={({ isActive }) =>
+                        `block p-2 mx-1 text-sm rounded-lg ${transitionClass} ${
+                          sidebarExpanded
+                            ? "text-left px-3"
+                            : "text-center px-2"
+                        } ${
+                          isActive
+                            ? "bg-teal-700 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      {sidebarExpanded ? (
+                        <div className="flex flex-row align-middle gap-2 text-md">
+                          <FaRegCircle className="text-xl" />
+                          {child.name}
+                        </div>
+                      ) : (
+                        child.name.charAt(0)
+                      )}
+                    </NavLink>
+                  ))}
                 </div>
               </div>
             ) : (
@@ -259,7 +396,9 @@ const DoctorSidebar = ({
                 to={item.link}
                 className={({ isActive }) =>
                   `flex items-center p-2 rounded-lg ${transitionClass} ${
-                    sidebarExpanded ? "px-3" : "justify-center items-center px-3"
+                    sidebarExpanded
+                      ? "px-3"
+                      : "justify-center items-center px-3"
                   } ${
                     isActive
                       ? "bg-[#E5F5F4] text-[#238781]"
@@ -278,6 +417,7 @@ const DoctorSidebar = ({
           </div>
         ))}
       </div>
+      <ScrollbarStyles />
 
       {/* Footer Section */}
       {sidebarExpanded && (
@@ -296,3 +436,4 @@ const DoctorSidebar = ({
 };
 
 export default DoctorSidebar;
+

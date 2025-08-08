@@ -1,419 +1,469 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-// import Cookies from "js-cookie";
-// import { Navigate } from "react-router-dom";
-import AdminLogin from "./LoginPage";
-import AdminHome from "./Components/Admin/DoctorHome";
+import { createBrowserRouter, RouterProvider, Outlet, Navigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+
+// Layouts
 import AdminsDashboard from "./Layouts/DoctorsDashboard";
 
+// Auth
+import AdminLogin from "./Components/Admin/LoginPage";
 
+// Dashboard & Home
+import AdminHome from "./Components/Admin/DoctorHome";
+import DoctorReportDetail from "./Components/Admin/DoctorReportDetail";
+import DoctorReporteditDetail from "./Components/Admin/DoctorReporteditDetail";
 
+// Admin Management
+import AdminApproval from "./Components/Admin/AdminApproval";
+import AdminApprovalTest from "./Components/Admin/AdminApprovalTest";
+
+// Department Management
 import AddDept from "./Components/Admin/AddDept";
 import ViewDepartment from "./Components/Admin/ViewDepartments";
 import UpdateDept from "./Components/Admin/UpdateDept";
 import AddSubDpt from "./Components/Admin/AddSubDept";
 import ViewSubDpt from "./Components/Admin/ViewSubDept";
 import UpdateSubDpt from "./Components/Admin/UpdateSubDept";
+
+// Hospital Management
 import AddHospitalType from "./Components/Admin/AddHospitalType";
 import ViewHospitalType from "./Components/Admin/ViewHospitalType";
 import UpdateHospitalType from "./Components/Admin/UpdateHospitalType";
 import AddHospital from "./Components/Admin/AddHospital";
 import ViewHospital from "./Components/Admin/ViewHospital";
 import UpdateHospital from "./Components/Admin/UpdateHospital";
+
+// Lab Management
 import AddLabToLab from "./Components/Admin/AddLabToLab";
 import ViewLabToLab from "./Components/Admin/ViewLabToLab";
-import AddNodalHospital from "./Components/Admin/AddNodalHospital";
-import ViewNodalHospital from "./Components/Admin/ViewNodalHospital";
-import AddInstrument from "./Components/Admin/AddInstrument";
-import ViewInstrument from "./Components/Admin/ViewInstrument";
 import UpdateLabToLab from "./Components/Admin/UpdateLabToLab";
-import UpdateInstrument from "./Components/Admin/UpdateInstrument";
-import ViewNodalInstrument from "./Components/Admin/ViewNodalInstruments";
-import AddNodalInstrument from "./Components/Admin/AddNodalInstrument";
-import UpdateNodalInstrument from "./Components/Admin/UpdateNodalIstrument";
+
+// Nodal Management
 import AddNodal from "./Components/Admin/AddNodal";
 import ViewNodal from "./Components/Admin/ViewNodal";
 import UpdateNodal from "./Components/Admin/UpdateNodal";
+import AddNodalHospital from "./Components/Admin/AddNodalHospital";
+import ViewNodalHospital from "./Components/Admin/ViewNodalHospital";
 import UpdateNodalHospital from "./Components/Admin/UpdateNodalHospital";
+
+// Instrument Management
+import AddInstrument from "./Components/Admin/AddInstrument";
+import ViewInstrument from "./Components/Admin/ViewInstrument";
+import UpdateInstrument from "./Components/Admin/UpdateInstrument";
+import AddNodalInstrument from "./Components/Admin/AddNodalInstrument";
+import ViewNodalInstrument from "./Components/Admin/ViewNodalInstruments";
+import UpdateNodalInstrument from "./Components/Admin/UpdateNodalIstrument";
+
+// Role Management
 import AddRole from "./Components/Admin/AddRole";
 import ViewRole from "./Components/Admin/ViewRole";
 import UpdateRole from "./Components/Admin/UpdateRole";
 
-
-
-
-import ViewPhlebotomist from "./Components/Admin/ViewPhlebotomist";
-import ViewReception from "./Components/Admin/ViewReception";
-import ViewTechnician from "./Components/Admin/ViewTechnician";
-import ViewReferalDoctor from "./Components/Admin/ViewReferalDoctor";
-import ViewReportDoctor from "./Components/Admin/ViewReportDoctor";
-
-import ViewProfileEntryMaster from "./Components/Admin/ViewProfileEntryMaster";
-import ViewProfileMaster from "./Components/Admin/ViewProfileMaster";
-import ViewInvestigation from "./Components/Admin/ViewInvestigation";
-
-import ViewReportTypeMaster from "./Components/Admin/ViewReportTypeMaster";
-import ViewKitMaster from "./Components/Admin/ViewKitMaster";
-import ViewSpecimenType from "./Components/Admin/ViewSpecimenType";
-import ViewColor from "./Components/Admin/ViewColor";
-
-
-
+// User Management
 import AddPhlebotomist from "./Components/Admin/AddPhelobomist";
-import AddReception from "./Components/Admin/AddReception";
-import AddTechnician from "./Components/Admin/AddTechnician";
-import AddReferalDoctor from "./Components/Admin/AddReferalDoctor";
-import AddReportDoctor from "./Components/Admin/AddReportDoctor";
-
-import AddProfileEntryMaster from "./Components/Admin/AddProfileEntryMaster";
-import AddInvestigation from "./Components/Admin/AddInvestigation";
-import AddKitMaster from "./Components/Admin/AddKitMaster";
-import AddReportTypeMaster from "./Components/Admin/AddReportTypeMaster";
-import AddSpecimenType from "./Components/Admin/AddSpecimenType";
-import AddColor from "./Components/Admin/AddColor";
-import AddProfileMaster from "./Components/Admin/AddProfileMaster";
-
-
-
+import ViewPhlebotomist from "./Components/Admin/ViewPhlebotomist";
 import UpdatePhlebotomist from "./Components/Admin/UpdatePhlebotomist";
+import AddReception from "./Components/Admin/AddReception";
+import ViewReception from "./Components/Admin/ViewReception";
 import UpdateReception from "./Components/Admin/UpdateReception";
+import AddTechnician from "./Components/Admin/AddTechnician";
+import ViewTechnician from "./Components/Admin/ViewTechnician";
 import UpdateTechnician from "./Components/Admin/UpdateTechnician";
+
+// Doctor Management
+import AddReferalDoctor from "./Components/Admin/AddReferalDoctor";
+import ViewReferalDoctor from "./Components/Admin/ViewReferalDoctor";
 import UpdateReferalDoctor from "./Components/Admin/UpdateReferalDoctor";
+import AddReportDoctor from "./Components/Admin/AddReportDoctor";
+import ViewReportDoctor from "./Components/Admin/ViewReportDoctor";
 import UpdateReportDoctor from "./Components/Admin/UpdateReportDoctor";
+import DoctorRegistration from "./Components/Admin/DoctorRegistration";
 
+// Profile & Investigation Management
+import AddProfileMaster from "./Components/Admin/AddProfileMaster";
+import ViewProfileMaster from "./Components/Admin/ViewProfileMaster";
+import AddProfileEntryMaster from "./Components/Admin/AddProfileEntryMaster";
+import ViewProfileEntryMaster from "./Components/Admin/ViewProfileEntryMaster";
 import UpdateProfileEntryMaster from "./Components/Admin/UpdateProfileEntryMaster";
+import AddInvestigation from "./Components/Admin/AddInvestigation";
+import ViewInvestigation from "./Components/Admin/ViewInvestigation";
 import UpdateInvestigation from "./Components/Admin/UpdateInvestigation";
-import UpdateKitMaster from "./Components/Admin/UpdateKitMaster";
-import UpdateReportTypeMaster from "./Components/Admin/UpdateReportTypeMaster";
-import UpdateSpecimenType from "./Components/Admin/UpdateSpecimenType";
-import UpdateColor from "./Components/Admin/UpdateColor";
-
 import AddInvestigation1 from "./Components/Admin/AddInvestigation1";
 
+// Master Data Management
+import AddKitMaster from "./Components/Admin/AddKitMaster";
+import ViewKitMaster from "./Components/Admin/ViewKitMaster";
+import UpdateKitMaster from "./Components/Admin/UpdateKitMaster";
+import AddReportTypeMaster from "./Components/Admin/AddReportTypeMaster";
+import ViewReportTypeMaster from "./Components/Admin/ViewReportTypeMaster";
+import UpdateReportTypeMaster from "./Components/Admin/UpdateReportTypeMaster";
+import AddSpecimenType from "./Components/Admin/AddSpecimenType";
+import ViewSpecimenType from "./Components/Admin/ViewSpecimenType";
+import UpdateSpecimenType from "./Components/Admin/UpdateSpecimenType";
+import AddColor from "./Components/Admin/AddColor";
+import ViewColor from "./Components/Admin/ViewColor";
+import UpdateColor from "./Components/Admin/UpdateColor";
 
-
-
-
-
-
+// A simple layout component for routes that don't need the dashboard
+const SimpleLayout = () => <Outlet />;
 
 function App() {
-  const AdminChecker = ({ element }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState('');
+  
+  // Define access levels
+  const hasAdminAccess = userRole === 'admin';
+  const hasDoctorAccess = userRole === 'doctor';
+
+  useEffect(() => {
+    // Check authentication status when component mounts
     const token = localStorage.getItem("authToken");
-    return token ? element : <AdminLogin />;
+    const role = localStorage.getItem("role");
+    setIsAuthenticated(!!token);
+    setUserRole(role || '');
+    setIsLoading(false);
+  }, []);
+
+  // Simple route protection
+  const requireRole = (requiredRole, element) => {
+    if (isLoading) return <div>Loading...</div>;
+    if (requiredRole === 'admin' && !hasAdminAccess) return <Navigate to="/" />;
+    if (requiredRole === 'doctor' && !hasDoctorAccess && !hasAdminAccess) return <Navigate to="/" />;
+    return element;
   };
+
+  // Protected route component
+  const ProtectedRoute = ({ children }) => {
+    if (isLoading) {
+      return <div>Loading...</div>; // Or a loading spinner
+    }
+    return isAuthenticated ? children : <Navigate to="/login" replace />;
+  };
+
+  // Public route component
+  const PublicRoute = ({ children }) => {
+    if (isLoading) {
+      return <div>Loading...</div>;
+    }
+    return !isAuthenticated ? children : <Navigate to="/" replace />;
+  };
+
+  // Create the router configuration
   const router = createBrowserRouter([
     {
+      path: "/login",
+      element: (
+        <PublicRoute>
+          <AdminLogin />
+        </PublicRoute>
+      ),
+    },
+    {
       path: "/",
-      // element: <AdminsDashboard />,
-      element: <AdminChecker element={<AdminsDashboard />} />,
+      element: (
+        <ProtectedRoute>
+          <AdminsDashboard />
+        </ProtectedRoute>
+      ),
       children: [
         {
           path: "",
-          element: <AdminHome />,
+          element: hasAdminAccess ? <AdminHome /> : <Navigate to="/doctorreport" />,
+        },
+        // Admin Management
+        {
+          path: "approval",
+          element: requireRole('admin', <AdminApproval />),
         },
         {
+          path: "approval-test",
+          element: requireRole('admin', <AdminApprovalTest />),
+        },
+        {
+          path: "doctorreport",
+          element: requireRole('doctor', <DoctorReportDetail />),
+        },
+        {
+          path: "doctorreportedit",
+          element: requireRole('doctor', <DoctorReporteditDetail />),
+        },
+        // Department Management
+        {
           path: "add-department",
-          element: <AddDept />,
+          element: requireRole('admin', <AddDept />),
         },
         {
           path: "view-departments",
-          element: <ViewDepartment />,
+          element: requireRole('admin', <ViewDepartment />),
         },
         {
           path: "update-department",
-          element: <UpdateDept />,
+          element: requireRole('admin', <UpdateDept />),
         },
         {
           path: "add-subDpt",
-          element: <AddSubDpt />,
+          element: requireRole('admin', <AddSubDpt />),
         },
         {
           path: "view-subDpt",
-          element: <ViewSubDpt />,
+          element: requireRole('admin', <ViewSubDpt />),
         },
         {
           path: "update-subDpt",
-          element: <UpdateSubDpt />,
+          element: requireRole('admin', <UpdateSubDpt />),
         },
+        // Hospital Management
         {
           path: "add-hospitaltype",
-          element: <AddHospitalType />,
+          element: userRole === 'admin' ? <AddHospitalType /> : <Navigate to="/" />,
         },
         {
           path: "view-hospitaltype",
-          element: <ViewHospitalType />,
+          element: userRole === 'admin' ? <ViewHospitalType /> : <Navigate to="/" />,
         },
         {
           path: "update-hospitaltype",
-          element: <UpdateHospitalType />,
+          element: userRole === 'admin' ? <UpdateHospitalType /> : <Navigate to="/" />,
         },
         {
           path: "add-hospital",
-          element: <AddHospital />,
+          element: userRole === 'admin' ? <AddHospital /> : <Navigate to="/" />,
         },
         {
           path: "view-hospital",
-          element: <ViewHospital />,
+          element: userRole === 'admin' ? <ViewHospital /> : <Navigate to="/" />,
+        },
+        {
+          path: "doctor-registration",
+          element: userRole === 'admin' ? <DoctorRegistration /> : <Navigate to="/" />,
         },
         {
           path: "update-hospital",
-          element: <UpdateHospital />,
+          element: userRole === 'admin' ? <UpdateHospital /> : <Navigate to="/" />,
         },
-        {
-          path: "add-labtolab",
-          element: <AddLabToLab />,
-        },
-        {
-          path: "view-labtolab",
-          element: <ViewLabToLab />,
-        },
-        {
-          path: "update-labtolab",
-          element: <UpdateLabToLab />,
-        },
+        // Nodal Management
         {
           path: "add-nodal",
-          element: <AddNodal />,
+          element: requireRole('admin', <AddNodal />),
         },
         {
           path: "view-nodal",
-          element: <ViewNodal />,
+          element: requireRole('admin', <ViewNodal />),
         },
         {
           path: "update-nodal",
-          element: <UpdateNodal />,
+          element: requireRole('admin', <UpdateNodal />),
         },
         {
           path: "add-nodal-hospital",
-          element: <AddNodalHospital />,
+          element: requireRole('admin', <AddNodalHospital />),
         },
         {
           path: "view-nodal-hospitals",
-          element: <ViewNodalHospital />,
+          element: requireRole('admin', <ViewNodalHospital />),
         },
         {
           path: "update-nodal-hospital",
-          element: <UpdateNodalHospital />,
+          element: requireRole('admin', <UpdateNodalHospital />),
         },
+        // Instrument Management
         {
           path: "add-instrument",
-          element: <AddInstrument />,
+          element: requireRole('admin', <AddInstrument />),
         },
         {
           path: "view-instruments",
-          element: <ViewInstrument />,
+          element: requireRole('admin', <ViewInstrument />),
         },
         {
           path: "update-instrument",
-          element: <UpdateInstrument />,
+          element: requireRole('admin', <UpdateInstrument />),
         },
         {
           path: "add-nodal-instrument",
-          element: <AddNodalInstrument />,
+          element: requireRole('admin', <AddNodalInstrument />),
         },
         {
           path: "view-nodal-instruments",
-          element: <ViewNodalInstrument />,
+          element: requireRole('admin', <ViewNodalInstrument />),
         },
         {
           path: "update-nodal-instrument",
-          element: <UpdateNodalInstrument />,
+          element: requireRole('admin', <UpdateNodalInstrument />),
         },
+        // Role Management
         {
           path: "add-role",
-          element: <AddRole />,
+          element: requireRole('admin', <AddRole />),
         },
         {
           path: "view-roles",
-          element: <ViewRole />,
+          element: requireRole('admin', <ViewRole />),
         },
         {
           path: "update-role",
-          element: <UpdateRole />,
+          element: requireRole('admin', <UpdateRole />),
         },
-
-
-
-
+        // User Management
         {
           path: "add-phlebotomist",
-          element: <AddPhlebotomist />,
+          element: requireRole('admin', <AddPhlebotomist />),
         },
         {
           path: "view-phlebotomist",
-          element: <ViewPhlebotomist />,
+          element: requireRole('admin', <ViewPhlebotomist />),
         },
         {
           path: "update-phlebotomist",
-          element: <UpdatePhlebotomist />,
+          element: requireRole('admin', <UpdatePhlebotomist />),
         },
-
-
         {
           path: "add-reception",
-          element: <AddReception />,
+          element: requireRole('admin', <AddReception />),
         },
         {
           path: "view-reception",
-          element: <ViewReception />,
+          element: requireRole('admin', <ViewReception />),
         },
         {
           path: "update-reception",
-          element: <UpdateReception />,
+          element: requireRole('admin', <UpdateReception />),
         },
-
         {
           path: "add-technician",
-          element: <AddTechnician />,
+          element: requireRole('admin', <AddTechnician />),
         },
         {
           path: "view-technician",
-          element: <ViewTechnician />,
+          element: requireRole('admin', <ViewTechnician />),
         },
         {
           path: "update-technician",
-          element: <UpdateTechnician />,
+          element: requireRole('admin', <UpdateTechnician />),
         },
-
-
+        // Doctor Management
         {
           path: "add-referal-doctor",
-          element: <AddReferalDoctor />,
+          element: requireRole('admin', <AddReferalDoctor />),
         },
         {
           path: "view-referal-doctor",
-          element: <ViewReferalDoctor />,
+          element: requireRole('admin', <ViewReferalDoctor />),
         },
         {
           path: "update-referal-doctor",
-          element: <UpdateReferalDoctor />,
+          element: requireRole('admin', <UpdateReferalDoctor />),
         },
         {
           path: "add-report-doctor-master",
-          element: <AddReportDoctor />,
+          element: requireRole('admin', <AddReportDoctor />),
         },
         {
           path: "view-report-doctor",
-          element: <ViewReportDoctor />,
+          element: requireRole('admin', <ViewReportDoctor />),
         },
         {
           path: "update-report-doctor-master",
-          element: <UpdateReportDoctor />,
+          element: requireRole('admin', <UpdateReportDoctor />),
         },
-
-
+        // Profile & Investigation Management
         {
           path: "add-profile-entry-master",
-          element: <AddProfileEntryMaster />,
+          element: requireRole('admin', <AddProfileEntryMaster />),
         },
         {
           path: "view-profile-entry-master",
-          element: <ViewProfileEntryMaster />,
+          element: requireRole('admin', <ViewProfileEntryMaster />),
         },
         {
           path: "update-profile-entry-master",
-          element: <UpdateProfileEntryMaster />,
+          element: requireRole('admin', <UpdateProfileEntryMaster />),
         },
-
         {
           path: "add-profile-master",
-          element: <AddProfileMaster />,
+          element: requireRole('admin', <AddProfileMaster />),
         },
         {
           path: "view-profile-master",
-          element: <ViewProfileMaster />,
+          element: requireRole('admin', <ViewProfileMaster />),
         },
-
-        
         {
           path: "add-investigation",
-          element: <AddInvestigation />,
+          element: requireRole('admin', <AddInvestigation />),
         },
         {
-          // new design
           path: "add-investigation1",
-          element: <AddInvestigation1 />,
+          element: requireRole('admin', <AddInvestigation1 />),
         },
         {
           path: "view-investigation",
-          element: <ViewInvestigation />,
+          element: requireRole('admin', <ViewInvestigation />),
         },
         {
           path: "update-investigation",
-          element: <UpdateInvestigation />,
+          element: requireRole('admin', <UpdateInvestigation />),
         },
-
-
-
-
+        // Master Data Management
         {
           path: "add-report-type-master",
-          element: <AddReportTypeMaster />,
+          element: requireRole('admin', <AddReportTypeMaster />),
         },
         {
           path: "view-report-type-master",
-          element: <ViewReportTypeMaster />,
+          element: requireRole('admin', <ViewReportTypeMaster />),
         },
         {
           path: "update-report-type-master",
-          element: <UpdateReportTypeMaster />,
+          element: requireRole('admin', <UpdateReportTypeMaster />),
         },
-        
         {
           path: "add-kit-master",
-          element: <AddKitMaster />,
+          element: requireRole('admin', <AddKitMaster />),
         },
         {
           path: "view-kit-master",
-          element: <ViewKitMaster />,
+          element: requireRole('admin', <ViewKitMaster />),
         },
         {
           path: "update-kit-master",
-          element: <UpdateKitMaster />,
+          element: requireRole('admin', <UpdateKitMaster />),
         },
-
-
-        
         {
           path: "add-specimen-type",
-          element: <AddSpecimenType />,
+          element: requireRole('admin', <AddSpecimenType />),
         },
         {
           path: "view-specimen-types",
-          element: <ViewSpecimenType />,
+          element: requireRole('admin', <ViewSpecimenType />),
         },
         {
           path: "update-specimen-type",
-          element: <UpdateSpecimenType />,
+          element: requireRole('admin', <UpdateSpecimenType />),
         },
         {
           path: "add-color",
-          element: <AddColor />,
+          element: requireRole('admin', <AddColor />),
         },
         {
           path: "view-colors",
-          element: <ViewColor />,
+          element: requireRole('admin', <ViewColor />),
         },
         {
           path: "update-color",
-          element: <UpdateColor />,
+          element: requireRole('admin', <UpdateColor />),
         },
-
-
+        // Fallback route
         {
           path: "*",
-          element: <>Not found</>,
+          element: <Navigate to="/" replace />,
         },
       ],
     },
-  ]);
+  ], {
+    basename: "/"
+  });
 
-  return (
-    <>
-      <RouterProvider router={router} />
-     
-    </>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

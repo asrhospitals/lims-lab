@@ -2,9 +2,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 
+import AdminLogin from "./LoginPage.jsx";
 import App from "./App.jsx";
 import PhlebotomistApp from "./PhlebotomistApp.jsx";
 import ReceptionApp from "./ReceptionApp.jsx";
+import DoctorApp from "./DoctorApp.jsx";
 
 // Get the stored role from localStorage
 const role = localStorage.getItem("role");
@@ -22,8 +24,11 @@ switch (role) {
   case "reception":
     RootComponent = ReceptionApp;
     break;
+  case "doctor":
+    RootComponent = DoctorApp;
+    break;
   default:
-    RootComponent = App; // fallback, could also be a LoginPage or ErrorPage
+    RootComponent = AdminLogin; // fallback, could also be a LoginPage or ErrorPage
 }
 
 createRoot(document.getElementById("root")).render(

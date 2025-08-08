@@ -19,7 +19,7 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function DocNavbar({ isCollapsed, isHovered, sidebarWidth, setIsCollapsed }) {
+export default function DoctorNavbar({ isCollapsed, isHovered, sidebarWidth, setIsCollapsed }) {
   const [showDropdown, setShowDropdown] = useState(null);
   const navigate = useNavigate();
 
