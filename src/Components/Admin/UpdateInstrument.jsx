@@ -1,16 +1,15 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import AdminContext from "../../context/adminContext";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { updateInstrument, viewInstrument } from "../../services/apiService";
 
 const UpdateInstrument = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { instrumentToUpdate, setInstrumentToUpdate } =
-    useContext(AdminContext);
+  const [instrumentData, setInstrumentData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const {
@@ -21,63 +20,66 @@ const UpdateInstrument = () => {
     trigger,
   } = useForm({ mode: "onBlur" });
 
-  // Set default values when component mounts or context updates
+  // Fetch instrument data by ID
   useEffect(() => {
-    let data = instrumentToUpdate;
-    console.log(data);
-    if (!data) {
-      const stored = localStorage.getItem("instrumentToUpdate");
-      if (stored) {
-        try {
-          data = JSON.parse(stored);
-          setInstrumentToUpdate(data);
-        } catch (err) {
-          console.error("Failed to parse instrument from localStorage", err);
-        }
+    const fetchInstrumentData = async () => {
+      if (!id) {
+        toast.error("❌ No instrument ID provided.");
+        navigate("/view-instruments");
+        return;
       }
-    }
 
-    if (data) {
-      const formattedDate = data.installDate
-        ? new Date(data.installDate).toISOString().split("T")[0]
-        : "";
+      try {
+        setLoading(true);
+        const response = await viewInstrument(id);
+        const data = response;
 
-      reset({
-        instrumentname: data.instrumentname || "",
-        make: data.make || "",
-        short_code: data.short_code || "",
-        installDate: data.installDateFormatted,
-        isactive: data.isActive ? "true" : "false",
-      });
-    }
-  }, [instrumentToUpdate, reset, setInstrumentToUpdate]);
+        if (data) {
+          setInstrumentData(data);
+
+          // Populate form with fetched data
+          reset({
+            instrumentname: data.instrumentname || "",
+            make: data.make || "",
+            short_code: data.short_code || "",
+            installDate: data.installdate ? data.installdate.split("T")[0] : "",
+            isactive: data.isactive ? "true" : "false",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch instrument:", error);
+        toast.error("❌ Failed to fetch instrument data.");
+        navigate("/view-instruments");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInstrumentData();
+  }, [id, navigate, reset]);
 
   const onSubmit = async (data) => {
-    if (!instrumentToUpdate?.id) return;
+    if (!id) {
+      toast.error("❌ No valid instrument ID to update.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
+      const payload = {
+        instrumentname: data.instrumentname,
+        make: data.make,
+        short_code: data.short_code,
+        installdate: data.installDate,
+        isactive: data.isactive === "true",
+      };
 
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-instrument/${instrumentToUpdate.id}`,
-        {
-          ...data,
-          isactive: data.isactive === "true",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await updateInstrument(id, payload);
 
       toast.success("✅ Instrument updated successfully!");
-      setInstrumentToUpdate(null);
-      localStorage.removeItem("instrumentToUpdate");
       navigate("/view-instruments");
     } catch (error) {
-      console.error(error);
+      console.error("Error updating instrument:", error);
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to update instrument. Please try again."
@@ -91,17 +93,37 @@ const UpdateInstrument = () => {
     {
       name: "instrumentname",
       label: "Instrument Name",
-      validation: { required: "Instrument name is required" },
+      validation: {
+        required: "Instrument name is required",
+        pattern: {
+          value: /^[a-zA-Z0-9_,\s-]+$/,
+          message:
+            "Only letters, numbers, underscore, comma, hyphen and spaces allowed",
+        },
+      },
     },
     {
       name: "make",
       label: "Make",
-      validation: { required: "Make is required" },
+      validation: {
+        required: "Make is required",
+        pattern: {
+          value: /^[a-zA-Z0-9_,\s-]+$/,
+          message:
+            "Only letters, numbers, underscore, comma, hyphen and spaces allowed",
+        },
+      },
     },
     {
       name: "short_code",
       label: "Short Code",
-      validation: { required: "Short code is required" },
+      validation: {
+        required: "Short code is required",
+        pattern: {
+          value: /^[a-zA-Z0-9_-]+$/,
+          message: "Only letters, numbers, underscore and hyphen allowed",
+        },
+      },
     },
     {
       name: "installDate",
@@ -121,34 +143,57 @@ const UpdateInstrument = () => {
     },
   ];
 
-  if (!instrumentToUpdate) {
+  if (loading) {
     return (
       <div className="text-center py-10">
-        <p className="text-gray-500">No instrument selected for update.</p>
+        <p className="text-gray-500">⏳ Loading instrument details...</p>
+      </div>
+    );
+  }
+
+  if (!instrumentData) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500">Instrument not found.</p>
       </div>
     );
   }
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="/" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-instruments"
-            className="hover:text-blue-600"
-          >
-            Instruments /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Update Instrument
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/admin-dashboard"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-instruments"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Instruments
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Update Instrument
+            </li>
+          </ol>
+        </nav>
       </div>
 
-      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -214,8 +259,7 @@ const UpdateInstrument = () => {
                 type="button"
                 onClick={() => {
                   reset();
-                  setInstrumentToUpdate(null);
-                  localStorage.removeItem("instrumentToUpdate");
+                  navigate("/view-instruments");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >

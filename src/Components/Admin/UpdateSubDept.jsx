@@ -1,17 +1,22 @@
-import { useContext, useEffect, useState } from "react"; 
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import AdminContext from "../../context/adminContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
+import {
+  updateSubDepartment,
+  viewDepartments,
+  viewSubDepartment,
+} from "../../services/apiService";
 
 const UpdateSubDpt = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [departments, setDepartments] = useState([]);
-  const [ setFetchError] = useState(null);
-  const { subDptToUpdate, setsubDptToUpdate } = useContext(AdminContext);
+  const [subDptToUpdate, setSubDptToUpdate] = useState(null);
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const {
     register,
@@ -19,7 +24,6 @@ const UpdateSubDpt = () => {
     formState: { errors },
     reset,
     trigger,
-    watch,
   } = useForm({
     mode: "onBlur",
     defaultValues: {
@@ -29,81 +33,63 @@ const UpdateSubDpt = () => {
     },
   });
 
-  // Watch dptname value for controlled select
-  const selectedDptName = watch("dptname");
-
-  // Fetch departments on mount
+  // Fetch both departments and sub-department data
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchData = async () => {
+      if (!id) {
+        toast.error("No sub-department ID provided");
+        navigate("/view-subDpt");
+        return;
+      }
+
+      setIsLoading(true);
       try {
         const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-department",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }
-        );
-        setDepartments(response.data || []);
+
+        // Fetch departments and sub-department data in parallel
+        const [departmentsResponse, subDeptResponse] = await Promise.all([
+          viewDepartments(),
+          viewSubDepartment(id),
+        ]);
+
+        setDepartments(departmentsResponse.data || []);
+        setSubDptToUpdate(subDeptResponse);
+        console.log(subDeptResponse);
+        // Set form values - use department ID for the select field
+        reset({
+          dptname: subDeptResponse.department_id || "",
+          subdptname: subDeptResponse.subdptname || "",
+          isactive: String(subDeptResponse.isactive),
+        });
       } catch (error) {
-        setFetchError(
-          error.response?.data?.message || "Failed to fetch departments."
+        console.error("Failed to fetch data:", error);
+        toast.error(
+          error?.response?.data?.message ||
+            "Failed to fetch sub-department data. Please try again."
         );
+        navigate("/view-subDpt");
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchDepartments();
-  }, []);
-
-  // Set form default values from subDptToUpdate or localStorage
-  useEffect(() => {
-    if (!subDptToUpdate) {
-      const stored = localStorage.getItem("subDptToUpdate");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setsubDptToUpdate(parsed);
-          reset({
-            dptname: parsed.dptname || "",
-            subdptname: parsed.subdptname || "",
-            isactive: String(parsed.isactive),
-          });
-        } catch (err) {
-          console.error("Failed to parse sub-department from localStorage", err);
-        }
-      }
-    } else {
-      reset({
-        dptname: subDptToUpdate.dptname || "",
-        subdptname: subDptToUpdate.subdptname || "",
-        isactive: String(subDptToUpdate.isactive),
-      });
-    }
-  }, [subDptToUpdate, reset, setsubDptToUpdate]);
+    fetchData();
+  }, [id, reset, navigate]);
 
   const onSubmit = async (data) => {
-    if (!subDptToUpdate?.id) return;
+    if (!id) return;
     setIsSubmitting(true);
 
     try {
-      const authToken = localStorage.getItem("authToken");
-
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-subdepartment/${subDptToUpdate.id}`,
-        {
-          ...data,
-          isactive: data.isactive === "true",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await updateSubDepartment(id, {
+        department_id: parseInt(data.dptname),
+        subdptname: data.subdptname,
+        isactive: data.isactive === "true",
+      });
 
       toast.success("✅ Sub-department updated successfully!");
-      setsubDptToUpdate(null);
-      localStorage.removeItem("subDptToUpdate");
-      navigate("/view-subdpt");
+      setSubDptToUpdate(null);
+      navigate("/view-subDpt");
     } catch (error) {
       console.error(error);
       toast.error(
@@ -115,10 +101,18 @@ const UpdateSubDpt = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500">Loading sub-department data...</p>
+      </div>
+    );
+  }
+
   if (!subDptToUpdate) {
     return (
       <div className="text-center py-10">
-        <p className="text-gray-500">No sub-department selected for update.</p>
+        <p className="text-gray-500">Sub-department not found.</p>
       </div>
     );
   }
@@ -177,18 +171,11 @@ const UpdateSubDpt = () => {
                   className={`w-full px-4 py-2 rounded-lg border ${
                     errors.dptname ? "border-red-500" : "border-gray-300"
                   } focus:ring-2 focus:ring-teal-500`}
-                  value={selectedDptName || ""}
-                  onChange={(e) => {
-                    // Manually trigger react-hook-form change event
-                    // NOTE: normally no need if using {...register()}
-                    const event = e;
-                    register("dptname").onChange(event);
-                  }}
                   onBlur={() => trigger("dptname")}
                 >
                   <option value="">-- Select Department --</option>
                   {departments.map((dept, index) => (
-                    <option key={index} value={dept.dptname}>
+                    <option key={index} value={dept.id}>
                       {dept.dptname}
                     </option>
                   ))}
@@ -263,7 +250,7 @@ const UpdateSubDpt = () => {
                 type="button"
                 onClick={() => {
                   reset();
-                  setsubDptToUpdate(null);
+                  navigate("/view-subDpt");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >

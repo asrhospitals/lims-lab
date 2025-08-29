@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { addHospitalType } from "../../services/apiService";
 
 const AddHospitalType = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,23 +26,14 @@ const AddHospitalType = () => {
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
-    // Convert isactive to boolean because API expects boolean
-    const payload = {
-      ...data,
-      isactive: data.isactive === "true",
-    };
     try {
-      const authToken = localStorage.getItem("authToken");
+      // Convert isactive to boolean because API expects boolean
+      const payload = {
+        ...data,
+        isactive: data.isactive === "true",
+      };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-hsptltype",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await addHospitalType(payload);
 
       toast.success("✅ Hospital type created successfully!", {
         position: "top-right",
@@ -275,7 +267,7 @@ const AddHospitalType = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting ? "Saving..." : "Add Hospital Type"}
               </button>
             </div>
           </div>

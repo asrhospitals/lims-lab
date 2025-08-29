@@ -21,7 +21,7 @@ const AddProfileEntryMaster = () => {
     setIsSubmitting(true);
 
     const payload = {
-      profileName: data.profileName,
+      profilename: data.profileName,
       profilecode: data.profilecode,
       alternativebarcode: data.alternativebarcode === "true",
       isactive: data.isactive === "true",

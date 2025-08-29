@@ -1,40 +1,41 @@
-import { useContext, useEffect, useState } from "react"; 
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
+import { viewDepartments } from "../../services/apiService";
 
 const ViewDepartment = () => {
   const [filteredDepartments, setFilteredDepartments] = useState([]);
   const [departments, setDepartments] = useState([]);
-
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const { setDepartmentToUpdate } = useContext(AdminContext);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAllDepartments = async () => {
+      setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-department",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const res = await viewDepartments(params);
+        const departmentsData = res.data.sort(
+          (a, b) => Number(a.id) - Number(b.id)
         );
-
-        // Sort by id ascending (numeric)
-        const departmentsData = response.data.sort((a, b) => Number(a.id) - Number(b.id));
-
+        console.log(departmentsData);
         setDepartments(departmentsData);
         setFilteredDepartments(departmentsData);
+        setTotalPages(res?.meta?.totalPages || 1);
+        setTotalItems(res?.meta?.totalItems || 0);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch departments.");
       } finally {
@@ -43,8 +44,9 @@ const ViewDepartment = () => {
     };
 
     fetchAllDepartments();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
+  // Client-side search filtering
   useEffect(() => {
     if (!search.trim()) {
       setFilteredDepartments(departments);
@@ -57,10 +59,17 @@ const ViewDepartment = () => {
     }
   }, [search, departments]);
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   const handleUpdate = (department) => {
-    setDepartmentToUpdate(department);
-    localStorage.setItem("departmentToUpdate", JSON.stringify(department));
-    navigate("/update-department");
+    navigate(`/update-department/${department.id}`);
   };
 
   const columns = [
@@ -133,6 +142,13 @@ const ViewDepartment = () => {
           </div>
 
           {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>Page {currentPage} of {totalPages}</span>
+          </div>
+
+          {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => navigate("/add-department")}
@@ -155,7 +171,13 @@ const ViewDepartment = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

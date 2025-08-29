@@ -2,10 +2,9 @@ import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
 import AdminContext from "../../context/adminContext";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { addRole } from "../../services/apiService";
 
 const AddRole = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,23 +24,13 @@ const AddRole = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
         roletype: data.roletype,
         roledescription: data.roledescription,
         isactive: data.isactive === "true",
       };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-role",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await addRole(payload);
 
       toast.success("✅ New role created successfully!", {
         position: "top-right",
@@ -106,18 +95,40 @@ const AddRole = () => {
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem href="/view-roles" className="hover:text-blue-600">
-            Roles /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Add Role
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-roles"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Roles
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              Add Role
+            </li>
+          </ol>
+        </nav>
       </div>
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
@@ -254,7 +265,7 @@ const AddRole = () => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Create new role
+                    Add new role
                   </span>
                 )}
               </button>

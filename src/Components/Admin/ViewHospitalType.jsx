@@ -1,44 +1,51 @@
-import { useContext, useEffect, useState } from "react"; 
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
+import { viewHospitalTypes } from "../../services/apiService";
 
 const ViewHospitalType = () => {
+  const [hospitalTypes, setHospitalTypes] = useState([]);
   const [filteredHospitalTypes, setFilteredHospitalTypes] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { hospitalTypes, setHospitalTypes, setHospitalTypeToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchHospitalTypes = async () => {
+      setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        const data = response.data || [];
-        // Ensure data has proper keys: id, hsptltype, hsptldsc, isactive
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const res = await viewHospitalTypes(params);
+        const data = res.data || [];
+
         setHospitalTypes(data);
         setFilteredHospitalTypes(data);
+        setTotalPages(res?.meta?.totalPages || 1);
+        setTotalItems(res?.meta?.totalItems || 0);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch hospital types.");
+        setError(
+          err.response?.data?.message || "Failed to fetch hospital types."
+        );
       } finally {
         setLoading(false);
       }
     };
     fetchHospitalTypes();
-  }, [setHospitalTypes]);
+  }, [currentPage, itemsPerPage]);
 
+  // Client-side search filtering
   useEffect(() => {
     if (!search.trim()) {
       setFilteredHospitalTypes(hospitalTypes);
@@ -46,16 +53,24 @@ const ViewHospitalType = () => {
       const lower = search.toLowerCase();
       const filtered = hospitalTypes.filter(
         (t) =>
-          (t.hsptltype?.toLowerCase().includes(lower) ||
-          t.hsptldsc?.toLowerCase().includes(lower))
+          t.hsptltype?.toLowerCase().includes(lower) ||
+          t.hsptldsc?.toLowerCase().includes(lower)
       );
       setFilteredHospitalTypes(filtered);
     }
   }, [search, hospitalTypes]);
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   const handleUpdate = (hospitalType) => {
-    setHospitalTypeToUpdate(hospitalType);
-    navigate("/update-hospitaltype");
+    navigate(`/update-hospitaltype/${hospitalType.id}`);
   };
 
   // Stats count for active and inactive hospital types
@@ -148,9 +163,8 @@ const ViewHospitalType = () => {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4">
-            
             <button
               onClick={() => navigate("/add-hospitaltype")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
@@ -172,7 +186,13 @@ const ViewHospitalType = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

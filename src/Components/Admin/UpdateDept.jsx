@@ -4,12 +4,16 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import AdminContext from "../../context/adminContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
+import { updateDepartment, viewDepartment } from "../../services/apiService";
 
 const UpdateDept = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { departmentToUpdate, setDepartmentToUpdate } = useContext(AdminContext);
+  const [isLoading, setIsLoading] = useState(true);
+  const { departmentToUpdate, setDepartmentToUpdate } =
+    useContext(AdminContext);
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const {
     register,
@@ -26,51 +30,50 @@ const UpdateDept = () => {
   });
 
   useEffect(() => {
-    if (!departmentToUpdate) {
-      const stored = localStorage.getItem("departmentToUpdate");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setDepartmentToUpdate(parsed);
-          reset({
-            dptname: parsed.dptname || "",
-            isactive: String(parsed.isactive),
-          });
-        } catch (err) {
-          console.error("Failed to parse department from localStorage", err);
-        }
+    const fetchDepartmentData = async () => {
+      if (!id) {
+        toast.error("No department ID provided");
+        navigate("/view-departments");
+        return;
       }
-    } else {
-      reset({
-        dptname: departmentToUpdate.dptname || "",
-        isactive: String(departmentToUpdate.isactive),
-      });
-    }
-  }, [departmentToUpdate, reset, setDepartmentToUpdate]);
+
+      setIsLoading(true);
+      try {
+        const authToken = localStorage.getItem("authToken");
+        const departmentData = await viewDepartment(id);
+        setDepartmentToUpdate(departmentData);
+        reset({
+          dptname: departmentData.dptname || "",
+          isactive: String(departmentData.isactive),
+        });
+      } catch (error) {
+        console.error("Failed to fetch department data:", error);
+        toast.error(
+          error?.response?.data?.message ||
+            "Failed to fetch department data. Please try again."
+        );
+        navigate("/view-departments");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDepartmentData();
+  }, [id, setDepartmentToUpdate, reset, navigate]);
 
   const onSubmit = async (data) => {
-    if (!departmentToUpdate?.id) return;
+    if (!id) return;
 
     setIsSubmitting(true);
     try {
       const authToken = localStorage.getItem("authToken");
 
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-department/${departmentToUpdate.id}`,
-        {
-          ...data,
-          isactive: data.isactive === "true",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-
+      await updateDepartment(id, {
+        ...data,
+        isactive: data.isactive === "true",
+      });
       toast.success("✅ Department updated successfully!");
       setDepartmentToUpdate(null);
-      localStorage.removeItem("departmentToUpdate");
       navigate("/view-departments");
     } catch (error) {
       console.error(error);
@@ -113,10 +116,18 @@ const UpdateDept = () => {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500">Loading department data...</p>
+      </div>
+    );
+  }
+
   if (!departmentToUpdate) {
     return (
       <div className="text-center py-10">
-        <p className="text-gray-500">No department selected for update.</p>
+        <p className="text-gray-500">Department not found.</p>
       </div>
     );
   }
@@ -229,8 +240,7 @@ const UpdateDept = () => {
                 type="button"
                 onClick={() => {
                   reset();
-                  setDepartmentToUpdate(null);
-                  localStorage.removeItem("departmentToUpdate");
+                  navigate("/view-departments");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >

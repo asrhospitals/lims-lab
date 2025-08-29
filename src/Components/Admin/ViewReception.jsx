@@ -1,10 +1,8 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
-// import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { viewReceptions } from "../../services/apiService";
 
 const ViewReception = () => {
   const [receptions, setReceptions] = useState([]);
@@ -12,28 +10,30 @@ const ViewReception = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { setReceptionToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchReceptions = async () => {
+      setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-recep",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        
-        const data = response.data.sort((a, b) => Number(a.id) - Number(b.id));
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
 
-        setReceptions(data);
-        setFilteredReceptions(data);
-        // console.log(filteredReceptions[0].isactive);
+        const res = await viewReceptions(params);
+        const receptionsData = res.data.sort(
+          (a, b) => Number(a.id) - Number(b.id)
+        );
+        setReceptions(receptionsData);
+        setFilteredReceptions(receptionsData);
+        setTotalPages(res?.meta?.totalPages || 1);
+        setTotalItems(res?.meta?.totalItems || 0);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch Receptions.");
       } finally {
@@ -42,112 +42,113 @@ const ViewReception = () => {
     };
 
     fetchReceptions();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
-
+  // Client-side search filtering
   useEffect(() => {
-  if (!search.trim()) {
-    setFilteredReceptions(receptions);
-  } else {
-    const lower = search.toLowerCase();
-    const filtered = (receptions || []).filter((h) =>
-      (h.receptionistName || "").toLowerCase().includes(lower) ||
-      (h.addressLine || "").toLowerCase().includes(lower) ||
-      (h.city || "").toLowerCase().includes(lower) ||
-      (h.state || "").toLowerCase().includes(lower) ||
-      (h.contactNo || "").toLowerCase().includes(lower) ||
-      (h.nodal || "").toLowerCase().includes(lower)
-    );
-    setFilteredReceptions(filtered);
-  }
-}, [search, receptions]);
+    if (!search.trim()) {
+      setFilteredReceptions(receptions);
+    } else {
+      const lower = search.toLowerCase();
+      const filtered = (receptions || []).filter(
+        (h) =>
+          (h.receptionistname || "").toLowerCase().includes(lower) ||
+          (h.addressline || "").toLowerCase().includes(lower) ||
+          (h.city || "").toLowerCase().includes(lower) ||
+          (h.state || "").toLowerCase().includes(lower) ||
+          (h.contactno || "").toLowerCase().includes(lower) ||
+          (h.nodal || "").toLowerCase().includes(lower)
+      );
+      setFilteredReceptions(filtered);
+    }
+  }, [search, receptions]);
 
-
-  const handleUpdate = (reception) => {
-    // console.log(filteredreceptions[0].isactive);
-    setReceptionToUpdate(reception);
-    localStorage.setItem("receptionToUpdate", JSON.stringify(reception));
-    navigate("/update-reception");
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
-//   const activeCount = (receptions || []).filter((h) => h.isactive).length;
-//   const inactiveCount = (receptions || []).length - activeCount;
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  const handleUpdate = (reception) => {
+    navigate(`/update-reception/${reception.id}`);
+  };
+
+  //   const activeCount = (receptions || []).filter((h) => h.isactive).length;
+  //   const inactiveCount = (receptions || []).length - activeCount;
 
   const columns = [
     { key: "id", label: "ID" },
-    { key: "receptionistName", label: "Reception Name" },
-    { key: "contactNo", label: "Phone" },
+    { key: "receptionistname", label: "Reception Name" },
+    { key: "contactno", label: "Phone" },
     { key: "nodal", label: "Nodal" },
     { key: "dob", label: "DOB" },
     { key: "gender", label: "Gender" },
-    { key: "pinCode", label: "Pin Code" },
+    { key: "pincode", label: "Pin Code" },
     { key: "city", label: "City" },
-    { key: "state", label: "State" },
-    
-    
+    // { key: "state", label: "State" },
+    { key: "status", label: "Status" },
+
     // status & action handled by DataTable
   ];
 
   const mappedItems = (filteredReceptions || []).map((h) => ({
     ...h,
     id: h.id,
-    receptionistName: h.receptionistName,
-    contactNo: h.contactNo,
-    nodal: h.nodal,
-    dob: new Date(h.dob).toLocaleDateString("en-IN") || "-",
-    gender: h.gender,
-    pinCode: h.pinCode,
-    city: h.city,
-    state: h.state,
+    receptionistname: h.receptionistname || "",
+    contactno: h.contactno || "",
+    nodal: h.nodal || "",
+    dob: h.dob ? new Date(h.dob).toLocaleDateString("en-IN") : "-",
+    gender: h.gender || "",
+    pincode: h.pincode || "",
+    city: h.city || "",
+    state: h.state || "",
+    isactive: !!h.isactive,
     status: h.isactive ? "Active" : "Inactive",
   }));
 
   return (
-    <>    
+    <>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
 
-    {/* Breadcrumb */}
-    <div className="fixed top-[61px] w-full z-10">
-    <nav
-        className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
-        aria-label="Breadcrumb"
-    >
-        <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li className="text-gray-400">/</li>
 
-        <li>
-            <Link
-            to="/"
-            className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
-            >
-            🏠︎ Home
-            </Link>
-        </li>
+            <li>
+              <Link
+                to="/view-reception"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Receptions
+              </Link>
+            </li>
 
-        <li className="text-gray-400">/</li>
+            <li className="text-gray-400">/</li>
 
-        <li>
-            <Link
-            to="/view-reception"
-            className="text-gray-700 hover:text-teal-600 transition-colors"
-            >
-            Receptions
-            </Link>
-        </li>
+            <li aria-current="page" className="text-gray-500">
+              View Receptions
+            </li>
+          </ol>
+        </nav>
+      </div>
 
-        <li className="text-gray-400">/</li>
-
-        <li aria-current="page" className="text-gray-500">
-            View Receptions
-        </li>
-        </ol>
-    </nav>
-    </div>
-
-
-
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-
-
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
@@ -167,6 +168,14 @@ const ViewReception = () => {
             </div>
           </div>
 
+          {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
 
           {/* Add New */}
           <div className="flex  flex-wrap gap-2 mb-4">
@@ -177,9 +186,6 @@ const ViewReception = () => {
               Add New
             </button>
           </div>
-          
-
-
 
           {/* Table */}
           {loading ? (
@@ -194,7 +200,13 @@ const ViewReception = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

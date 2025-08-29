@@ -1,9 +1,10 @@
-import  {  useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { addDepartment } from "../../services/apiService";
 
 const AddDept = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,23 +21,17 @@ const AddDept = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
+      const formattedData = {
+        ...data,
+        isactive: data.isactive === "true",
+      };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-department",
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await addDepartment(formattedData);
 
       toast.success("✅ New department created successfully!", {
         position: "top-right",
         autoClose: 5000,
       });
-
       reset();
       navigate("/view-departments");
     } catch (error) {
@@ -254,7 +249,7 @@ const AddDept = () => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Create new department
+                    Add Department
                   </span>
                 )}
               </button>

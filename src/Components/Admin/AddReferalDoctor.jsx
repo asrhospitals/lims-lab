@@ -29,7 +29,7 @@ const AddReferalDoctor = () => {
             headers: { Authorization: `Bearer ${authToken}` },
           }
         );
-        setHospitalList(data || []);
+        setHospitalList(data?.data || []);
       } catch (error) {
         setFetchError(
           error.response?.data?.message ||
@@ -161,8 +161,8 @@ const AddReferalDoctor = () => {
       label: "Hospital",
       type: "select",
       options: hospitalList.map((h) => ({
-        value: h.hospital_name,
-        label: h.hospital_name,
+        value: h.hospitalname,
+        label: h.hospitalname,
       })),
       validation: { required: "Hospital is required" },
     },

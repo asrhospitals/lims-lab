@@ -70,7 +70,7 @@ const ViewProfileEntryMaster = () => {
   const columns = [
     { key: "serial", label: "S. No." },
     // { key: "profile_id", label: "Profile ID" },
-    { key: "profileName", label: "Profile Name" },
+    { key: "profilename", label: "Profile Name" },
     { key: "profilecode", label: "Profile Code" },
     { key: "alternativebarcode", label: "Alternative Barcode" },
     { key: "isactive", label: "Status" },

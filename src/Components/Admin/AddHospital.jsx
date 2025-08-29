@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { viewHospitalTypes, addHospital } from "../../services/apiService";
 
 const AddHospital = () => {
   const [hospitalTypes, setHospitalTypes] = useState([]);
@@ -23,13 +24,7 @@ const AddHospital = () => {
   useEffect(() => {
     const fetchHospitalTypes = async () => {
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }
-        );
+        const response = await viewHospitalTypes();
         setHospitalTypes(response.data || []);
       } catch (error) {
         setFetchError(
@@ -43,31 +38,23 @@ const AddHospital = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
-    // Prepare payload with correct column names & types
     const payload = {
       hospitalname: data.hospitalname,
-      hsptltype: data.hsptltype,
+      hospital_type_id: parseInt(data.hsptltype),
       address: data.address,
       city: data.city,
       district: data.district,
-      pin: Number(data.pin),
+      pin: parseInt(data.pin),
       states: data.states,
       email: data.email,
-      phoneno: data.phoneno, // phone as string (e.g. may contain leading zero)
+      phoneno: parseInt(data.phoneno),
       cntprsn: data.cntprsn,
-      cntprsnmob: data.cntprsnmob, // keep as string if leading zero allowed, else Number
+      cntprsnmob: parseInt(data.cntprsnmob),
       isactive: data.isactive === "true",
     };
 
     try {
-      const authToken = localStorage.getItem("authToken");
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-hospital",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addHospital(payload);
 
       toast.success("Hospital added successfully!");
       reset();
@@ -101,7 +88,7 @@ const AddHospital = () => {
       label: "Hospital Type",
       type: "select",
       options: hospitalTypes.map((t) => ({
-        value: t.hsptltype,
+        value: t.id,
         label: t.hsptldsc,
       })),
       validation: { required: "Hospital type is required" },
@@ -368,7 +355,7 @@ const AddHospital = () => {
               disabled={isSubmitting}
               className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-md text-white transition"
             >
-              {isSubmitting ? "Saving..." : "Save Hospital"}
+              {isSubmitting ? "Saving..." : "Add Hospital"}
             </button>
           </div>
         </form>

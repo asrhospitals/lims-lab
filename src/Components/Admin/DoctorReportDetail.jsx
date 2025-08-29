@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './DoctorReportDetail.css';
 
 const DoctorReportDetail = () => {
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -236,84 +235,184 @@ const DoctorReportDetail = () => {
     const paginatedData = sortedData.slice(startIndex, endIndex);
 
     return (
-        <div className="report-detail-container">
-            <h2>Report Detail Section</h2>
-            <div className="filters">
-                <input type="text" placeholder="Search by Hospital" />
-                <input type="text" placeholder="Search by Test" />
-                <input type="date" />
-                <input type="date" />
-                <button>Search</button>
-            </div>
-            <table className="report-table">
-                <thead>
-                    <tr>
-                        <th 
-                            onClick={() => requestSort('id')}
-                            className={sortConfig.key === 'id' ? sortConfig.direction : ''}
-                        >Sl No.</th>
-                        <th 
-                            onClick={() => requestSort('patientId')}
-                            className={sortConfig.key === 'patientId' ? sortConfig.direction : ''}
-                        >Patient ID</th>
-                        <th 
-                            onClick={() => requestSort('patientName')}
-                            className={sortConfig.key === 'patientName' ? sortConfig.direction : ''}
-                        >Patient Name</th>
-                        <th 
-                            onClick={() => requestSort('barCode')}
-                            className={sortConfig.key === 'barCode' ? sortConfig.direction : ''}
-                        >Bar Code</th>
-                        <th 
-                            onClick={() => requestSort('slidePrep')}
-                            className={sortConfig.key === 'slidePrep' ? sortConfig.direction : ''}
-                        >Slide Preparation</th>
-                        <th 
-                            onClick={() => requestSort('nodalName')}
-                            className={sortConfig.key === 'nodalName' ? sortConfig.direction : ''}
-                        >Nodal Name</th>
-                        <th 
-                            onClick={() => requestSort('hospitalName')}
-                            className={sortConfig.key === 'hospitalName' ? sortConfig.direction : ''}
-                        >Hospital Name {sortConfig.key === 'hospitalName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
-                        <th 
-                            onClick={() => requestSort('regDate')}
-                            className={sortConfig.key === 'regDate' ? sortConfig.direction : ''}
-                        >Date Of Registration</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {paginatedData.map((item, index) => (
-                        <tr key={item.id}>
-                            <td>{startIndex + index + 1}</td>
-                            <td>{item.patientId}</td>
-                            <td>{item.patientName}</td>
-                            <td>{item.barCode}</td>
-                            <td>{item.slidePrep}</td>
-                            <td>{item.nodalName}</td>
-                            <td>{item.hospitalName}</td>
-                            <td>{item.regDate}</td>
-                            <td><button onClick={() => window.location.href='/doctorreportedit'}>Edit</button></td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+        <div className="p-4 sm:p-5 bg-white rounded-lg shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Report Detail Section</h2>
             
-            {/* Pagination controls */}
-            <div className="pagination">
+            {/* Search Controls - Updated for mobile */}
+            <div className="flex flex-col gap-3 mb-6 w-full">
+                {/* Search inputs - Stack on mobile */}
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
+                    <input 
+                        type="text" 
+                        placeholder="Search by Hospital" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <input 
+                        type="text" 
+                        placeholder="Search by Test" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+                
+                {/* Date inputs and button - Full width on mobile */}
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
+                    <input 
+                        type="date" 
+                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <input 
+                        type="date" 
+                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium whitespace-nowrap">
+                        Search
+                    </button>
+                </div>
+            </div>
+            
+            {/* Table Container */}
+            <div className="relative h-[60vh] w-full overflow-hidden">
+                <div className="absolute inset-0 overflow-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th 
+                                    onClick={() => requestSort('id')}
+                                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${sortConfig.key === 'id' ? 'bg-gray-100' : ''}`}
+                                >
+                                    <div className="flex items-center">
+                                        Sl No.
+                                        {sortConfig.key === 'id' && (
+                                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </div>
+                                </th>
+                                <th 
+                                    onClick={() => requestSort('patientId')}
+                                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${sortConfig.key === 'patientId' ? 'bg-gray-100' : ''}`}
+                                >
+                                    <div className="flex items-center">
+                                        Patient ID
+                                        {sortConfig.key === 'patientId' && (
+                                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </div>
+                                </th>
+                                <th 
+                                    onClick={() => requestSort('patientName')}
+                                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${sortConfig.key === 'patientName' ? 'bg-gray-100' : ''}`}
+                                >
+                                    <div className="flex items-center">
+                                        Patient Name
+                                        {sortConfig.key === 'patientName' && (
+                                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </div>
+                                </th>
+                                <th 
+                                    onClick={() => requestSort('barCode')}
+                                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${sortConfig.key === 'barCode' ? 'bg-gray-100' : ''}`}
+                                >
+                                    <div className="flex items-center">
+                                        Bar Code
+                                        {sortConfig.key === 'barCode' && (
+                                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </div>
+                                </th>
+                                <th 
+                                    onClick={() => requestSort('slidePrep')}
+                                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${sortConfig.key === 'slidePrep' ? 'bg-gray-100' : ''}`}
+                                >
+                                    <div className="flex items-center">
+                                        Slide Preparation
+                                        {sortConfig.key === 'slidePrep' && (
+                                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </div>
+                                </th>
+                                <th 
+                                    onClick={() => requestSort('nodalName')}
+                                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${sortConfig.key === 'nodalName' ? 'bg-gray-100' : ''}`}
+                                >
+                                    <div className="flex items-center">
+                                        Nodal Name
+                                        {sortConfig.key === 'nodalName' && (
+                                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </div>
+                                </th>
+                                <th 
+                                    onClick={() => requestSort('hospitalName')}
+                                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${sortConfig.key === 'hospitalName' ? 'bg-gray-100' : ''}`}
+                                >
+                                    <div className="flex items-center">
+                                        Hospital Name
+                                        {sortConfig.key === 'hospitalName' && (
+                                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </div>
+                                </th>
+                                <th 
+                                    onClick={() => requestSort('regDate')}
+                                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${sortConfig.key === 'regDate' ? 'bg-gray-100' : ''}`}
+                                >
+                                    <div className="flex items-center">
+                                        Date Of Registration
+                                        {sortConfig.key === 'regDate' && (
+                                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                        )}
+                                    </div>
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {paginatedData.map((item, index) => (
+                                <tr key={item.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{startIndex + index + 1}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.patientId}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.patientName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.barCode}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.slidePrep}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.nodalName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.hospitalName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.regDate}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button 
+                                            onClick={() => window.location.href='/lims-lab/doctorreportedit'}
+                                            className="text-indigo-600 hover:text-indigo-900"
+                                        >
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            {/* Pagination - Stacked on mobile */}
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-1 gap-3">
                 <button 
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
+                    className={`px-4 py-2 border border-gray-300 rounded-md text-sm font-medium w-full sm:w-auto text-center ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                 >
                     Previous
                 </button>
                 
-                <span>Page {currentPage} of {totalPages}</span>
+                <span className="text-sm text-gray-700">
+                    Page {currentPage} of {totalPages}
+                </span>
                 
                 <button 
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
+                    className={`px-4 py-2 border border-gray-300 rounded-md text-sm font-medium w-full sm:w-auto text-center ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                 >
                     Next
                 </button>

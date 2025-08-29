@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom"; 
+import { Link, useNavigate } from "react-router-dom"; 
+import { addInstrument } from "../../services/apiService"; 
 
 const AddInstrument = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,20 +20,15 @@ const AddInstrument = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
-        ...data,
+        instrumentname: data.instrumentname,
+        make: data.make,
+        short_code: data.short_code,
+        installdate: data.installdate,
         isactive: data.isactive === "true",
       };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-instrument",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addInstrument(payload);
 
       toast.success("✅ Instrument added successfully!");
       
@@ -42,6 +36,7 @@ const AddInstrument = () => {
       navigate("/view-instruments");
 
     } catch (error) {
+      console.error("Error adding instrument:", error);
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to add Instrument. Please try again."
@@ -52,61 +47,99 @@ const AddInstrument = () => {
   };
 
   const fields = [
-    {
-      name: "instrumentname",
-      label: "Instrument Name",
-      placeholder: "Enter Instrument Name",
-      validation: { required: "Instrument name is required" },
+  {
+    name: "instrumentname",
+    label: "Instrument Name",
+    type: "text",
+    placeholder: "Enter Instrument Name",
+    validation: { 
+      required: "Instrument name is required",
+      pattern: {
+        value: /^[a-zA-Z0-9_,\s-]+$/,
+        message: "Only letters, numbers, underscore, comma, hyphen and spaces allowed"
+      }
     },
-    {
-      name: "make",
-      label: "Make",
-      placeholder: "Enter Make",
-      validation: { required: "Make is required" },
+  },
+  {
+    name: "make",
+    label: "Make",
+    type: "text",
+    placeholder: "Enter Make",
+    validation: { 
+      required: "Make is required",
+      pattern: {
+        value: /^[a-zA-Z0-9_,\s-]+$/,
+        message: "Only letters, numbers, underscore, comma, hyphen and spaces allowed"
+      }
     },
-    {
-      name: "short_code",
-      label: "Short Code",
-      placeholder: "Enter Short Code",
-      validation: { required: "Short code is required" },
+  },
+  {
+    name: "short_code",
+    label: "Short Code",
+    type: "text",
+    placeholder: "Enter Short Code",
+    validation: { 
+      required: "Short code is required",
+      pattern: {
+        value: /^[a-zA-Z0-9_-]+$/,
+        message: "Only letters, numbers, underscore and hyphen allowed"
+      }
     },
-    {
-      name: "installDate",
-      label: "Install Date",
-      type: "date",
-      validation: { required: "Install date is required" },
-    },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Status is required." },
-    },
-  ];
+  },
+  {
+    name: "installdate",
+    label: "Install Date",
+    type: "date",
+    validation: { required: "Install date is required" },
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+    validation: { required: "Status is required." },
+  },
+];
+
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="/" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-instruments"
-            className="hover:text-blue-600"
-          >
-            Instruments /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Add Instruments
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-instruments"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Instruments
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Add Instrument
+            </li>
+          </ol>
+        </nav>
       </div>
-      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
+
+      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -117,7 +150,7 @@ const AddInstrument = () => {
           </div>
 
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
                 ({
                   name,
@@ -189,7 +222,7 @@ const AddInstrument = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
               >
-                {isSubmitting ? "Saving..." : "Create Instrument"}
+                {isSubmitting ? "Saving..." : "Add Instrument"}
               </button>
             </div>
           </div>

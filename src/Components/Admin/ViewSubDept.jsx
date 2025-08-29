@@ -1,9 +1,9 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
+import { viewSubDepartments } from "../../services/apiService";
 
 const ViewSubDpt = () => {
   const [subDpts, setSubDpts] = useState([]);
@@ -11,26 +11,29 @@ const ViewSubDpt = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
-  const { setsubDptToUpdate } = useContext(AdminContext);
 
   useEffect(() => {
     const fetchSubDepartments = async () => {
+      setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-subdepartment",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
 
-        const sortedData = response.data.sort((a, b) => a.id - b.id);
+        const res = await viewSubDepartments(params);
+        const sortedData = res?.data.sort((a, b) => a.id - b.id);
+        
         setSubDpts(sortedData);
         setFilteredSubDpts(sortedData);
+        setTotalPages(res?.meta?.totalPages || 1);
+        setTotalItems(res?.meta?.totalItems || 0);
       } catch (err) {
         setError(
           err.response?.data?.message || "Failed to fetch sub-departments."
@@ -40,21 +43,34 @@ const ViewSubDpt = () => {
       }
     };
     fetchSubDepartments();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
+  // Client-side search filtering
   useEffect(() => {
-    const lowerSearch = search.toLowerCase();
-    const filtered = subDpts.filter(
-      (item) =>
-        item.subdptname?.toLowerCase().includes(lowerSearch) ||
-        item.dptname?.toLowerCase().includes(lowerSearch)
-    );
-    setFilteredSubDpts(search.trim() ? filtered : subDpts);
+    if (!search.trim()) {
+      setFilteredSubDpts(subDpts);
+    } else {
+      const lowerSearch = search.toLowerCase();
+      const filtered = subDpts.filter(
+        (item) =>
+          item.subdptname?.toLowerCase().includes(lowerSearch) ||
+          item.department?.dptname?.toLowerCase().includes(lowerSearch)
+      );
+      setFilteredSubDpts(filtered);
+    }
   }, [search, subDpts]);
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   const handleUpdate = (subDpt) => {
-    setsubDptToUpdate(subDpt);
-    navigate("/update-subDpt");
+    navigate(`/update-subDpt/${subDpt.id}`);
   };
 
   const columns = [
@@ -66,7 +82,7 @@ const ViewSubDpt = () => {
 
   const mappedItems = filteredSubDpts.map((item) => ({
     id: item.id,
-    dptname: item.dptname,
+    dptname: item.department.dptname,
     subdptname: item.subdptname,
     isactive: item.isactive,
     status: item.isactive ? "Active" : "Inactive",
@@ -114,14 +130,16 @@ const ViewSubDpt = () => {
               Sub-Department List
             </h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-                placeholder="Search sub-department..."
-              />
-              <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
+              <div className="relative flex-1 sm:w-64">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                  placeholder="Search sub-department..."
+                />
+                <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
+              </div>
             </div>
           </div>
 
@@ -148,7 +166,13 @@ const ViewSubDpt = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               onUpdate={handleUpdate}
               showDetailsButtons={false}
             />

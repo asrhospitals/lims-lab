@@ -2,9 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { useNavigate, Link } from "react-router-dom";
+import { addLabToLab } from "../../services/apiService";
 
 const AddLabToLab = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,8 +20,6 @@ const AddLabToLab = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
         labname: data.labname,
         addressline: data.addressline,
@@ -35,13 +32,7 @@ const AddLabToLab = () => {
         isactive: data.isactive === "true",
       };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-labtolab",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addLabToLab(payload);
 
       toast.success("✅ Lab added successfully!");
       reset();
@@ -176,21 +167,36 @@ const AddLabToLab = () => {
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="/" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-labtolab"
-            className="hover:text-blue-600"
-          >
-            Lab To Lab /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Add Lab
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/admin-dashboard"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-labtolab"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Lab To Lab
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Add Lab
+            </li>
+          </ol>
+        </nav>
       </div>
 
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
@@ -272,7 +278,7 @@ const AddLabToLab = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
               >
-                {isSubmitting ? "Saving..." : "Create Lab"}
+                {isSubmitting ? "Saving..." : "Add Lab"}
               </button>
             </div>
           </div>

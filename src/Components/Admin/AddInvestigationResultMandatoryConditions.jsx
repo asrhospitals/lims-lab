@@ -76,7 +76,7 @@ const AddInvestigationResultMandatoryConditions = ({ showModal, handleClose }) =
                             className="bg-orange-500 text-white rounded-lg py-2 px-4 hover:bg-orange-600"
                             onClick={handleAdd}
                         >
-                            Add
+                            Add Condition
                         </button>
                         <button
                             type="button"

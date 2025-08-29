@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { addPhlebotomist, viewNodals, viewHospitals } from "../../services/apiService";
 
 const AddPhlebotomist = () => {
   const [nodalList, setNodalList] = useState([]);
@@ -24,19 +23,13 @@ const AddPhlebotomist = () => {
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
-        const authToken = localStorage.getItem("authToken");
-
         const [nodalRes, hospitalRes] = await Promise.all([
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hospital", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
+          viewNodals(),
+          viewHospitals(),
         ]);
 
-        setNodalList(nodalRes.data || []);
-        setHospitalList(hospitalRes.data || []);
+        setNodalList(nodalRes?.data || []);
+        setHospitalList(hospitalRes?.data || []);
       } catch (error) {
         setFetchError(error.response?.data?.message || "Failed to fetch nodal or hospital data.");
       }
@@ -48,22 +41,21 @@ const AddPhlebotomist = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
-        ...data,
+        phleboname: data.phleboname,
+        addressline: data.addressline,
+        city: data.city,
+        state: data.state,
         pincode: Number(data.pincode),
+        dob: data.dob,
         contactno: data.contactno.toString(),
+        gender: data.gender,
+        nodal: data.nodal,
+        hospital: data.hospital,
         isactive: data.isactive === "true",
       };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-phlebo",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addPhlebotomist(payload);
 
       toast.success("✅ Phlebotomist added successfully!");
       reset();
@@ -191,15 +183,43 @@ const AddPhlebotomist = () => {
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">🏠︎ Home /</CBreadcrumbItem>
-          <CBreadcrumbItem href="/view-phlebotomist" className="hover:text-blue-600">Phlebotomist /</CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">Add Phlebotomist</CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-phlebotomist"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Phlebotomists
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              Add Phlebotomist
+            </li>
+          </ol>
+        </nav>
       </div>
 
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         {fetchError && <p className="text-red-500 text-sm mb-4">{fetchError}</p>}
 
@@ -264,7 +284,7 @@ const AddPhlebotomist = () => {
                 disabled={isSubmitting}
                 className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-2 rounded-md transition disabled:opacity-60"
               >
-                {isSubmitting ? "Submitting..." : "Submit"}
+                {isSubmitting ? "Submitting..." : "Add Phlebotomist"}
               </button>
             </div>
           </div>

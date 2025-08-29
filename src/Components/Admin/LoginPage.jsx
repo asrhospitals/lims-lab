@@ -1,13 +1,15 @@
 import { useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import { FiUser, FiLock, FiMail } from "react-icons/fi";
+import { FiUser, FiLock, FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 
 const LoginPage = () => {
   const [loginData, setLoginData] = useState({ username: "", password: "" });
-  const [loginClicked, SetLoginClicked] = useState(false);
-  const [otp, SetOtp] = useState("");
+  const [loginClicked, setLoginClicked] = useState(false);
+  const [otp, setOtp] = useState("");
   const [responseData, setResponseData] = useState({ userid: "", otp: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [requiresOtp, setRequiresOtp] = useState(false); // NEW
 
   const OTP_SENDER = "https://asrlabs.asrhospitalindia.in/lims/authentication/signin";
 
@@ -18,17 +20,30 @@ const LoginPage = () => {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    SetLoginClicked(true);
+    setLoginClicked(true);
+
+    const isAdmin = loginData.username.trim().toLowerCase() === "admin";
+    setRequiresOtp(isAdmin);
+
     try {
       const response = await axios.post(OTP_SENDER, loginData);
-      toast.success("OTP sent to your email/phone.");
-      setResponseData({ userid: response.data.id, otp: "" });
-      SetOtp(response.data.otp);
+
       localStorage.setItem("role", response.data.role);
       localStorage.setItem("userid", response.data.id);
+
+      if (isAdmin) {
+        toast.success("OTP sent to your email/phone.");
+        setResponseData({ userid: response.data.id, otp: "" });
+        setOtp(response.data.otp); // for debug
+      } else {
+        // Direct login without OTP for non-admin
+        toast.success("Login successful!");
+        localStorage.setItem("authToken", response.data.token);
+        window.location.reload();
+      }
     } catch (err) {
       toast.error("Login failed. Please check your credentials.");
-      SetLoginClicked(false);
+      setLoginClicked(false);
     }
   };
 
@@ -61,19 +76,14 @@ const LoginPage = () => {
       />
 
       <div className="w-full max-w-md bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-2xl">
-        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-6">
-          Sign In
-        </h2>
+        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-6">Sign In</h2>
 
         <form onSubmit={handleLoginSubmit} className="space-y-5">
+          {/* Username Field */}
           <div>
-            <label className="block text-sm mb-1 text-gray-600 font-medium">
-              Username
-            </label>
+            <label className="block text-sm mb-1 text-gray-600 font-medium">Username</label>
             <div className="relative">
-              <span className="absolute left-3 top-3.5 text-gray-400">
-                <FiUser />
-              </span>
+              <span className="absolute left-3 top-3.5 text-gray-400"><FiUser /></span>
               <input
                 type="text"
                 name="username"
@@ -82,65 +92,63 @@ const LoginPage = () => {
                 onChange={handleLoginChange}
                 disabled={loginClicked}
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-400 transition duration-200 ease-in-out text-sm"
+                className="w-full pl-10 pr-4 py-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-400 transition duration-200 text-sm"
               />
             </div>
           </div>
 
+          {/* Password Field */}
           <div>
-            <label className="block text-sm mb-1 text-gray-600 font-medium">
-              Password
-            </label>
+            <label className="block text-sm mb-1 text-gray-600 font-medium">Password</label>
             <div className="relative">
-              <span className="absolute left-3 top-3.5 text-gray-400">
-                <FiLock />
-              </span>
+              <span className="absolute left-3 top-3.5 text-gray-400"><FiLock /></span>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Enter your password"
                 value={loginData.password}
                 onChange={handleLoginChange}
                 disabled={loginClicked}
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-400 transition duration-200 ease-in-out text-sm"
+                className="w-full pl-10 pr-10 py-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-400 transition duration-200 text-sm"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+                tabIndex={-1}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
             </div>
           </div>
 
+          {/* Login Button */}
           <button
             type="submit"
             disabled={loginClicked}
             className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 text-white py-3 rounded-md font-medium hover:from-cyan-400 hover:to-blue-500 transition duration-300 disabled:opacity-50 text-sm"
           >
-            {loginClicked ? "Sending OTP..." : "Login"}
+            {loginClicked ? (requiresOtp ? "Sending OTP..." : "Logging in...") : "Login"}
           </button>
         </form>
 
-        <div className="mt-4">
-          <a
-            href="#"
-            className="forgot-password block text-center text-sm text-blue-600 hover:underline"
-          >
-            Forgot password?
-          </a>
+        <div className="mt-4 text-center">
+          <a href="#" className="text-sm text-blue-600 hover:underline">Forgot password?</a>
         </div>
 
-        {otp && (
+        {otp && requiresOtp && (
           <p className="text-center mt-4 text-green-600 text-sm">
             <strong>Debug OTP:</strong> {otp}
           </p>
         )}
 
-        {loginClicked && (
+        {/* OTP Input */}
+        {loginClicked && requiresOtp && (
           <div className="mt-6">
-            <label className="block text-sm mb-1 text-gray-600 font-medium">
-              Enter OTP
-            </label>
+            <label className="block text-sm mb-1 text-gray-600 font-medium">Enter OTP</label>
             <div className="relative">
-              <span className="absolute left-3 top-3.5 text-gray-400">
-                <FiMail />
-              </span>
+              <span className="absolute left-3 top-3.5 text-gray-400"><FiMail /></span>
               <input
                 type="text"
                 placeholder="Enter OTP"

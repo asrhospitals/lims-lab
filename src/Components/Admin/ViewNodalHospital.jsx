@@ -1,70 +1,76 @@
-import React, { useContext, useEffect, useState } from "react"; 
+import React, { useEffect, useState } from "react"; 
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
-import AdminContext from "../../context/adminContext";
+import { viewNodalHospitals } from "../../services/apiService";
 
 const ViewNodalHospital = () => {
-  const [hospitals, setHospitals] = useState([]); // Combined enriched data
+  const [hospitals, setHospitals] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { setNodalHospitalToUpdate } = useContext(AdminContext);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchNodalHospitals = async () => {
       setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        // Fetch nodal master data
-        const nodalResp = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodal",
-          { headers: { Authorization: `Bearer ${authToken}` } }
-        );
-        const nodalData = nodalResp.data || [];
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
 
-        // Fetch hospital master data
-        const hospitalResp = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-hospital",
-          { headers: { Authorization: `Bearer ${authToken}` } }
-        );
-        const hospitalData = hospitalResp.data || [];
-
-        // Fetch combined nodalhospital relations (with only IDs)
-        const nodalHospitalResp = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodalhospital",
-          { headers: { Authorization: `Bearer ${authToken}` } }
-        );
-        const nodalHospitalData = nodalHospitalResp.data || [];
-
-        // Create maps for quick lookup
-        const nodalMap = new Map();
-        nodalData.forEach(n => nodalMap.set(n.id, n.nodalname));
-
-        const hospitalMap = new Map();
-        hospitalData.forEach(h => hospitalMap.set(h.id, h.hospitalname));
-
-        // Enrich nodalHospitalData with names
-        const enrichedData = nodalHospitalData.map(item => ({
+        const res = await viewNodalHospitals(params);
+        const data = res.data.sort((a, b) => a.id - b.id);
+        
+        // Map the data to include status
+        const enrichedData = data.map(item => ({
           ...item,
-          nodalname: nodalMap.get(item.nodalid) ?? "-",
-          hospitalname: hospitalMap.get(item.hospitalid) ?? "-",
           status: item.isactive ? "Active" : "Inactive",
         }));
 
         setHospitals(enrichedData);
         setFiltered(enrichedData);
+        setTotalPages(res?.meta?.totalPages || 1);
+        setTotalItems(res?.meta?.totalItems || 0);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch data.");
+        setError(err.response?.data?.message || "Failed to fetch nodal hospitals.");
       } finally {
         setLoading(false);
       }
     };
-    fetchAll();
-  }, []);
+
+    fetchNodalHospitals();
+  }, [currentPage, itemsPerPage]);
+
+  // Client-side search filtering
+  useEffect(() => {
+    if (!search.trim()) {
+      setFiltered(hospitals);
+    } else {
+      const s = search.toLowerCase();
+      const filteredData = (hospitals || []).filter((h) =>
+        (h.nodalName && h.nodalName.toLowerCase().includes(s)) ||
+        (h.hospitalName && h.hospitalName.toLowerCase().includes(s)) ||
+        (h.status && h.status.toLowerCase().includes(s))
+      );
+      setFiltered(filteredData);
+    }
+  }, [search, hospitals]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
 
   const handleSearchChange = (e) => {
     const val = e.target.value;
@@ -74,34 +80,14 @@ const ViewNodalHospital = () => {
     }
   };
 
-  useEffect(() => {
-    if (!search.trim()) {
-      setFiltered(hospitals);
-    } else {
-      const s = search.toLowerCase();
-      setFiltered(
-        hospitals.filter(
-          (h) =>
-            (h.nodalid && String(h.nodalid).toLowerCase().includes(s)) ||
-            (h.hospitalid && String(h.hospitalid).toLowerCase().includes(s)) ||
-            (h.nodalname.toLowerCase().includes(s)) ||
-            (h.hospitalname.toLowerCase().includes(s))
-        )
-      );
-    }
-  }, [search, hospitals]);
-
   const handleUpdate = (hospital) => {
-    localStorage.setItem("nodalHospitalToUpdate", JSON.stringify(hospital));
-    setNodalHospitalToUpdate(hospital);
-    navigate("/update-nodal-hospital");
+    navigate(`/update-nodal-hospital/${hospital.id}`);
   };
 
   const columns = [
-    { key: "nodalid", label: "Nodal ID" },
-    { key: "hospitalid", label: "Hospital ID" },
-    { key: "nodalname", label: "Nodal Name" },
-    { key: "hospitalname", label: "Hospital Name" },
+    { key: "id", label: "ID" },
+    { key: "nodalName", label: "Nodal Name" },
+    { key: "hospitalName", label: "Hospital Name" },
     { key: "status", label: "Status" },
   ];
 
@@ -140,7 +126,7 @@ const ViewNodalHospital = () => {
       </div>
 
       {/* Main Content */}
-      <div className="w-full mt-12 px-2 space-y-4 text-sm">
+      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -158,6 +144,13 @@ const ViewNodalHospital = () => {
                 <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
               </div>
             </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>Page {currentPage} of {totalPages}</span>
           </div>
 
           {/* Actions */}
@@ -181,7 +174,13 @@ const ViewNodalHospital = () => {
             <DataTable
               items={filtered}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

@@ -1,15 +1,16 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import AdminContext from "../../context/adminContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
+import { viewNodal, updateNodal } from "../../services/apiService";
 
 const UpdateNodal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { nodalToUpdate, setNodalToUpdate } = useContext(AdminContext);
+  const [isLoading, setIsLoading] = useState(true);
+  const [nodalToUpdate, setNodalToUpdate] = useState(null);
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const {
     register,
@@ -21,70 +22,62 @@ const UpdateNodal = () => {
     mode: "onBlur",
     defaultValues: {
       nodalname: "",
-      motherlab: "Yes", // default to "Yes" to match your localStorage format
+      motherlab: "true",
       isactive: "true",
     },
   });
 
   useEffect(() => {
-    if (!nodalToUpdate) {
-      const stored = localStorage.getItem("nodalToUpdate");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-
-          // Convert localStorage values to form radio string values
-          const motherlabValue = parsed.motherlab === "Yes" ? "true" : "false";
-          const isactiveValue = parsed.isactive === true || parsed.isactive === "true" ? "true" : "false";
-
-          setNodalToUpdate(parsed);
-          reset({
-            nodalname: parsed.nodalname || "",
-            motherlab: motherlabValue,
-            isactive: isactiveValue,
-          });
-        } catch (err) {
-          console.error("Failed to parse nodal from localStorage", err);
-        }
+    const fetchNodalData = async () => {
+      if (!id) {
+        toast.error("No nodal ID provided");
+        navigate("/view-nodal");
+        return;
       }
-    } else {
-      // When context nodalToUpdate is present, reset form accordingly
-      const motherlabValue = nodalToUpdate.motherlab === "Yes" ? "true" : "false";
-      const isactiveValue = nodalToUpdate.isactive === true || nodalToUpdate.isactive === "true" ? "true" : "false";
 
-      reset({
-        nodalname: nodalToUpdate.nodalname || "",
-        motherlab: motherlabValue,
-        isactive: isactiveValue,
-      });
-    }
-  }, [nodalToUpdate, reset, setNodalToUpdate]);
+      setIsLoading(true);
+      try {
+        const response = await viewNodal(id);
+        const nodalData = response;
+        setNodalToUpdate(nodalData);
+
+        // Convert boolean values to form radio string values
+        reset({
+          nodalname: nodalData.nodalname || "",
+          motherlab: nodalData.motherlab ? "true" : "false",
+          isactive: nodalData.isactive ? "true" : "false",
+        });
+      } catch (error) {
+        console.error("Failed to fetch nodal data:", error);
+        toast.error(
+          error?.response?.data?.message ||
+            "Failed to fetch nodal data. Please try again."
+        );
+        navigate("/view-nodal");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNodalData();
+  }, [id, reset, navigate]);
 
   const onSubmit = async (data) => {
-    if (!nodalToUpdate?.id) return;
+    if (!id) return;
 
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
+      const payload = {
+        nodalname: data.nodalname,
+        motherlab: data.motherlab === "true",
+        isactive: data.isactive === "true",
+      };
 
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-nodal/${nodalToUpdate.id}`,
-        {
-          nodalname: data.nodalname,
-          motherlab: data.motherlab === "true" ? "Yes" : "No", // convert back to "Yes"/"No"
-          isactive: data.isactive === "true", // boolean
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await updateNodal(id, payload);
 
       toast.success("✅ Nodal updated successfully!");
       navigate("/view-nodal");
       setNodalToUpdate(null);
-      localStorage.removeItem("nodalToUpdate");
     } catch (error) {
       console.error(error);
       toast.error(
@@ -138,10 +131,18 @@ const UpdateNodal = () => {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500">Loading nodal data...</p>
+      </div>
+    );
+  }
+
   if (!nodalToUpdate) {
     return (
       <div className="text-center py-10">
-        <p className="text-gray-500">No nodal lab selected for update.</p>
+        <p className="text-gray-500">Nodal lab not found.</p>
       </div>
     );
   }
@@ -254,8 +255,7 @@ const UpdateNodal = () => {
                 type="button"
                 onClick={() => {
                   reset();
-                  setNodalToUpdate(null);
-                  localStorage.removeItem("nodalToUpdate");
+                  navigate("/view-nodal");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >

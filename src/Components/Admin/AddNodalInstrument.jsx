@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import { addNodalInstrument } from "../../services/apiService";
 
 const AddNodalInstrument = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -18,24 +20,23 @@ const AddNodalInstrument = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
-        ...data,
-        isactive: data.isactive === "true", // convert to boolean
+        nodalname: data.nodalname,
+        instrumentname: data.instrumentname,
+        isactive: data.isactive === "true",
       };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-nodalinstrument",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addNodalInstrument(payload);
 
       toast.success("✅ Nodal Instrument added successfully!");
       reset();
+      
+      // Navigate to view page after short delay so toast can be seen
+      setTimeout(() => {
+        navigate("/view-nodal-instruments");
+      }, 1500);
     } catch (error) {
+      console.error("Error adding nodal instrument:", error);
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to add Nodal Instrument. Please try again."
@@ -50,13 +51,25 @@ const AddNodalInstrument = () => {
       name: "nodalname",
       label: "Nodal Name",
       placeholder: "Enter Nodal Name",
-      validation: { required: "Nodal name is required" },
+      validation: { 
+        required: "Nodal name is required",
+        pattern: {
+          value: /^[a-zA-Z0-9_,\s-]+$/,
+          message: "Only letters, numbers, underscore, comma, hyphen and spaces allowed"
+        }
+      },
     },
     {
       name: "instrumentname",
       label: "Instrument Name",
       placeholder: "Enter Instrument Name",
-      validation: { required: "Instrument name is required" },
+      validation: { 
+        required: "Instrument name is required",
+        pattern: {
+          value: /^[a-zA-Z0-9_,\s-]+$/,
+          message: "Only letters, numbers, underscore, comma, hyphen and spaces allowed"
+        }
+      },
     },
     {
       name: "isactive",
@@ -71,98 +84,132 @@ const AddNodalInstrument = () => {
   ];
 
   return (
-    <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
-      >
-        <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
-          <h4 className="font-semibold text-white">Add Nodal Instrument</h4>
-        </div>
+    <>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-nodal-instruments"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Nodal Instrument
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Add Nodal Instrument
+            </li>
+          </ol>
+        </nav>
+      </div>
 
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {fields.map(
-              (
-                {
-                  name,
-                  label,
-                  placeholder,
-                  type = "text",
-                  options,
-                  validation,
-                },
-                idx
-              ) => (
-                <div key={name + idx} className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    {label}{" "}
-                    {validation?.required && (
-                      <span className="text-red-500">*</span>
+      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+        <ToastContainer />
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
+        >
+          <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
+            <h4 className="font-semibold text-white">Add Nodal Instrument</h4>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {fields.map(
+                (
+                  {
+                    name,
+                    label,
+                    placeholder,
+                    type = "text",
+                    options,
+                    validation,
+                  },
+                  idx
+                ) => (
+                  <div key={name + idx} className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {label}{" "}
+                      {validation?.required && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </label>
+
+                    {type === "radio" ? (
+                      <div className="flex space-x-4 pt-2">
+                        {options.map((opt) => (
+                          <label
+                            key={opt.value}
+                            className="inline-flex items-center"
+                          >
+                            <input
+                              type="radio"
+                              {...register(name, validation)}
+                              value={opt.value}
+                              className="h-4 w-4 text-teal-600"
+                            />
+                            <span className="ml-2">{opt.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <input
+                        type={type}
+                        {...register(name, validation)}
+                        onBlur={() => trigger(name)}
+                        placeholder={placeholder}
+                        className={`w-full px-4 py-2 rounded-lg border ${
+                          errors[name]
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-teal-500"
+                        } focus:ring-2 transition`}
+                      />
                     )}
-                  </label>
 
-                  {type === "radio" ? (
-                    <div className="flex space-x-4 pt-2">
-                      {options.map((opt) => (
-                        <label
-                          key={opt.value}
-                          className="inline-flex items-center"
-                        >
-                          <input
-                            type="radio"
-                            {...register(name, validation)}
-                            value={opt.value}
-                            className="h-4 w-4 text-teal-600"
-                          />
-                          <span className="ml-2">{opt.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <input
-                      type={type}
-                      {...register(name, validation)}
-                      onBlur={() => trigger(name)}
-                      placeholder={placeholder}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors[name]
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-gray-300 focus:ring-teal-500"
-                      } focus:ring-2 transition`}
-                    />
-                  )}
+                    {errors[name] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[name].message}
+                      </p>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
 
-                  {errors[name] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors[name].message}
-                    </p>
-                  )}
-                </div>
-              )
-            )}
+            <div className="mt-8 flex justify-end">
+              <button
+                type="button"
+                onClick={() => reset()}
+                className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              >
+                Reset
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
+              >
+                {isSubmitting ? "Saving..." : "Add Nodal Instrument"}
+              </button>
+            </div>
           </div>
-
-          <div className="mt-8 flex justify-end">
-            <button
-              type="button"
-              onClick={() => reset()}
-              className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-            >
-              Reset
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
-            >
-              {isSubmitting ? "Saving..." : "Create Nodal Instrument"}
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </>
   );
 };
 

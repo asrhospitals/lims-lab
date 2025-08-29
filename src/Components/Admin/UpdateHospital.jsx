@@ -1,16 +1,21 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import AdminContext from "../../context/adminContext";
+import {
+  updateHospital,
+  viewHospital,
+  viewHospitalTypes,
+} from "../../services/apiService";
 
 const UpdateHospital = () => {
-  const { hospitalToUpdate, setHospitalToUpdate } = useContext(AdminContext);
+  const [hospitalToUpdate, setHospitalToUpdate] = useState(null);
   const [hospitalTypes, setHospitalTypes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const {
     register,
@@ -22,78 +27,83 @@ const UpdateHospital = () => {
   });
 
   useEffect(() => {
-    const fetchHospitalTypes = async () => {
+    const fetchData = async () => {
+      if (!id) {
+        toast.error("No hospital ID provided");
+        // navigate("/view-hospital");
+        return;
+      }
+
+      setIsLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        const types = response.data || [];
+        // Fetch hospital types and hospital data in parallel
+        const [hospitalTypesResponse, hospitalResponse] = await Promise.all([
+          viewHospitalTypes(),
+          viewHospital(id),
+        ]);
+
+        const types = hospitalTypesResponse.data || [];
         setHospitalTypes(types);
 
-        // Update dropdown default value AFTER hospital types loaded
-        const stored = localStorage.getItem("hospitalToUpdate");
-        const localHospital = hospitalToUpdate || (stored && JSON.parse(stored));
-        if (localHospital) {
-          setHospitalToUpdate(localHospital);
-          reset({
-            hospitalname: localHospital.hospitalname || "",
-            hsptltype: localHospital.hsptltype || "",
-            address: localHospital.address || "",
-            city: localHospital.city || "",
-            district: localHospital.district || "",
-            pin: localHospital.pin || "",
-            states: localHospital.states || "",
-            email: localHospital.email || "",
-            phoneno: localHospital.phoneno || "",
-            cntprsn: localHospital.cntprsn || "",
-            cntprsnmob: localHospital.cntprsnmob || "",
-            isactive: String(localHospital.isactive ?? "true"),
-          });
-        }
+        const hospitalData = hospitalResponse
+        setHospitalToUpdate(hospitalData);
+
+        reset({
+          hospitalname: hospitalData.hospitalname || "",
+          hsptltype: hospitalData.hospital_type_id || "",
+          address: hospitalData.address || "",
+          city: hospitalData.city || "",
+          district: hospitalData.district || "",
+          pin: hospitalData.pin || "",
+          states: hospitalData.states || "",
+          email: hospitalData.email || "",
+          phoneno: hospitalData.phoneno || "",
+          cntprsn: hospitalData.cntprsn || "",
+          cntprsnmob: hospitalData.cntprsnmob || "",
+          isactive: String(hospitalData.isactive ?? "true"),
+        });
       } catch (err) {
-        console.error("Failed to load hospital types", err);
+        console.error("Failed to fetch data:", err);
+        toast.error(
+          err?.response?.data?.message ||
+            "Failed to fetch hospital data. Please try again."
+        );
+        navigate("/view-hospital");
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchHospitalTypes();
-  }, [hospitalToUpdate, reset, setHospitalToUpdate]);
+
+    fetchData();
+  }, [id, reset, navigate]);
 
   const onSubmit = async (data) => {
-    const stored = localStorage.getItem("hospitalToUpdate");
-    const localHospital = hospitalToUpdate || (stored && JSON.parse(stored));
-    const hospitalId = localHospital?.id;
-
-    if (!hospitalId) {
+    if (!id) {
       toast.error("❌ Hospital ID not found. Cannot update.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
       const payload = {
-        ...data,
+        hospitalname: data.hospitalname,
+        hospital_type_id: data.hsptltype,
+        address: data.address,
+        city: data.city,
+        district: data.district,
+        pin: data.pin,
+        states: data.states,
+        email: data.email,
+        phoneno: String(data.phoneno),
+        cntprsn: data.cntprsn,
+        cntprsnmob: String(data.cntprsnmob),
         isactive: data.isactive === "true",
       };
 
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-hospital/${hospitalId}`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await updateHospital(id, payload);
 
       toast.success("✅ Hospital updated successfully!");
       setHospitalToUpdate(null);
-      localStorage.removeItem("hospitalToUpdate");
       navigate("/view-hospital");
     } catch (error) {
       console.error(error);
@@ -109,13 +119,17 @@ const UpdateHospital = () => {
   const alphaNumRegex = /^[a-zA-Z0-9\s\-_,]+$/;
 
   const fields = [
-    { name: "hospitalname", label: "Hospital Name", placeholder: "Hospital Name" },
+    {
+      name: "hospitalname",
+      label: "Hospital Name",
+      placeholder: "Hospital Name",
+    },
     {
       name: "hsptltype",
       label: "Hospital Type",
       type: "select",
       options: hospitalTypes.map((t) => ({
-        value: t.hsptltype,
+        value: t.id,
         label: t.hsptldsc,
       })),
     },
@@ -139,12 +153,17 @@ const UpdateHospital = () => {
     },
   ];
 
-  const storedHospital = hospitalToUpdate || localStorage.getItem("hospitalToUpdate");
-  if (!storedHospital) {
+  if (isLoading) {
     return (
       <div className="text-center py-10 text-gray-500">
-        No hospital selected for update.
+        Loading hospital data...
       </div>
+    );
+  }
+
+  if (!hospitalToUpdate) {
+    return (
+      <div className="text-center py-10 text-gray-500">Hospital not found.</div>
     );
   }
 
@@ -192,75 +211,91 @@ const UpdateHospital = () => {
           </div>
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {fields.map(({ name, label, placeholder, type = "text", options = [] }) => (
-                <div key={name}>
-                  <label className="block text-sm font-medium text-gray-700">
-                    {label}
-                  </label>
+              {fields.map(
+                ({ name, label, placeholder, type = "text", options = [] }) => (
+                  <div key={name}>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {label}
+                    </label>
 
-                  {type === "select" ? (
-                    <select
-                      {...register(name, { required: `${label} is required.` })}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors[name] ? "border-red-500" : "border-gray-300"
-                      } focus:ring-2 focus:ring-teal-500`}
-                    >
-                      <option value="">Select {label}</option>
-                      {options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : type === "radio" ? (
-                    <div className="flex space-x-4 pt-2">
-                      {options.map((option) => (
-                        <label key={option.value} className="inline-flex items-center">
-                          <input
-                            type="radio"
-                            {...register(name, { required: true })}
-                            value={option.value}
-                            className="h-4 w-4 text-teal-600"
-                          />
-                          <span className="ml-2">{option.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <input
-                      type={type}
-                      {...register(name, {
-                        required: `${label} is required.`,
-                        ...(type !== "email" &&
-                        type !== "number" &&
-                        name !== "pin" &&
-                        name !== "phoneno" &&
-                        name !== "cntprsnmob"
-                          ? {
-                              pattern: {
-                                value: alphaNumRegex,
-                                message:
-                                  "Only letters, numbers, -, _, and , are allowed.",
-                              },
-                            }
-                          : {}),
-                      })}
-                      placeholder={placeholder}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors[name] ? "border-red-500" : "border-gray-300"
-                      } focus:ring-2 focus:ring-teal-500`}
-                    />
-                  )}
-                  {errors[name] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors[name]?.message}
-                    </p>
-                  )}
-                </div>
-              ))}
+                    {type === "select" ? (
+                      <select
+                        {...register(name, {
+                          required: `${label} is required.`,
+                        })}
+                        className={`w-full px-4 py-2 rounded-lg border ${
+                          errors[name] ? "border-red-500" : "border-gray-300"
+                        } focus:ring-2 focus:ring-teal-500`}
+                      >
+                        <option value="">Select {label}</option>
+                        {options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : type === "radio" ? (
+                      <div className="flex space-x-4 pt-2">
+                        {options.map((option) => (
+                          <label
+                            key={option.value}
+                            className="inline-flex items-center"
+                          >
+                            <input
+                              type="radio"
+                              {...register(name, { required: true })}
+                              value={option.value}
+                              className="h-4 w-4 text-teal-600"
+                            />
+                            <span className="ml-2">{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <input
+                        type={type}
+                        {...register(name, {
+                          required: `${label} is required.`,
+                          ...(type !== "email" &&
+                          type !== "number" &&
+                          name !== "pin" &&
+                          name !== "phoneno" &&
+                          name !== "cntprsnmob"
+                            ? {
+                                pattern: {
+                                  value: alphaNumRegex,
+                                  message:
+                                    "Only letters, numbers, -, _, and , are allowed.",
+                                },
+                              }
+                            : {}),
+                        })}
+                        placeholder={placeholder}
+                        className={`w-full px-4 py-2 rounded-lg border ${
+                          errors[name] ? "border-red-500" : "border-gray-300"
+                        } focus:ring-2 focus:ring-teal-500`}
+                      />
+                    )}
+                    {errors[name] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[name]?.message}
+                      </p>
+                    )}
+                  </div>
+                )
+              )}
             </div>
           </div>
-          <div className="px-6 py-4 bg-gray-50 text-right">
+          <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={() => {
+                navigate("/view-hospital");
+              }}
+              className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               disabled={isSubmitting}

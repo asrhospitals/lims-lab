@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { addNodal } from "../../services/apiService";
 
 const AddNodal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,19 +23,15 @@ const AddNodal = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
+      const payload = {
+        nodalname: data.nodalname,
+        motherlab: data.motherlab === "true",
+        isactive: data.isactive === "true",
+      };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-nodal",
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await addNodal(payload);
 
-      toast.success("✅ New nodal lab created successfully!");
+      toast.success("New nodal created successfully!");
       
       // Optionally reset form before redirecting
       reset();
@@ -125,7 +121,7 @@ const AddNodal = () => {
             </li>
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
-              Add Nodal Lab
+              Add Nodal
             </li>
           </ol>
         </nav>
@@ -138,7 +134,7 @@ const AddNodal = () => {
           className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
         >
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
-            <h4 className="font-semibold text-white">Add New Nodal Lab</h4>
+            <h4 className="font-semibold text-white">Add New Nodal</h4>
           </div>
 
           <div className="p-6">
@@ -260,7 +256,7 @@ const AddNodal = () => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Create Nodal Lab
+                    Add Nodal Lab
                   </span>
                 )}
               </button>

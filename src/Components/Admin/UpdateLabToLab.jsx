@@ -1,15 +1,15 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import AdminContext from "../../context/adminContext";
-import { useNavigate } from "react-router-dom";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { viewLabToLab, updateLabToLab } from "../../services/apiService";
 
 const UpdateLabToLab = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { labToUpdate, setLabToUpdate } = useContext(AdminContext);
+  const [labData, setLabData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const {
@@ -34,52 +34,70 @@ const UpdateLabToLab = () => {
   });
 
   useEffect(() => {
-    if (!labToUpdate) {
-      const stored = localStorage.getItem("labToUpdate");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setLabToUpdate(parsed);
-          reset({
-            ...parsed,
-            isactive: String(parsed.isactive),
-          });
-        } catch (err) {
-          console.error("Failed to parse lab from localStorage", err);
-        }
+    const fetchLabData = async () => {
+      if (!id) {
+        toast.error("❌ No lab ID provided.");
+        navigate("/view-labtolab");
+        return;
       }
-    } else {
-      reset({
-        ...labToUpdate,
-        isactive: String(labToUpdate.isactive),
-      });
-    }
-  }, [labToUpdate, reset, setLabToUpdate]);
+
+      try {
+        setLoading(true);
+        const response = await viewLabToLab(id);
+        const data = response;
+
+        if (data) {
+          setLabData(data);
+
+          // Populate form with fetched data
+          reset({
+            labname: data.labname || "",
+            addressline: data.addressline || "",
+            city: data.city || "",
+            state: data.state || "",
+            pincode: data.pincode || "",
+            contactperson: data.contactperson || "",
+            contactno: data.contactno || "",
+            email: data.email || "",
+            isactive: String(data.isactive),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch lab:", error);
+        toast.error("❌ Failed to fetch lab data.");
+        navigate("/view-labtolab");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLabData();
+  }, [id, navigate, reset]);
 
   const onSubmit = async (data) => {
-    if (!labToUpdate?.labid) return;
+    if (!id) {
+      toast.error("❌ No valid lab ID to update.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
+      const payload = {
+        labname: data.labname,
+        addressline: data.addressline,
+        city: data.city,
+        state: data.state,
+        pincode: Number(data.pincode),
+        contactperson: data.contactperson,
+        contactno: data.contactno,
+        email: data.email,
+        isactive: data.isactive === "true",
+      };
 
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-labtolab/${labToUpdate.labid}`,
-        {
-          ...data,
-          isactive: data.isactive === "true",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await updateLabToLab(id, payload);
 
       toast.success("✅ Lab updated successfully!");
       navigate("/view-labtolab");
-      setLabToUpdate(null);
-      localStorage.removeItem("labToUpdate");
     } catch (error) {
       console.error(error);
       toast.error(
@@ -197,10 +215,12 @@ const UpdateLabToLab = () => {
     },
   ];
 
-  if (!labToUpdate) {
+  if (loading || !labData) {
     return (
       <div className="text-center py-10">
-        <p className="text-gray-500">No lab selected for update.</p>
+        <p className="text-gray-500">
+          {loading ? "Loading lab data..." : "No lab selected for update."}
+        </p>
       </div>
     );
   }
@@ -208,20 +228,29 @@ const UpdateLabToLab = () => {
   return (
     <>
       <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="/" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-labtolab"
-            className="hover:text-blue-600"
-          >
-            Lab To Lab /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Update Lab
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="breadcrumb"
+        >
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">
+              <Link to="/" className="hover:text-blue-600">
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="breadcrumb-item">
+              <Link to="/view-labtolab" className="hover:text-blue-600">
+                Lab To Lab
+              </Link>
+            </li>
+            <li
+              className="breadcrumb-item active text-gray-500"
+              aria-current="page"
+            >
+              Update Lab
+            </li>
+          </ol>
+        </nav>
       </div>
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
@@ -295,8 +324,7 @@ const UpdateLabToLab = () => {
               <button
                 type="button"
                 onClick={() => {
-                  reset();
-                  setLabToUpdate(null);
+                  navigate("/view-labtolab");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >

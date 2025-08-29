@@ -1,15 +1,15 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import AdminContext from "../../context/adminContext";
 import { useNavigate, Link } from "react-router-dom";
+import { addSubDepartments, viewDepartments } from "../../services/apiService";
 
 const AddSubDpt = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchError, setFetchError] = useState("");
-  const { departments = [], setDepartments } = useContext(AdminContext);
+  const [departments, setDepartments] = useState([]);
   const navigate = useNavigate();
 
   const {
@@ -24,14 +24,8 @@ const AddSubDpt = () => {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-department",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }
-        );
-        setDepartments(response.data || []);
+        const res = await viewDepartments();
+        setDepartments(res?.data || []);
       } catch (error) {
         setFetchError(
           error.response?.data?.message || "Failed to fetch departments."
@@ -40,7 +34,7 @@ const AddSubDpt = () => {
     };
 
     fetchDepartments();
-  }, [setDepartments]);
+  }, []);
 
   // Form submit handler
   const onSubmit = async (data) => {
@@ -50,18 +44,12 @@ const AddSubDpt = () => {
       const authToken = localStorage.getItem("authToken");
 
       const payload = {
-        dptname: data.dptname,
+        department_id: data.dptname,
         subdptname: data.subdptname,
         isactive: data.isactive === "true",
       };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-subdepartment",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addSubDepartments(payload);
 
       toast.success("✅ New sub-department created successfully!");
       reset();
@@ -84,7 +72,7 @@ const AddSubDpt = () => {
       label: "Department",
       type: "select",
       options: departments.map((dept) => ({
-        value: dept.dptname,
+        value: dept.id,
         label: dept.dptname,
       })),
       validation: { required: "Department is required." },
@@ -255,7 +243,7 @@ const AddSubDpt = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Processing..." : "Create Sub-Department"}
+                {isSubmitting ? "Processing..." : "Add Sub-Department"}
               </button>
             </div>
           </div>

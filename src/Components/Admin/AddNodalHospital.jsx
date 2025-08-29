@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { viewHospitals, viewNodals, addNodalHospital } from "../../services/apiService";
 
 const AddNodalHospital = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,68 +21,43 @@ const AddNodalHospital = () => {
   } = useForm({ mode: "onBlur" });
 
   useEffect(() => {
-    const fetchHospitals = async () => {
+    const fetchData = async () => {
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-hospital",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }
-        );
-        setHospitalList(response.data || []);
+        const [hospitalResponse, nodalResponse] = await Promise.all([
+          viewHospitals(),
+          viewNodals(), 
+        ]);
+
+        setHospitalList(hospitalResponse.data || []);
+        setNodalList(nodalResponse.data || []);
       } catch (error) {
+        console.error("Failed to fetch data:", error);
         setFetchError(
-          error?.response?.data?.message || "Failed to fetch hospital list."
+          error?.response?.data?.message || "Failed to fetch hospital/nodal list."
         );
       }
     };
 
-    const fetchNodals = async () => {
-      try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodal",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }
-        );
-        setNodalList(response.data || []);
-      } catch (error) {
-        setFetchError(
-          error?.response?.data?.message || "Failed to fetch nodal list."
-        );
-      }
-    };
-
-    fetchHospitals();
-    fetchNodals();
+    fetchData();
   }, []);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
         nodalid: parseInt(data.nodal_id, 10),
         hospitalid: parseInt(data.hospital_id, 10),
         isactive: data.isactive === "true",
       };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-nodalhospital",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addNodalHospital(payload);
 
       toast.success("✅ Nodal Hospital added successfully!");
       reset();
       navigate("/view-nodal-hospitals");
     } catch (error) {
+      console.error("Error adding nodal hospital:", error);
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to add Nodal Hospital. Please try again."
@@ -278,7 +253,7 @@ const AddNodalHospital = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
               >
-                {isSubmitting ? "Saving..." : "Create Nodal Hospital"}
+                {isSubmitting ? "Saving..." : "Add Nodal Hospital"}
               </button>
             </div>
           </div>

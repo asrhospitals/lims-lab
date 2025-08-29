@@ -1,10 +1,8 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { viewLabToLabs } from "../../services/apiService";
 
 const ViewLabToLab = () => {
   const [labs, setLabs] = useState([]);
@@ -12,25 +10,30 @@ const ViewLabToLab = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { setLabToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchLabs = async () => {
+      setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-labtolab",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const response = await viewLabToLabs(params);
+        const labsData = response.data.sort(
+          (a, b) => Number(a.id) - Number(b.id)
         );
-        const data = response.data || [];
-        setLabs(data);
-        setFilteredLabs(data);
+        setLabs(labsData);
+        setFilteredLabs(labsData);
+        setTotalPages(response?.meta?.totalPages || 1);
+        setTotalItems(response?.meta?.totalItems || 0);
       } catch (error) {
         setError(
           error?.response?.data?.message || "Failed to fetch lab records."
@@ -41,8 +44,9 @@ const ViewLabToLab = () => {
     };
 
     fetchLabs();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
+  // Client-side search filtering
   useEffect(() => {
     const lower = search.toLowerCase();
     if (!lower.trim()) {
@@ -61,15 +65,24 @@ const ViewLabToLab = () => {
     }
   }, [search, labs]);
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   const handleUpdate = (lab) => {
-    setLabToUpdate(lab);
-    localStorage.setItem("labToUpdate", JSON.stringify(lab));
-    navigate("/update-labtolab");
+    navigate(`/update-labtolab/${lab.id}`);
   };
 
   const columns = [
-    { key: "labid", label: "ID" },
+    { key: "id", label: "ID" },
     { key: "labname", label: "Lab Name" },
+    { key: "contactperson", label: "Contact Person" },
+    { key: "contactno", label: "Contact No" },
     { key: "city", label: "City" },
     { key: "state", label: "State" },
     { key: "email", label: "Email" },
@@ -78,28 +91,44 @@ const ViewLabToLab = () => {
 
   const mappedItems = filteredLabs.map((lab) => ({
     ...lab,
-    id: lab.labid ?? '',
+    id: lab.id,
+    labname: lab.labname || "-",
+    contactperson: lab.contactperson || "-",
+    contactno: lab.contactno || "-",
+    city: lab.city || "-",
+    state: lab.state || "-",
+    email: lab.email || "-",
     status: lab.isactive ? "Active" : "Inactive",
   }));
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem href="/view-labtolab" className="hover:text-blue-600">
-            Lab To Lab /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            View Lab
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/admin-dashboard"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Lab To Lab
+            </li>
+          </ol>
+        </nav>
       </div>
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
+          {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               Lab To Lab List
@@ -118,6 +147,16 @@ const ViewLabToLab = () => {
             </div>
           </div>
 
+          {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
+
+          {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => navigate("/add-labtolab")}
@@ -127,6 +166,7 @@ const ViewLabToLab = () => {
             </button>
           </div>
 
+          {/* Data Table */}
           {loading ? (
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (
@@ -139,7 +179,13 @@ const ViewLabToLab = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

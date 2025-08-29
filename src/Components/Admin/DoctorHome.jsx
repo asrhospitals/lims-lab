@@ -12,11 +12,10 @@ import {
   RiFolderAddLine,
   RiFileSearchLine ,
   RiFileUserLine ,
-  RiFileList2Line ,
-  
+  RiFileList2Line 
 } from "react-icons/ri";
 
- 
+import { FaUserDoctor } from "react-icons/fa6";
 
 import { useNavigate } from "react-router-dom";
 
@@ -59,14 +58,6 @@ const sections = [
     ],
   },
   {
-    title: "Lab to Lab",
-    icon: <RiTestTubeLine className="text-3xl text-[#238781]" />,
-    buttons: [
-      { label: "Add Lab", route: "/add-labtolab" },
-      { label: "View Labs", route: "/view-labtolab" },
-    ],
-  },
-  {
     title: "Nodal",
     icon: <RiHospitalLine className="text-3xl text-[#238781]" />,
     buttons: [
@@ -96,6 +87,14 @@ const sections = [
     buttons: [
       { label: "Add Nodal Instrument", route: "/add-nodal-instrument" },
       { label: "View Nodal Instruments", route: "/view-nodal-instruments" },
+    ],
+  },
+  {
+    title: "Lab to Lab",
+    icon: <RiTestTubeLine className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Add Lab", route: "/add-labtolab" },
+      { label: "View Labs", route: "/view-labtolab" },
     ],
   },
   {
@@ -132,13 +131,6 @@ const sections = [
     ],
   },
   {
-    title: "Doctor Registration",
-    icon: <RiUserAddLine className="text-3xl text-[#238781]" />,
-    buttons: [
-      { label: "Doctor Registration", route: "/doctor-registration" }
-    ],
-  },
-  {
     title: "Profile Entry",
     icon: <RiFileList2Line className="text-3xl text-[#238781]" />,
     buttons: [
@@ -162,7 +154,47 @@ const sections = [
       { label: "View Investigations", route: "/view-investigation" },
     ],
   },
-  
+
+  {
+    title: "Report Type",
+    icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Add Report Type", route: "/add-report-type-master" },
+      { label: "View Report Type", route: "/view-report-type-master" },
+    ],
+  },
+  {
+    title: "Kit Master",
+    icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Add Kit Master", route: "/add-kit-master" },
+      { label: "View Kit Master", route: "/view-kit-master" },
+    ],
+  },
+  {
+    title: "Specimen Type",
+    icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Add Specimen Type", route: "/add-specimen-type" },
+      { label: "View Specimen Type", route: "/view-specimen-type" },
+    ],
+  },
+  {
+    title: "Color Master",
+    icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Add Color Master", route: "/add-color" },
+      { label: "View Color Master", route: "/view-color" },
+    ],
+  },
+  {
+    title: "Doctor Registration",
+    icon: <FaUserDoctor  className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Doctor Registration", route: "/doctor-registration" },
+     
+    ],
+  },
 ];
 
 

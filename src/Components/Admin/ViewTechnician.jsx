@@ -1,8 +1,7 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import { viewTechnicians } from "../../services/apiService";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
 // import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 
@@ -12,30 +11,33 @@ const ViewTechnician = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { setTechnicianToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTechnicians = async () => {
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-tech",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
+        setLoading(true);
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const response = await viewTechnicians(params);
         
-        // const data = response.data.sort((a, b) => Number(a.id) - Number(b.id));
-        const data = (response.data || []).sort((a, b) => Number(a.id) - Number(b.id));
-
-
-        setTechnicians(data);
-        setFilteredTechnicians(data);
-        // console.log(filteredTechnicians[0].isactive);
+        if (response?.data) {
+          const data = response.data.sort((a, b) => Number(a.id) - Number(b.id));
+          setTechnicians(data);
+          setFilteredTechnicians(data);
+          
+          // Update pagination info
+          setTotalPages(response?.meta?.totalPages || 1);
+          setTotalItems(response?.meta?.totalItems || 0);
+        }
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch Technicians.");
       } finally {
@@ -44,47 +46,52 @@ const ViewTechnician = () => {
     };
 
     fetchTechnicians();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
 
+  // Client-side search filtering
   useEffect(() => {
-  if (!search.trim()) {
-    setFilteredTechnicians(technicians);
-  } else {
-    const lower = search.toLowerCase();
-    const filtered = (technicians || []).filter((h) =>
-      (h.technicianName || "").toLowerCase().includes(lower) ||
-      (h.addressLine || "").toLowerCase().includes(lower) ||
-      (h.city || "").toLowerCase().includes(lower) ||
-      (h.state || "").toLowerCase().includes(lower) ||
-      (h.contactNo || "").toLowerCase().includes(lower) ||
-      (h.nodal || "").toLowerCase().includes(lower)
-    );
-    setFilteredTechnicians(filtered);
-  }
-}, [search, technicians]);
+    if (!search.trim()) {
+      setFilteredTechnicians(technicians);
+    } else {
+      const lower = search.toLowerCase();
+      const filtered = (technicians || []).filter((h) =>
+        (h.technicianname || "").toLowerCase().includes(lower) ||
+        (h.addressline || "").toLowerCase().includes(lower) ||
+        (h.city || "").toLowerCase().includes(lower) ||
+        (h.state || "").toLowerCase().includes(lower) ||
+        (h.contactno || "").toLowerCase().includes(lower) ||
+        (h.nodal || "").toLowerCase().includes(lower) ||
+        (h.roletype || "").toLowerCase().includes(lower) ||
+        (h.instrument || "").toLowerCase().includes(lower)
+      );
+      setFilteredTechnicians(filtered);
+    }
+  }, [search, technicians]);
 
-
-  const handleUpdate = (technician) => {
-    // console.log(filteredtechnicians[0].isactive);
-    setTechnicianToUpdate(technician);
-    localStorage.setItem("technicianToUpdate", JSON.stringify(technician));
-    navigate("/update-technician");
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
-//   const activeCount = (technicians || []).filter((h) => h.isactive).length;
-//   const inactiveCount = (technicians || []).length - activeCount;
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  const handleUpdate = (technician) => {
+    navigate(`/update-technician/${technician.id}`);
+  };
 
   const columns = [
     { key: "id", label: "ID" },
-    { key: "technicianName", label: "Technician Name" },
-    { key: "contactNo", label: "Phone" },
+    { key: "technicianname", label: "Technician Name" },
+    { key: "contactno", label: "Phone" },
     { key: "nodal", label: "Nodal" },
-    { key: "roleType", label: "Role Type" },
+    { key: "roletype", label: "Role Type" },
     { key: "instrument", label: "Instrument" },
     { key: "dob", label: "DOB" },
     { key: "gender", label: "Gender" },
-    { key: "pinCode", label: "Pin Code" },
+    { key: "pincode", label: "Pin Code" },
     // { key: "city", label: "City" },
     // { key: "state", label: "State" },
     
@@ -95,14 +102,14 @@ const ViewTechnician = () => {
   const mappedItems = (filteredTechnicians || []).map((h) => ({
     ...h,
     id: h.id,
-    technicianName: h.technicianName,
-    contactNo: h.contactNo,
+    technicianname: h.technicianname,
+    contactno: h.contactno,
     nodal: h.nodal,
-    roleType: h.roleType,
+    roletype: h.roletype,
     instrument: h.instrument,
     dob: new Date(h.dob).toLocaleDateString("en-IN") || "-",
     gender: h.gender,
-    pinCode: h.pinCode,
+    pincode: h.pincode,
     city: h.city,
     state: h.state,
     status: h.isactive ? "Active" : "Inactive",
@@ -121,7 +128,7 @@ const ViewTechnician = () => {
 
         <li>
             <Link
-            to="/"
+            to="/admin-dashboard"
             className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
             >
             🏠︎ Home
@@ -130,19 +137,8 @@ const ViewTechnician = () => {
 
         <li className="text-gray-400">/</li>
 
-        <li>
-            <Link
-            to="/view-technician"
-            className="text-gray-700 hover:text-teal-600 transition-colors"
-            >
-            Technicians
-            </Link>
-        </li>
-
-        <li className="text-gray-400">/</li>
-
         <li aria-current="page" className="text-gray-500">
-            View Technicians
+            Technicians
         </li>
         </ol>
     </nav>
@@ -173,9 +169,16 @@ const ViewTechnician = () => {
             </div>
           </div>
 
+          {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>Page {currentPage} of {totalPages}</span>
+          </div>
 
-          {/* Add New */}
-          <div className="flex  flex-wrap gap-2 mb-4">
+
+          {/* Add Button */}
+          <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => navigate("/add-technician")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
@@ -187,7 +190,7 @@ const ViewTechnician = () => {
 
 
 
-          {/* Table */}
+          {/* Data Table */}
           {loading ? (
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (
@@ -200,7 +203,13 @@ const ViewTechnician = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

@@ -12,6 +12,8 @@
   "dependencies": {
     "@coreui/react": "^5.7.0",
     "@coreui/react-pro": "^5.17.0",
+    "@headlessui/react": "^2.2.7",
+    "@heroicons/react": "^2.2.0",
     "@radix-ui/react-slider": "^1.2.2",
     "@tanstack/react-table": "^8.21.3",
     "ag-grid-community": "^33.3.2",
