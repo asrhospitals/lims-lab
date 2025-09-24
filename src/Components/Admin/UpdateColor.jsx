@@ -20,81 +20,66 @@ const UpdateColor = () => {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      color_code: "",
+      color_name: "",
       color_status: "",
     },
   });
 
+  // Populate form when component mounts
   useEffect(() => {
-    if (!colorToUpdate) {
-      const stored = localStorage.getItem("colorToUpdate");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setColorToUpdate(parsed);
-          reset({
-            color_code: parsed.color_code || "",
-            color_status: parsed.color_status || "",
-          });
-        } catch (err) {
-          console.error("Failed to parse color from localStorage", err);
-        }
-      }
-    } else {
-      reset({
-        color_code: colorToUpdate.color_code || "",
-        color_status: colorToUpdate.color_status || "",
-      });
-    }
-  }, [colorToUpdate, reset, setColorToUpdate]);
+    if (!colorToUpdate) return navigate("/view-color"); // Redirect if no color to update
 
+    reset({
+      color_name: colorToUpdate.colorcode?.name || "",
+      color_status: colorToUpdate.colorstatus || "#000000",
+    });
+  }, [colorToUpdate, navigate, reset]);
 
-  
-
-  const onSubmit = async (data) => {
-    if (!colorToUpdate?.color_id) {
-      toast.error("❌ Missing color ID for update.");
-      return;
-    }
-
+  const onSubmit = async (formData) => {
     setIsSubmitting(true);
+  
     try {
       const token = localStorage.getItem("authToken");
-
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-color/${colorToUpdate.color_id}`,
-        {
-          color_code: data.color_code,
-          color_status: data.color_status,
+  
+      const payload = {
+        colorstatus: formData.color_status,
+        colorname: formData.color_name.trim(),
+        colorcode: {
+          hex: formData.color_status,
+          rgb: hexToRgb(formData.color_status),
+          hsl: hexToHsl(formData.color_status),
         },
+      };
+  
+      console.log("Update Payload:", payload);
+  
+      await axios.put(
+        `https://asrlabs.asrhospitalindia.in/api/lims/master/colors/${colorToUpdate.id}`,
+        payload,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      toast.success("✅ Color updated successfully!");
+  
+      toast.success("Color updated successfully!");
       setColorToUpdate(null);
-      localStorage.removeItem("colorToUpdate");
-      navigate("/view-colors");
+      navigate("/view-color");
     } catch (error) {
-      console.error("Error updating color:", error);
-      toast.error(
-        error.response?.data?.message || "❌ Failed to update color."
-      );
+      console.error("Update failed:", error);
+      toast.error(error.response?.data?.message || "❌ Failed to update color.");
     } finally {
       setIsSubmitting(false);
     }
   };
+  
 
   const fields = [
     {
-      name: "color_code",
-      label: "Color Code",
+      name: "color_name",
+      label: "Color Name",
       placeholder: "e.g., Red",
       validation: {
-        required: "Color code is required",
+        required: "Color name is required",
         pattern: {
           value: /^[A-Za-z\s]+$/i,
           message: "Only alphabets allowed",
@@ -103,13 +88,13 @@ const UpdateColor = () => {
     },
     {
       name: "color_status",
-      label: "Color Status",
-      placeholder: "e.g., Accept / Reject",
+      label: "Color Code",
+      placeholder: "#ff0000",
       validation: {
-        required: "Status is required",
+        required: "Color code is required",
         pattern: {
-          value: /^[A-Za-z\s]+$/i,
-          message: "Only alphabets allowed",
+          value: /^#([0-9A-Fa-f]{3}){1,2}$/,
+          message: "Must be a valid hex code",
         },
       },
     },
@@ -136,8 +121,9 @@ const UpdateColor = () => {
                     <span className="text-red-500">*</span>
                   )}
                 </label>
+
                 <input
-                  type="text"
+                  type={name === "color_status" ? "color" : "text"}
                   {...register(name, validation)}
                   onBlur={() => trigger(name)}
                   placeholder={placeholder}
@@ -147,6 +133,7 @@ const UpdateColor = () => {
                       : "border-gray-300 focus:ring-teal-500"
                   } focus:ring-2 focus:border-transparent transition`}
                 />
+
                 {errors[name] && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors[name].message}
@@ -164,6 +151,7 @@ const UpdateColor = () => {
             >
               Reset
             </button>
+
             <button
               type="submit"
               disabled={isSubmitting}

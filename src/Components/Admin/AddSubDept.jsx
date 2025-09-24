@@ -1,37 +1,44 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import AdminContext from "../../context/adminContext";
 import { useNavigate, Link } from "react-router-dom";
+import { addSubDepartments, viewDepartments } from "../../services/apiService";
 
 const AddSubDpt = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetchError, setFetchError] = useState("");
-  const { departments = [], setDepartments } = useContext(AdminContext);
+  const [departments, setDepartments] = useState([]);
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
     reset,
-    trigger,
-  } = useForm({ mode: "onBlur" });
+    clearErrors,
+    watch,
+  } = useForm({
+    mode: "onChange",
+  });
+  const watchedFields = watch(); // watch all fields
+
+  // const {
+  //   register,
+  //   handleSubmit,
+  //   formState: { errors },
+  //   reset,
+  //   trigger,
+  // } = useForm({ mode: "onBlur" });
 
   // Fetch all departments on load
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-department",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }
-        );
-        setDepartments(response.data || []);
+        const res = await viewDepartments();
+        setDepartments(res?.data || []);
       } catch (error) {
         setFetchError(
           error.response?.data?.message || "Failed to fetch departments."
@@ -40,34 +47,36 @@ const AddSubDpt = () => {
     };
 
     fetchDepartments();
-  }, [setDepartments]);
+  }, []);
 
-  // Form submit handler
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
-        dptname: data.dptname,
+        department_id: data.dptname,
         subdptname: data.subdptname,
         isactive: data.isactive === "true",
       };
 
-      await axios.post(
+      const authToken = localStorage.getItem("authToken");
+
+      const response = await axios.post(
         "https://asrlabs.asrhospitalindia.in/lims/master/add-subdepartment",
         payload,
         {
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         }
       );
 
-      toast.success("✅ New sub-department created successfully!");
+      console.log("API Response:", response.data);
+      toast.success("New Sub Department created successfully!");
       reset();
-      navigate("/view-subDpt");
+      setTimeout(() => navigate("/view-subDpt"), 1500);
     } catch (error) {
-      console.error(error);
+      console.error("Error creating sub-department:", error);
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to create sub-department. Please try again."
@@ -84,26 +93,34 @@ const AddSubDpt = () => {
       label: "Department",
       type: "select",
       options: departments.map((dept) => ({
-        value: dept.dptname,
+        value: dept.id,
         label: dept.dptname,
       })),
       validation: { required: "Department is required." },
     },
-    {
-      name: "subdptname",
-      label: "Sub-Department Name",
-      placeholder: "Enter Sub-Department Name",
-      validation: {
-        required: "Name is required",
-        minLength: { value: 5, message: "Minimum 5 characters" },
-        maxLength: { value: 30, message: "Maximum 30 characters" },
-        pattern: {
-          value: /^[A-Za-z0-9_\-\s]+$/,
-          message:
-            "Only alphabets, numbers, spaces, underscores (_) and hyphens (-) are allowed",
-        },
-      },
+   {
+  name: "subdptname",
+  label: "Sub-Department Name",
+  placeholder: "Enter Sub-Department Name",
+  validation: {
+    required: "Name is required",
+    minLength: { value: 5, message: "Minimum 5 characters" },
+    maxLength: { value: 30, message: "Maximum 30 characters" },
+    pattern: {
+      value: /^(?!\d+$)[A-Za-z\s_-]+$/,
+      message:
+        "Only letters, spaces, underscores (_) and hyphens (-) are allowed. Numbers alone are not allowed.",
     },
+  },
+  onBlur: (e, errors) => {
+    // cursor-preserving: stay in field if validation errors exist
+    if (errors?.subdptname) {
+      e.target.focus();
+    }
+  },
+},
+
+
     {
       name: "isactive",
       label: "Is Active?",
@@ -229,6 +246,34 @@ const AddSubDpt = () => {
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:ring-teal-500"
                         } focus:ring-2 focus:border-transparent transition`}
+                        onKeyUp={(e) => {
+                          const value = e.target.value;
+                          if (["dptname", "city", "state"].includes(name)) {
+                            const isValid = /^[a-zA-Z\s]*$/.test(value); // Only letters and spaces
+                            if (!isValid) {
+                              setError(name, {
+                                type: "manual",
+                                message: "Only letters are allowed",
+                              });
+                            } else {
+                              clearErrors(name);
+                            }
+                          }
+                        }}
+                        onInput={(e) => {
+                          const value = e.target.value;
+                          if (["dptname", "city", "state"].includes(name)) {
+                            const isValid = /^[a-zA-Z\s]*$/.test(value); // Only letters and spaces
+                            if (!isValid) {
+                              setError(name, {
+                                type: "manual",
+                                message: "Only letters are allowed",
+                              });
+                            } else {
+                              clearErrors(name);
+                            }
+                          }
+                        }}
                       />
                     )}
 
@@ -255,7 +300,7 @@ const AddSubDpt = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Processing..." : "Create Sub-Department"}
+                {isSubmitting ? "Processing..." : "Add Sub-Department"}
               </button>
             </div>
           </div>

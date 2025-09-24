@@ -12,11 +12,12 @@ const ViewProfileMaster = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const { setProfileEntryMasterToUpdate } = useContext(AdminContext);
+  const { setProfileMasterToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfiles = async () => {
+      setLoading(true);
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
@@ -27,20 +28,23 @@ const ViewProfileMaster = () => {
             },
           }
         );
-
-        const data = Array.isArray(response.data) ? response.data : [response.data];
-
-        setProfiles(data);
-        setFilteredProfiles(data);
+  
+        // Access the nested `data` array
+        const profilesData = response.data?.data || [];
+        console.log("profilesData====", profilesData);
+  
+        setProfiles(profilesData);
+        setFilteredProfiles(profilesData);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch Profile Entries.");
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchProfiles();
   }, []);
+  
 
   useEffect(() => {
     if (!search.trim()) {
@@ -60,25 +64,29 @@ const ViewProfileMaster = () => {
   }, [search, profiles]);
 
   const handleUpdate = (entry) => {
-    setProfileEntryMasterToUpdate(entry);
-    localStorage.setItem("profileEntryMasterToUpdate", JSON.stringify(entry));
-    navigate("/update-profileEntryMaster");
+    setProfileMasterToUpdate(entry);
+    localStorage.setItem("profileMasterToUpdate", JSON.stringify(entry));
+    navigate("/update-profileMaster");
   };
 
   const columns = [
     { key: "profile_id", label: "Profile Id" },
-    { key: "profileName", label: "Profile Name" },
+    { key: "profilename", label: "Profile Name" },
     { key: "investigations", label: "Investigations" },
   ];
 
   const mappedItems = filteredProfiles.map((entry, index) => ({
     id: index + 1,
-    profile_id: entry.profile_id,
-    profileName: entry.profileName,
-    investigations: (Array.isArray(entry.investigations) ? entry.investigations.join(", ") : ""),
+    profile_id: entry.id,
+    profilename: entry.profilename,
+    investigations: Array.isArray(entry.investigations)
+      ? entry.investigations.map(inv => inv.testname).join(", ")
+      : "",
     status: entry.isactive ? "Active" : "Inactive",
     raw: entry,
   }));
+  
+  
 
   return (
     <>
@@ -100,7 +108,7 @@ const ViewProfileMaster = () => {
             <li className="text-gray-400">/</li>
             <li>
               <Link
-                to="/view-profileEntryMaster"
+                to="/view-profile-Master"
                 className="text-gray-700 hover:text-teal-600 transition-colors"
               >
                 Profile Masters
@@ -119,7 +127,7 @@ const ViewProfileMaster = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-              Profile Entry List
+              Profile  List
             </h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
@@ -128,7 +136,7 @@ const ViewProfileMaster = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
-                  placeholder="Search Profile Entry Master..."
+                  placeholder="Search Profile Master..."
                 />
                 <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
               </div>
@@ -138,7 +146,7 @@ const ViewProfileMaster = () => {
           {/* Add New */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
-              onClick={() => navigate("/add-profileEntryMaster")}
+              onClick={() => navigate("/add-profile-master")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
@@ -156,12 +164,12 @@ const ViewProfileMaster = () => {
             </div>
           ) : (
             <DataTable
-              items={mappedItems}
-              columns={columns}
-              itemsPerPage={10}
-              showDetailsButtons={false}
-              onUpdate={(item) => handleUpdate(item.raw)} // Pass original entry on update
-            />
+            items={mappedItems}
+            columns={columns}
+            itemsPerPage={10}
+            showDetailsButtons={false}
+            onUpdate={(item) => handleUpdate(item.raw)}
+          />
           )}
         </div>
       </div>

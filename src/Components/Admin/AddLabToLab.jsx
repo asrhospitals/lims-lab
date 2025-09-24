@@ -2,9 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { useNavigate, Link } from "react-router-dom";
+import { addLabToLab } from "../../services/apiService";
 
 const AddLabToLab = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,8 +20,6 @@ const AddLabToLab = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
         labname: data.labname,
         addressline: data.addressline,
@@ -35,17 +32,15 @@ const AddLabToLab = () => {
         isactive: data.isactive === "true",
       };
 
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-labtolab",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addLabToLab(payload);
 
-      toast.success("✅ Lab added successfully!");
+
+      toast.success("New Lab added successfully!");
       reset();
-      navigate("/view-labtolab");
+      setTimeout(() => navigate("/view-labtolab"), 1500);
+
+
+
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
@@ -56,141 +51,221 @@ const AddLabToLab = () => {
     }
   };
 
+  const handleLettersOnly = (name, value) => {
+    // Only letters and spaces allowed
+    const isValid = /^[a-zA-Z\s]*$/.test(value);
+
+    if (!isValid) {
+      setError(name, {
+        type: "manual",
+        message: "Only letters are allowed",
+      });
+    } else {
+      clearErrors(name);
+    }
+  };
+
+  // Validation regex
   const alphanumericRegex = /^[a-zA-Z0-9\s\-_]+$/;
-  const numberRegex = /^\d+$/;
   const pinCodeRegex = /^\d{6}$/;
   const phoneRegex = /^[6-9]\d{9}$/;
-
+  const lettersOnlyRegex = /^[a-zA-Z\s]+$/; // Only letters, space, _ and -
   const fields = [
-    {
-      name: "labname",
-      label: "Lab Name",
-      placeholder: "Enter Lab Name",
-      validation: {
-        required: "Lab name is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
+  {
+    name: "labname",
+    label: "Lab Name",
+    placeholder: "Enter Lab Name",
+    validation: {
+      required: "Lab name is required",
+      pattern: {
+        value: lettersOnlyRegex,
+        message: "Only letters, spaces, underscore (_) and hyphen (-) are allowed",
+      },
+      lettersOnly: true,
+    },
+    onBlur: (e, errors) => {
+      if (errors?.labname) {
+        const inputElement = document.querySelector(`[name="labname"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "addressline",
+    label: "Address",
+    placeholder: "Enter Address",
+    validation: {
+      required: "Address is required",
+      pattern: {
+        value: alphanumericRegex,
+        message: "Only letters, numbers, space, - and _ are allowed",
       },
     },
-    {
-      name: "addressline",
-      label: "Address",
-      placeholder: "Enter Address",
-      validation: {
-        required: "Address is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
+    onBlur: (e, errors) => {
+      if (errors?.addressline) {
+        const inputElement = document.querySelector(`[name="addressline"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "city",
+    label: "City",
+    placeholder: "Enter City",
+    validation: {
+      required: "City is required",
+      pattern: {
+        value: lettersOnlyRegex,
+        message: "Only letters and spaces are allowed",
       },
     },
-    {
-      name: "city",
-      label: "City",
-      placeholder: "Enter City",
-      validation: {
-        required: "City is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
+    onBlur: (e, errors) => {
+      if (errors?.city) {
+        const inputElement = document.querySelector(`[name="city"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "state",
+    label: "State",
+    placeholder: "Enter State",
+    validation: {
+      required: "State is required",
+      pattern: {
+        value: lettersOnlyRegex,
+        message: "Only letters and spaces are allowed",
       },
     },
-    {
-      name: "state",
-      label: "State",
-      placeholder: "Enter State",
-      validation: {
-        required: "State is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
+    onBlur: (e, errors) => {
+      if (errors?.state) {
+        const inputElement = document.querySelector(`[name="state"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "pincode",
+    label: "PIN Code",
+    placeholder: "Enter PIN Code",
+    type: "text",
+    validation: {
+      required: "PIN code is required",
+      pattern: {
+        value: pinCodeRegex,
+        message: "PIN must be exactly 6 digits",
       },
     },
-    {
-      name: "pincode",
-      label: "PIN Code",
-      placeholder: "Enter PIN Code",
-      type: "text",
-      validation: {
-        required: "PIN code is required",
-        pattern: {
-          value: pinCodeRegex,
-          message: "PIN must be exactly 6 digits",
-        },
+    onBlur: (e, errors) => {
+      if (errors?.pincode) {
+        const inputElement = document.querySelector(`[name="pincode"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "contactperson",
+    label: "Contact Person",
+    placeholder: "Enter Contact Person",
+    validation: {
+      required: "Contact person is required",
+      pattern: {
+        value: lettersOnlyRegex,
+        message: "Only letters and spaces are allowed",
       },
     },
-    {
-      name: "contactperson",
-      label: "Contact Person",
-      placeholder: "Enter Contact Person",
-      validation: {
-        required: "Contact person is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
+    onBlur: (e, errors) => {
+      if (errors?.contactperson) {
+        const inputElement = document.querySelector(`[name="contactperson"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "contactno",
+    label: "Contact Number",
+    type: "text",
+    placeholder: "Enter Contact Number",
+    validation: {
+      required: "Contact number is required",
+      pattern: {
+        value: phoneRegex,
+        message: "Enter valid 10-digit mobile number",
       },
     },
-    {
-      name: "contactno",
-      label: "Contact Number",
-      type: "text",
-      placeholder: "Enter Contact Number",
-      validation: {
-        required: "Contact number is required",
-        pattern: {
-          value: phoneRegex,
-          message: "Enter valid 10-digit mobile number",
-        },
+    onBlur: (e, errors) => {
+      if (errors?.contactno) {
+        const inputElement = document.querySelector(`[name="contactno"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "email",
+    label: "Email",
+    placeholder: "Enter Email",
+    validation: {
+      required: "Email is required",
+      pattern: {
+        value: /^\S+@\S+\.\S+$/,
+        message: "Invalid email format",
       },
     },
-    {
-      name: "email",
-      label: "Email",
-      placeholder: "Enter Email",
-      validation: {
-        required: "Email is required",
-        pattern: {
-          value: /^\S+@\S+\.\S+$/,
-          message: "Invalid email format",
-        },
-      },
+    onBlur: (e, errors) => {
+      if (errors?.email) {
+        const inputElement = document.querySelector(`[name="email"]`);
+        if (inputElement) inputElement.focus();
+      }
     },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: {
-        required: "Status is required",
-      },
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+    validation: {
+      required: "Status is required",
     },
-  ];
+    // No cursor-preserving needed for radio
+  },
+];
+
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="/" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-labtolab"
-            className="hover:text-blue-600"
-          >
-            Lab To Lab /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Add Lab
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/admin-dashboard"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-labtolab"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Lab To Lab
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Add Lab
+            </li>
+          </ol>
+        </nav>
       </div>
 
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
@@ -229,6 +304,8 @@ const AddLabToLab = () => {
                               type="radio"
                               {...register(name, validation)}
                               value={opt.value}
+                              onInput={() => trigger(name)}
+                              onKeyUp={() => trigger(name)}
                               className="h-4 w-4 text-blue-600"
                             />
                             <span className="ml-2">{opt.label}</span>
@@ -240,6 +317,8 @@ const AddLabToLab = () => {
                         type={type}
                         {...register(name, validation)}
                         onBlur={() => trigger(name)}
+                        onInput={() => trigger(name)}
+                        onKeyUp={() => trigger(name)}
                         placeholder={placeholder}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
@@ -272,7 +351,7 @@ const AddLabToLab = () => {
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
               >
-                {isSubmitting ? "Saving..." : "Create Lab"}
+                {isSubmitting ? "Saving..." : "Add Lab"}
               </button>
             </div>
           </div>

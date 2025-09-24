@@ -333,7 +333,7 @@ const AddReportDoctor = () => {
                   isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-teal-600 hover:bg-teal-700"
                 }`}
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting ? "Saving..." : "Add Report Doctor"}
               </button>
             </div>
           </div>

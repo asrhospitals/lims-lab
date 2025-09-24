@@ -2,10 +2,9 @@ import React, { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
 import AdminContext from "../../context/adminContext";
-import { useNavigate } from "react-router-dom";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { useNavigate, Link } from "react-router-dom";
+import { updateRole } from "../../services/apiService";
 
 const UpdateRole = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,20 +56,13 @@ const UpdateRole = () => {
 
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
+      const payload = {
+        roletype: data.roletype,
+        roledescription: data.roledescription,
+        isactive: data.isactive === "true",
+      };
 
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-role/${roleToUpdate.id}`,
-        {
-          ...data,
-          isactive: data.isactive === "true",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await updateRole(roleToUpdate.id, payload);
 
       navigate("/view-roles");
       toast.success("✅ Role updated successfully!");
@@ -142,21 +134,43 @@ const UpdateRole = () => {
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem href="/view-roles" className="hover:text-blue-600">
-            Roles /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Update Role
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li>
+              <Link
+                to="/view-roles"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Roles
+              </Link>
+            </li>
+
+            <li className="text-gray-400">/</li>
+
+            <li aria-current="page" className="text-gray-500">
+              Update Role
+            </li>
+          </ol>
+        </nav>
       </div>
 
-      <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -165,8 +179,8 @@ const UpdateRole = () => {
           <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="text-white font-semibold">Update Role</h4>
           </div>
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 space-y-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
                 ({
                   name,

@@ -1,9 +1,8 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
+import { viewNodals } from "../../services/apiService";
 
 const ViewNodal = () => {
   const [nodalLabs, setNodalLabs] = useState([]);
@@ -11,25 +10,29 @@ const ViewNodal = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { setNodalToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchNodalLabs = async () => {
+      setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodal",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        const data = response.data || [];
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const res = await viewNodals(params);
+        const data = res.data.sort((a, b) => a.id - b.id);
+        
         setNodalLabs(data);
         setFilteredNodalLabs(data);
+        setTotalPages(res?.meta?.totalPages || 1);
+        setTotalItems(res?.meta?.totalItems || 0);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch nodal labs.");
       } finally {
@@ -38,33 +41,32 @@ const ViewNodal = () => {
     };
 
     fetchNodalLabs();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
-  // Filter based on search with allowed characters only
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    // Allow only alphabets, numbers, _ and , and spaces
-    if (/^[a-zA-Z0-9_,\s]*$/.test(value)) {
-      setSearch(value);
-    }
-  };
-
+  // Client-side search filtering
   useEffect(() => {
     if (!search.trim()) {
       setFilteredNodalLabs(nodalLabs);
     } else {
       const lower = search.toLowerCase();
-      const filtered = nodalLabs.filter((n) =>
-        n.nodalname.toLowerCase().includes(lower)
+      const filtered = (nodalLabs || []).filter((n) =>
+        (n.nodalname && n.nodalname.toLowerCase().includes(lower))
       );
       setFilteredNodalLabs(filtered);
     }
   }, [search, nodalLabs]);
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   const handleUpdate = (nodal) => {
-    setNodalToUpdate(nodal);
-    localStorage.setItem("nodalToUpdate", JSON.stringify(nodal));
-    navigate("/update-nodal");
+    navigate(`/update-nodal/${nodal.id}`);
   };
 
   // Columns reflect actual database column names and types
@@ -87,9 +89,9 @@ const ViewNodal = () => {
   return (
     <>
       {/* Breadcrumb */}
-      <div className="fixed top-[61px] w-full z-10 bg-gray-50 border-b shadow-lg">
+      <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center font-medium justify-start px-4 py-2"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
@@ -123,7 +125,7 @@ const ViewNodal = () => {
       </div>
 
       {/* Main Content */}
-      <div className="w-full mt-12 px-2 space-y-4 text-sm">
+      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -135,7 +137,13 @@ const ViewNodal = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={handleSearchChange}
+                  onChange={(e) => {
+                    // Optional: Restrict input to alphabets, numbers, underscore, comma
+                    const val = e.target.value;
+                    if (/^[a-zA-Z0-9_,\s]*$/.test(val)) {
+                      setSearch(val);
+                    }
+                  }}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
                   placeholder="Search nodal lab..."
                 />
@@ -144,11 +152,18 @@ const ViewNodal = () => {
             </div>
           </div>
 
+          {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>Page {currentPage} of {totalPages}</span>
+          </div>
+
           {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4 justify-start">
             <button
               onClick={() => navigate("/add-nodal")}
-              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
+              className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
             </button>
@@ -167,7 +182,13 @@ const ViewNodal = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

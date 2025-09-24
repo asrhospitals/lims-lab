@@ -1,15 +1,17 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import AdminContext from "../../context/adminContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
+import { viewHospitalType, updateHospitalType } from "../../services/apiService";
 
 const UpdateHospitalType = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { hospitalTypeToUpdate, setHospitalTypeToUpdate } = useContext(AdminContext);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hospitalTypeToUpdate, setHospitalTypeToUpdate] = useState(null);
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const {
     register,
@@ -22,59 +24,55 @@ const UpdateHospitalType = () => {
     defaultValues: {
       hsptltype: "",
       hsptldsc: "",
-      isactive: true, // match lowercase column name and boolean type
+      isactive: true,
     },
   });
 
   useEffect(() => {
-    if (!hospitalTypeToUpdate) {
-      const stored = localStorage.getItem("hospitalTypeToUpdate");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setHospitalTypeToUpdate(parsed);
-          reset({
-            hsptltype: parsed.hsptltype || "",
-            hsptldsc: parsed.hsptldsc || "",
-            isactive: parsed.isactive ?? true, // default true if undefined
-          });
-        } catch (err) {
-          console.error("Failed to parse hospitalType from localStorage", err);
-        }
+    const fetchHospitalTypeData = async () => {
+      if (!id) {
+        toast.error("No hospital type ID provided");
+        navigate("/view-hospitaltype");
+        return;
       }
-    } else {
-      reset({
-        hsptltype: hospitalTypeToUpdate.hsptltype || "",
-        hsptldsc: hospitalTypeToUpdate.hsptldsc || "",
-        isactive: hospitalTypeToUpdate.isactive ?? true,
-      });
-    }
-  }, [hospitalTypeToUpdate, reset, setHospitalTypeToUpdate]);
+
+      setIsLoading(true);
+      try {
+        const hospitalTypeData = await viewHospitalType(id);
+        setHospitalTypeToUpdate(hospitalTypeData);
+        reset({
+          hsptltype: hospitalTypeData.hsptltype || "",
+          hsptldsc: hospitalTypeData.hsptldsc || "",
+          isactive: String(hospitalTypeData.isactive),
+        });
+      } catch (error) {
+        console.error("Failed to fetch hospital type data:", error);
+        toast.error(
+          error?.response?.data?.message ||
+            "Failed to fetch hospital type data. Please try again."
+        );
+        navigate("/view-hospitaltype");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHospitalTypeData();
+  }, [id, reset, navigate]);
 
   const onSubmit = async (data) => {
-    if (!hospitalTypeToUpdate?.id) return;
+    if (!id) return;
 
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-hsptltype/${hospitalTypeToUpdate.id}`,
-        {
-          hsptltype: data.hsptltype,
-          hsptldsc: data.hsptldsc,
-          isactive: data.isactive, // boolean already
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      await updateHospitalType(id, {
+        hsptltype: data.hsptltype,
+        hsptldsc: data.hsptldsc,
+        isactive: data.isactive === "true",
+      });
 
       toast.success("✅ Hospital type updated successfully!");
       setHospitalTypeToUpdate(null);
-      localStorage.removeItem("hospitalTypeToUpdate");
       navigate("/view-hospitaltype");
     } catch (error) {
       console.error(error);
@@ -87,42 +85,48 @@ const UpdateHospitalType = () => {
     }
   };
 
-  const fields = [
-    {
-      name: "hsptltype",
-      label: "Hospital Type Code",
-      placeholder: "Enter Hospital Type Code (e.g., DH)",
-      validation: {
-        required: "Hospital type code is required",
-        pattern: {
-          value: /^[a-zA-Z0-9_, ]+$/,
-          message:
-            "Only letters, numbers, underscore, comma and spaces allowed",
+ const fields = [
+  {
+    name: "hsptltype",
+    label: "Hospital Type Code",
+    placeholder: "Enter Hospital Type Code (e.g., DH)",
+    validation: {
+      required: "Hospital type code is required",
+      pattern: {
+        value: /^[A-Za-z\s]+$/, // ✅ only letters and spaces
+        message: "Only letters and spaces are allowed (no numbers or special characters)",
+      },
+      validate: {
+        noDuplicate: (value) => {
+          const existing = ["DH", "CH", "RH"]; // replace with real list from API or state
+          return !existing.includes(value) || "Duplicate hospital type code is not allowed";
         },
       },
     },
+  },
+
+
     {
-      name: "hsptldsc",
-      label: "Hospital Type Description",
-      placeholder: "Enter Hospital Type Description",
-      validation: {
-        required: "Description is required",
-        minLength: { value: 2, message: "Minimum 2 characters" },
-        maxLength: { value: 100, message: "Maximum 100 characters" },
-        pattern: {
-          value: /^[a-zA-Z0-9_, ]+$/,
-          message:
-            "Only letters, numbers, underscore, comma and spaces allowed",
-        },
-      },
+  name: "hsptldsc",
+  label: "Hospital Type Description",
+  placeholder: "Enter Hospital Type Description",
+  validation: {
+    required: "Description is required",
+    minLength: { value: 2, message: "Minimum 2 characters" },
+    maxLength: { value: 100, message: "Maximum 100 characters" },
+    pattern: {
+      value: /^[A-Za-z\s]+$/, 
+      message: "Only letters and spaces are allowed (no numbers or special characters)",
     },
+  },
+},
     {
       name: "isactive",
       label: "Is Active?",
       type: "radio",
       options: [
-        { value: true, label: "True" },
-        { value: false, label: "False" },
+        { value: "true", label: "True" },
+        { value: "false", label: "False" },
       ],
       validation: {
         required: "This field is required.",
@@ -130,10 +134,18 @@ const UpdateHospitalType = () => {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500">Loading hospital type data...</p>
+      </div>
+    );
+  }
+
   if (!hospitalTypeToUpdate) {
     return (
       <div className="text-center py-10">
-        <p className="text-gray-500">No hospital type selected for update.</p>
+        <p className="text-gray-500">Hospital type not found.</p>
       </div>
     );
   }
@@ -207,21 +219,14 @@ const UpdateHospitalType = () => {
                       <div className="flex space-x-4 pt-2">
                         {options.map((option) => (
                           <label
-                            key={option.value.toString()}
+                            key={option.value}
                             className="inline-flex items-center"
                           >
                             <input
                               type="radio"
                               {...register(name, validation)}
-                              value={option.value.toString()}
+                              value={option.value}
                               className="h-4 w-4 text-teal-600"
-                              defaultChecked={
-                                String(option.value) ===
-                                String(
-                                  hospitalTypeToUpdate[name] ??
-                                    (name === "isactive" ? true : "")
-                                )
-                              }
                             />
                             <span className="ml-2">{option.label}</span>
                           </label>
@@ -253,7 +258,7 @@ const UpdateHospitalType = () => {
                 type="button"
                 onClick={() => {
                   reset();
-                  setHospitalTypeToUpdate(null);
+                  navigate("/view-hospitaltype");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >

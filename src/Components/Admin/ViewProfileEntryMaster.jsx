@@ -11,6 +11,12 @@ const ViewProfileEntryMaster = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);   // Current page number
+const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items per page
+const [totalPages, setTotalPages] = useState(1);     // Total pages from API
+const [totalItems, setTotalItems] = useState(0);     // Total items from API
+
+
 
   const { setProfileEntryMasterToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
@@ -18,32 +24,37 @@ const ViewProfileEntryMaster = () => {
   // Fetch data from API on mount
   useEffect(() => {
     const fetchProfileEntries = async () => {
+      setLoading(true);
       try {
         const authToken = localStorage.getItem("authToken");
+        const params = {
+        page: currentPage,       // current page
+        limit: itemsPerPage,     // items per page
+      };
         const response = await axios.get(
           "https://asrlabs.asrhospitalindia.in/lims/master/get-profileentry",
           {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
+            headers: { Authorization: `Bearer ${authToken}` },
+            params: params,       // pass pagination params here
           }
         );
-
-        const data = (response.data || []).sort(
-          (a, b) => Number(a.profile_id) - Number(b.profile_id)
-        );
-
-        setProfileEntries(data);
-        setFilteredProfileEntries(data);
+  
+        const responseData = response.data.data || [];
+        const data = responseData.sort((a, b) => Number(a.id) - Number(b.id));
+  
+        // Update total items and total pages from API meta (if API provides)
+      setTotalItems(response.data.meta?.totalItems || responseData.length);
+      setTotalPages(response.data.meta?.totalPages || 1);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch Profile Entries.");
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchProfileEntries();
-  }, []);
+  }, [currentPage, itemsPerPage]); // re-fetch when page or page size changes
+  
 
   // Filter on search input
   useEffect(() => {
@@ -61,16 +72,15 @@ const ViewProfileEntryMaster = () => {
   }, [search, profileEntries]);
 
   const handleUpdate = (entry) => {
-    setProfileEntryMasterToUpdate(entry);
-    localStorage.setItem("profileEntryMasterToUpdate", JSON.stringify(entry));
-    navigate("/update-profile-entry-master");
+    navigate(`/update-profile-entry-master/${entry.id}`);
   };
+  
 
   // Define table columns
   const columns = [
     { key: "serial", label: "S. No." },
     // { key: "profile_id", label: "Profile ID" },
-    { key: "profileName", label: "Profile Name" },
+    { key: "profilename", label: "Profile Name" },
     { key: "profilecode", label: "Profile Code" },
     { key: "alternativebarcode", label: "Alternative Barcode" },
     { key: "isactive", label: "Status" },
@@ -80,11 +90,12 @@ const ViewProfileEntryMaster = () => {
   // Prepare data for DataTable
   const mappedItems = filteredProfileEntries.map((entry, index) => ({
     ...entry,
-    id :index+1,
+    id: index + 1,  // Serial id (optional, could use entry.id)
     serial: index + 1,
     alternativebarcode: entry.alternativebarcode ? "Yes" : "No",
     isactive: entry.isactive ? "Active" : "Inactive",
   }));
+  
 
   return (
     <>
@@ -159,12 +170,18 @@ const ViewProfileEntryMaster = () => {
             </div>
           ) : (
             <DataTable
-              items={mappedItems}
-              columns={columns}
-              itemsPerPage={10}
-              showDetailsButtons={false}
-              onUpdate={handleUpdate}
-            />
+                         items={mappedItems}
+                         columns={columns}
+                         serverSidePagination={true}
+                         currentPage={currentPage}
+                         totalPages={totalPages}
+                         totalItems={totalItems}
+                         itemsPerPage={itemsPerPage}
+                         onPageChange={handlePageChange}
+                         onPageSizeChange={handlePageSizeChange}
+                         showDetailsButtons={false}
+                         onUpdate={handleUpdate}
+                       />
           )}
         </div>
       </div>

@@ -1,10 +1,9 @@
-import  { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
+import { viewNodalInstruments } from "../../services/apiService";
 
 const ViewNodalInstrument = () => {
   const [instruments, setInstruments] = useState([]);
@@ -12,22 +11,42 @@ const ViewNodalInstrument = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
   const { setNodalInstrumentToUpdate } = useContext(AdminContext);
 
+  // Handlers for pagination
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1); // Reset to first page
+  };
+
   useEffect(() => {
     const fetchAll = async () => {
+      setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const resp = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodalinstrument",
-          { headers: { Authorization: `Bearer ${authToken}` } }
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+        const response = await viewNodalInstruments(params);
+        const data = (response.data || []).sort(
+          (a, b) => Number(a.instruments_id) - Number(b.instruments_id)
         );
-        const data = resp.data || [];
         setInstruments(data);
-        setFiltered(data);
+        setFiltered(data); // fixed state name
+        setTotalPages(response?.meta?.totalPages || 1);
+        setTotalItems(response?.meta?.totalItems || 0);
       } catch (err) {
+        console.error("Failed to fetch nodal instruments:", err);
         setError(
           err.response?.data?.message || "Failed to fetch nodal instruments."
         );
@@ -36,8 +55,8 @@ const ViewNodalInstrument = () => {
       }
     };
 
-    fetchAll();
-  }, []);
+    fetchAll(); // ✅ call the correct function
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     const term = search.toLowerCase();
@@ -45,10 +64,10 @@ const ViewNodalInstrument = () => {
       setFiltered(instruments);
     } else {
       setFiltered(
-        instruments.filter(
+        (instruments || []).filter(
           (i) =>
-            i.nodalname?.toLowerCase().includes(term) ||
-            i.instrumentname?.toLowerCase().includes(term)
+            (i.nodalname && i.nodalname.toLowerCase().includes(term)) ||
+            (i.instrumentname && i.instrumentname.toLowerCase().includes(term))
         )
       );
     }
@@ -60,42 +79,55 @@ const ViewNodalInstrument = () => {
     navigate("/update-nodal-instrument");
   };
 
-  // const activeCount = instruments.filter((i) => i.isactive).length;
-  // const inactiveCount = instruments.length - activeCount;
-
   const columns = [
     { key: "id", label: "ID" },
     { key: "instrumentname", label: "Instrument" },
     { key: "nodalname", label: "Nodal" },
     { key: "status", label: "Status" },
-    // status handled by DataTable
   ];
 
-  const mappedItems = filtered.map((i) => ({
-    ...i,
+  const mappedItems = (filtered || []).map((i) => ({
+    id: i.id ?? Math.random().toString(36).substring(2, 9),
+    instrumentname: i.instrumentName || "-",
+    nodalname: i.nodalName || "-",
     status: i.isactive ? "Active" : "Inactive",
   }));
 
   return (
     <>
-      <div className="fixed top-[61px] w-full z-50">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-nodal-instruments"
-            className="hover:text-blue-600"
-          >
-            Nodal Instrument /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-nodal-instruments"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Nodal Instrument
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              View Nodal Instruments
+            </li>
+          </ol>
+        </nav>
       </div>
 
-      <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -107,7 +139,12 @@ const ViewNodalInstrument = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^[a-zA-Z0-9_,\s]*$/.test(val)) {
+                      setSearch(val);
+                    }
+                  }}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
                   placeholder="Search instrument or nodal..."
                 />
@@ -116,24 +153,8 @@ const ViewNodalInstrument = () => {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Add New Button */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {/* <div className="flex items-center bg-blue-200 border border-blue-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-blue-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">Active</span>
-              <span className="ml-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {activeCount}
-              </span>
-            </div>
-            <div className="flex items-center bg-red-200 border border-red-100 rounded-lg px-3 py-1.5">
-              <RiCircleFill className="text-red-500 text-xs mr-1.5" />
-              <span className="text-sm font-medium text-gray-700">
-                Inactive
-              </span>
-              <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {inactiveCount}
-              </span>
-            </div> */}
             <button
               onClick={() => navigate("/add-nodal-instrument")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
@@ -155,7 +176,13 @@ const ViewNodalInstrument = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

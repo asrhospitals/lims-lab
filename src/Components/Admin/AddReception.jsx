@@ -1,14 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-// import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 import { useNavigate, Link } from "react-router-dom";
+import { addReception } from "../../services/apiService";
 
 const AddReceptionist = () => {
-  const [nodalCenters, setNodalCenters] = useState([]);
-  const [fetchError, setFetchError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -20,238 +17,237 @@ const AddReceptionist = () => {
     trigger,
   } = useForm({ mode: "onBlur" });
 
-  // Fetch nodal centers
-  useEffect(() => {
-    const fetchNodalCenters = async () => {
-      try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-nodal",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }
-        );
-        setNodalCenters(response.data || []);
-      } catch (error) {
-        setFetchError(
-          error.response?.data?.message || "Failed to fetch nodal centers."
-        );
-      }
-    };
-    fetchNodalCenters();
-  }, []);
-  
+  // Today’s date in YYYY-MM-DD format
+  const today = new Date().toISOString().split("T")[0];
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     const payload = {
-      receptionistName: data.receptionistName,
-      addressLine: data.addressLine,
-      city: data.city,
-      state: data.state,
-      pinCode: Number(data.pinCode),
-      dob: data.dob,
-      contactNo: data.contactNo,
+      receptionistname: data.receptionistname.trim(),
+      addressline: data.addressline.trim(),
+      city: data.city.trim(),
+      state: data.state.trim(),
+      pincode: Number(data.pincode),
+      dob: today, // force present date only
+      contactno: data.contactno.trim(),
       gender: data.gender,
-      nodal: data.nodal,
       isactive: data.isactive === "true",
     };
 
     try {
-      const authToken = localStorage.getItem("authToken");
-      await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-recep",
-        payload,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      await addReception(payload);
 
       toast.success("Receptionist added successfully!", {
         position: "top-right",
-        autoClose: 2000, // show for 2 seconds
+        autoClose: 2000,
       });
 
       reset();
-
       setTimeout(() => {
         navigate("/view-reception");
-      }, 2000); // wait 2 seconds before navigating
-
+      }, 2000);
     } catch (error) {
       console.error("Submission error:", error?.response?.data);
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to add receptionist. Please try again.",
-        {
-          position: "top-right",
-          autoClose: 3000,
-        }
+        { position: "top-right", autoClose: 3000 }
       );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+ const fields = [
+  {
+    name: "receptionistname",
+    label: "Receptionist Name",
+    placeholder: "Enter Receptionist Name",
+    validation: {
+      required: "Receptionist name is required",
+      pattern: {
+        value: /^[a-zA-Z\s]+$/,
+        message: "Name should only contain letters and spaces",
+      },
+    },
+    onBlur: (e, errors) => {
+      if (errors?.receptionistname) {
+        const input = document.querySelector(`[name="receptionistname"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "addressline",
+    label: "Address",
+    placeholder: "Enter Address",
+    validation: { required: "Address is required" },
+    onBlur: (e, errors) => {
+      if (errors?.addressline) {
+        const input = document.querySelector(`[name="addressline"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "city",
+    label: "City",
+    placeholder: "Enter City",
+    validation: {
+      required: "City is required",
+      pattern: {
+        value: /^[a-zA-Z\s]+$/,
+        message: "City should only contain letters and spaces",
+      },
+    },
+    onBlur: (e, errors) => {
+      if (errors?.city) {
+        const input = document.querySelector(`[name="city"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "state",
+    label: "State",
+    placeholder: "Enter State",
+    validation: {
+      required: "State is required",
+      pattern: {
+        value: /^[a-zA-Z\s]+$/,
+        message: "State should only contain letters and spaces",
+      },
+    },
+    onBlur: (e, errors) => {
+      if (errors?.state) {
+        const input = document.querySelector(`[name="state"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "pincode",
+    label: "PIN Code",
+    type: "text",
+    placeholder: "Enter PIN Code",
+    validation: {
+      required: "PIN Code is required",
+      pattern: {
+        value: /^\d{6}$/,
+        message: "PIN must be exactly 6 digits",
+      },
+    },
+    onBlur: (e, errors) => {
+      if (errors?.pincode) {
+        const input = document.querySelector(`[name="pincode"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "dob",
+    label: "Date of Birth",
+    type: "date",
+    validation: { required: "Date of birth is required" },
+    max: today, // restrict to today or past
+    onBlur: (e, errors) => {
+      if (errors?.dob) {
+        const input = document.querySelector(`[name="dob"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "contactno",
+    label: "Contact Number",
+    type: "text",
+    placeholder: "Enter Contact Number",
+    validation: {
+      required: "Contact number is required",
+      pattern: {
+        value: /^\d{10}$/,
+        message: "Contact number must be 10 digits",
+      },
+    },
+    onBlur: (e, errors) => {
+      if (errors?.contactno) {
+        const input = document.querySelector(`[name="contactno"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "gender",
+    label: "Gender",
+    type: "radio",
+    options: [
+      { value: "Male", label: "Male" },
+      { value: "Female", label: "Female" },
+      { value: "Other", label: "Other" },
+    ],
+    validation: { required: "Gender is required" },
+    // no cursor-preserving needed for radio
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+    validation: { required: "Status is required" },
+    // no cursor-preserving needed for radio
+  },
+];
 
-  const fields = [
-    {
-      name: "receptionistName",
-      label: "Receptionist Name",
-      placeholder: "Enter Receptionist Name",
-      validation: { required: "Receptionist name is required" },
-    },
-    {
-      name: "addressLine",
-      label: "Address",
-      placeholder: "Enter Address",
-      validation: { required: "Address is required" },
-    },
-    {
-      name: "city",
-      label: "City",
-      placeholder: "Enter City",
-      validation: { required: "City is required" },
-    },
-    {
-      name: "state",
-      label: "State",
-      placeholder: "Enter State",
-      validation: { required: "State is required" },
-    },
-    {
-      name: "pinCode",
-      label: "PIN Code",
-      type: "number",
-      placeholder: "Enter PIN Code",
-      validation: {
-        required: "PIN code is required",
-        pattern: {
-          value: /^\d{6}$/,
-          message: "PIN code must be exactly 6 digits",
-        },
-      },
-    },
-    {
-      name: "dob",
-      label: "Date of Birth",
-      type: "date",
-      placeholder: "Select DOB",
-      validation: { required: "Date of birth is required" },
-    },
-    {
-      name: "contactNo",
-      label: "Contact Number",
-      type: "number",
-      placeholder: "Enter Contact Number",
-      validation: {
-        required: "Contact number is required",
-        pattern: {
-          value: /^\d{10}$/,
-          message: "Contact number must be 10 digits",
-        },
-      },
-    },
-    {
-      name: "gender",
-      label: "Gender",
-      type: "radio",
-      options: [
-        { value: "Male", label: "Male" },
-        { value: "Female", label: "Female" },
-        { value: "Other", label: "Other" },
-      ],
-      validation: { required: "Gender is required" },
-    },
-    {
-      name: "nodal",
-      label: "Nodal Center",
-      type: "select",
-      options: nodalCenters.map((n) => ({
-        value: n.nodalname,
-        label: n.nodalname,
-      })),
-      validation: { required: "Nodal center is required" },
-    },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Status is required" },
-    },
-  ];
 
   return (
     <>
-    
-      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-            <nav
-                className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
-                aria-label="Breadcrumb"
-            >
-                <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-      
-                <li>
-                    <Link
-                    to="/"
-                    className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
-                    >
-                    🏠︎ Home
-                    </Link>
-                </li>
-      
-                <li className="text-gray-400">/</li>
-      
-                <li>
-                    <Link
-                    to="/view-reception"
-                    className="text-gray-700 hover:text-teal-600 transition-colors"
-                    >
-                    Receptionist
-                    </Link>
-                </li>
-      
-                <li className="text-gray-400">/</li>
-      
-                <li aria-current="page" className="text-gray-500">
-                    Add Receptionist
-                </li>
-                </ol>
-            </nav>
+        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-reception"
+                className="text-gray-700 hover:text-teal-600"
+              >
+                Receptionist
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Add Receptionist
+            </li>
+          </ol>
+        </nav>
       </div>
 
-
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
-        {fetchError && (
-          <p className="text-red-500 text-sm mb-4">{fetchError}</p>
-        )}
 
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
         >
-          <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
+          <div className="border-b px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add Receptionist</h4>
           </div>
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
-                ({
-                  name,
-                  label,
-                  placeholder,
-                  type = "text",
-                  options,
-                  validation,
-                }) => (
+                ({ name, label, placeholder, type = "text", options, validation }) => (
                   <div key={name} className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">
                       {label}
@@ -259,24 +255,8 @@ const AddReceptionist = () => {
                         <span className="text-red-500"> *</span>
                       )}
                     </label>
-                    {type === "select" ? (
-                      <select
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name]
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:ring-teal-500"
-                        } focus:ring-2 transition`}
-                      >
-                        <option value="">Select {label}</option>
-                        {options.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : type === "radio" ? (
+
+                    {type === "radio" ? (
                       <div className="flex space-x-4 pt-2">
                         {options.map((opt) => (
                           <label key={opt.value} className="inline-flex items-center">
@@ -284,17 +264,31 @@ const AddReceptionist = () => {
                               type="radio"
                               {...register(name, validation)}
                               value={opt.value}
+                              onInput={() => trigger(name)}
                               className="h-4 w-4 text-teal-600"
                             />
                             <span className="ml-2">{opt.label}</span>
                           </label>
                         ))}
                       </div>
+                    ) : type === "date" ? (
+                      <input
+                        type="date"
+                        {...register(name, validation)}
+                        onInput={() => trigger(name)}
+                        min={today}
+                        max={today}
+                        className={`w-full px-4 py-2 rounded-lg border ${
+                          errors[name]
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-teal-500"
+                        } focus:ring-2 transition`}
+                      />
                     ) : (
                       <input
                         type={type}
                         {...register(name, validation)}
-                        onBlur={() => trigger(name)}
+                        onInput={() => trigger(name)}
                         placeholder={placeholder}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
@@ -303,6 +297,7 @@ const AddReceptionist = () => {
                         } focus:ring-2 transition`}
                       />
                     )}
+
                     {errors[name] && (
                       <p className="text-red-500 text-xs mt-1">
                         {errors[name].message}
@@ -317,16 +312,18 @@ const AddReceptionist = () => {
               <button
                 type="button"
                 onClick={() => reset()}
-                className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                className="mr-4 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
               >
                 Reset
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70"
+                className={`px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 ${
+                  isSubmitting && "opacity-50 cursor-not-allowed"
+                }`}
               >
-                {isSubmitting ? "Saving..." : "Create Receptionist"}
+                {isSubmitting ? "Submitting..." : "Add Receptionist"}
               </button>
             </div>
           </div>

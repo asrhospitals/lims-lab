@@ -1,14 +1,14 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import AdminContext from "../../context/adminContext";
 
 const UpdateProfileEntryMaster = () => {
-  const { profileEntryMasterToUpdate, setProfileEntryMasterToUpdate } = useContext(AdminContext);
+  const { id } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profileEntry, setProfileEntry] = useState(null);
   const navigate = useNavigate();
 
   const {
@@ -27,55 +27,59 @@ const UpdateProfileEntryMaster = () => {
   });
 
   useEffect(() => {
-    const stored = localStorage.getItem("profileEntryMasterToUpdate");
+    const fetchProfileEntry = async () => {
+      try {
+        const authToken = localStorage.getItem("authToken");
 
-    const initializeForm = (data) => {
-      reset({
-        profileName: data.profileName || "",
-        profilecode: data.profilecode || "",
-        alternativebarcode:
-          data.alternativebarcode === true || data.alternativebarcode === "true" || data.alternativebarcode === "Yes"
-            ? "true"
-            : "false",
-        isactive:
-          data.isactive === true || data.isactive === "true" || data.isactive === "Active"
-            ? "true"
-            : "false",
-      });
+        const response = await axios.get(
+          `https://asrlabs.asrhospitalindia.in/lims/master/get-profileentry/${id}`,
+          {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }
+        );
+
+        const data = response.data;
+
+        setProfileEntry(data);
+
+        reset({
+          profileName: data.profilename || "",
+          profilecode: data.profilecode || "",
+          alternativebarcode:
+            data.alternativebarcode === true ||
+            data.alternativebarcode === "true" ||
+            data.alternativebarcode === "Yes"
+              ? "true"
+              : "false",
+          isactive:
+            data.isactive === true ||
+            data.isactive === "true" ||
+            data.isactive === "Active"
+              ? "true"
+              : "false",
+        });
+      } catch (error) {
+        toast.error("❌ Failed to load profile entry data.");
+      }
     };
 
-    if (!profileEntryMasterToUpdate && stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setProfileEntryMasterToUpdate(parsed);
-        initializeForm(parsed);
-      } catch {
-        console.error("Invalid JSON in localStorage for profileEntryMasterToUpdate");
-      }
-    } else if (profileEntryMasterToUpdate) {
-      initializeForm(profileEntryMasterToUpdate);
-    }
-  }, [profileEntryMasterToUpdate, reset, setProfileEntryMasterToUpdate]);
+    fetchProfileEntry();
+  }, [id, reset]);
 
   const onSubmit = async (data) => {
-    if (!profileEntryMasterToUpdate?.id) {
-      toast.error("❌ Profile Entry ID not found.");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const authToken = localStorage.getItem("authToken");
 
       const payload = {
-        profileName: data.profileName,
+        profilename: data.profileName,
         profilecode: data.profilecode,
         alternativebarcode: data.alternativebarcode === "true",
         isactive: data.isactive === "true",
       };
 
       await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-profileentry/${profileEntryMasterToUpdate.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-profileentry/${id}`,
         payload,
         {
           headers: {
@@ -88,8 +92,6 @@ const UpdateProfileEntryMaster = () => {
       toast.success("Profile Entry updated successfully!", { autoClose: 2000 });
 
       setTimeout(() => {
-        setProfileEntryMasterToUpdate(null);
-        localStorage.removeItem("profileEntryMasterToUpdate");
         navigate("/view-profile-entry-master");
       }, 2000);
     } catch (error) {
@@ -99,10 +101,10 @@ const UpdateProfileEntryMaster = () => {
     }
   };
 
-  if (!profileEntryMasterToUpdate) {
+  if (!profileEntry) {
     return (
       <div className="text-center py-10 text-gray-500">
-        No Profile Entry selected for update.
+        Loading Profile Entry...
       </div>
     );
   }
@@ -123,6 +125,7 @@ const UpdateProfileEntryMaster = () => {
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
+
         <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
           <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="text-white font-semibold">Update Profile Entry</h4>
@@ -130,6 +133,7 @@ const UpdateProfileEntryMaster = () => {
 
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
               {/* Profile Entry Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Profile Entry Name</label>
@@ -195,6 +199,7 @@ const UpdateProfileEntryMaster = () => {
                   <p className="text-red-500 text-xs mt-1">{errors.isactive.message}</p>
                 )}
               </div>
+
             </div>
           </div>
 

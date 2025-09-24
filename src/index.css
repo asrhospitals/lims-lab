@@ -71,3 +71,8 @@ body {
     --chart-2: 340 75% 55%;
   }
 }
+
+select {
+  background: #f2fffe;
+  border-color: rgb(214 214 214);
+}

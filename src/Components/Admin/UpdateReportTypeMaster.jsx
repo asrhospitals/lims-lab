@@ -47,71 +47,64 @@ const UpdateReportTypeMaster = () => {
     }
   }, [reportTypeToUpdate, setReportTypeToUpdate, setValue]);
 
- const onSubmit = async (data) => {
-  setIsSubmitting(true);
-
-  const payload = {
-    reporttype: data.reporttype,
-    reportdescription: data.reportdescription,
-    entrytype: data.entrytype,
-    entryvalues: data.entryvalues.trim()
-      ? data.entryvalues.split(",").map((val) => val.trim())
-      : [],
-    isactive: data.isactive === "true",
-  };
-
-  try {
-    const authToken = localStorage.getItem("authToken");
-    const localData = reportTypeToUpdate || JSON.parse(localStorage.getItem("reportTypeToUpdate") || "{}");
-    const reportId = localData?.id;
-
-    if (!authToken) {
-      toast.error("Missing authentication token.");
-      return;
-    }
-
-    if (!reportId) {
-      toast.error("Missing Report ID.");
-      return;
-    }
-
-    const response = await axios.put(
-      `https://asrlabs.asrhospitalindia.in/lims/master/update-report/${reportId}`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
+  
+    try {
+      const authToken = localStorage.getItem("authToken");
+      const localData = reportTypeToUpdate || JSON.parse(localStorage.getItem("reportTypeToUpdate") || "{}");
+      const reportId = localData?.id;
+  
+      if (!authToken) {
+        toast.error("Missing authentication token.");
+        return;
       }
-    );
-
-    toast.success("Report Type updated successfully!", {
-      position: "top-right",
-      autoClose: 2000,
-    });
-
-    reset();
-    setTimeout(() => navigate("/view-report-type-master"), 2000);
-
-    setTimeout(() => {
-      localStorage.removeItem("reportTypeToUpdate");
-      setReportTypeToUpdate(null);
-      navigate("/view-report-type-master");
-    }, 2000);
-  } catch (error) {
-    console.error("Update Error:", error?.response?.data || error.message || error);
-    toast.error(
-      error?.response?.data?.message || "❌ Failed to update report type.",
-      {
+  
+      if (!reportId) {
+        toast.error("Missing Report ID.");
+        return;
+      }
+  
+      const payload = {
+        reporttype: data.reporttype,
+        reportdescription: data.reportdescription,
+        entrytype: data.entrytype,
+        entryvalues: data.entryvalues.trim()
+          ? data.entryvalues.split(",").map((val) => val.trim())
+          : [],
+        isactive: data.isactive === "true",
+      };
+  
+      await axios.put(
+        `https://asrlabs.asrhospitalindia.in/api/lims/master/report-types/${reportId}`,
+        payload,
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+  
+      // ✅ Show success toast
+      toast.success("Report Type updated successfully!", {
         position: "top-right",
-        autoClose: 3000,
-      }
-    );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+        autoClose: 2000,
+      });
+      // ✅ Navigate after short delay to allow toast to be visible
+      setTimeout(() => {
+        navigate("/view-report-type-master");
+      }, 2000); //
+  
+    } catch (error) {
+      console.error("Update Error:", error?.response?.data || error.message || error);
+      toast.error(
+        error?.response?.data?.message || "❌ Failed to update report type.",
+        { position: "top-right", autoClose: 3000 }
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  
+  
+  
 
   return (
     <>
@@ -146,37 +139,55 @@ const UpdateReportTypeMaster = () => {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Report Type */}
             <div>
-              <label className="block font-medium text-gray-700">
-                Report Type <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. POSITIVE/N"
-                {...register("reporttype", { required: "Report Type is required" })}
-                onBlur={() => trigger("reporttype")}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.reporttype ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.reporttype && (
-                <p className="text-red-500 text-xs mt-1">{errors.reporttype.message}</p>
-              )}
-            </div>
+  <label className="block font-medium text-gray-700">
+    Report Type <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    placeholder="e.g. POSITIVE/N"
+    {...register("reporttype", {
+      required: "Report Type is required",
+      pattern: {
+        value: /^[A-Za-z0-9\s-]+$/,
+        message: "Only letters, numbers, spaces, and hyphens are allowed",
+      },
+    })}
+    onBlur={() => trigger("reporttype")}
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.reporttype ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.reporttype && (
+    <p className="text-red-500 text-xs mt-1">{errors.reporttype.message}</p>
+  )}
+</div>
+
 
             {/* Description */}
             <div>
-              <label className="block font-medium text-gray-700">
-                Report Description <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. POSITIVE/NEGATIVE"
-                {...register("reportdescription", { required: "Description is required" })}
-                onBlur={() => trigger("reportdescription")}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.reportdescription ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.reportdescription && (
-                <p className="text-red-500 text-xs mt-1">{errors.reportdescription.message}</p>
-              )}
-            </div>
+  <label className="block font-medium text-gray-700">
+    Report Description <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    placeholder="e.g. POSITIVE/NEGATIVE"
+    {...register("reportdescription", {
+      required: "Description is required",
+      pattern: {
+        value: /^[A-Za-z0-9\s-]+$/,
+        message: "Only letters, numbers, spaces, and hyphens are allowed",
+      },
+    })}
+    onBlur={() => trigger("reportdescription")}
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.reportdescription ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.reportdescription && (
+    <p className="text-red-500 text-xs mt-1">{errors.reportdescription.message}</p>
+  )}
+</div>
+
 
             {/* Entry Type */}
             <div>
@@ -200,19 +211,34 @@ const UpdateReportTypeMaster = () => {
 
             {/* Entry Values */}
             <div className="md:col-span-2">
-              <label className="block font-medium text-gray-700">Report Entry Values</label>
-              <input
-                type="text"
-                placeholder="e.g. POSITIVE, NEGATIVE, EQUIVOCAL"
-                {...register("entryvalues")}
-                onBlur={() => trigger("entryvalues")}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.entryvalues ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.entryvalues && (
-                <p className="text-red-500 text-xs mt-1">{errors.entryvalues.message}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">Separate values with commas.</p>
-            </div>
+  <label className="block font-medium text-gray-700">
+    Report Entry Values <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    placeholder="e.g. POSITIVE, NEGATIVE, EQUIVOCAL"
+    {...register("entryvalues", {
+      required: "Report Entry Values are required",
+      pattern: {
+        value: /^[A-Za-z0-9\s,]+$/,
+        message: "Only letters, numbers, spaces, and commas are allowed",
+      },
+    })}
+    onBlur={() => trigger("entryvalues")}
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.entryvalues ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.entryvalues && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.entryvalues.message}
+    </p>
+  )}
+  <p className="text-xs text-gray-500 mt-1">
+    Separate values with commas.
+  </p>
+</div>
+
 
             {/* Is Active */}
             <div>

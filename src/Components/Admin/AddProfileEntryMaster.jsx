@@ -21,7 +21,7 @@ const AddProfileEntryMaster = () => {
     setIsSubmitting(true);
 
     const payload = {
-      profileName: data.profileName,
+      profilename: data.profileName, // align with backend key
       profilecode: data.profilecode,
       alternativebarcode: data.alternativebarcode === "true",
       isactive: data.isactive === "true",
@@ -65,40 +65,72 @@ const AddProfileEntryMaster = () => {
     }
   };
 
+  // Regex rules
+  const onlyLettersRegex = /^[A-Za-z\s]+$/; // Letters + spaces only
+
+  const alphaNumericRegex = /^[A-Za-z0-9]+$/; // Letters + numbers, no spaces
+
   const fields = [
-    {
-      name: "profileName",
-      label: "Profile Name",
-      placeholder: "Enter Profile Name",
-      validation: { required: "Profile name is required" },
+  {
+    name: "profileName",
+    label: "Profile Name",
+    placeholder: "Enter Profile Name",
+    validation: {
+      required: "Profile name is required",
+      pattern: {
+        value: onlyLettersRegex,
+        message: "Only letters and spaces are allowed",
+      },
     },
-    {
-      name: "profilecode",
-      label: "Profile Code",
-      placeholder: "Enter Profile Code",
-      validation: { required: "Profile code is required" },
+    onBlur: (e, errors) => {
+      if (errors?.profileName) {
+        const input = document.querySelector(`[name="profileName"]`);
+        if (input) input.focus();
+      }
     },
-    {
-      name: "alternativebarcode",
-      label: "Alternative Barcode",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Please choose an option" },
+  },
+  {
+    name: "profilecode",
+    label: "Profile Code",
+    placeholder: "Enter Profile Code",
+    validation: {
+      required: "Profile code is required",
+      pattern: {
+        value: alphaNumericRegex,
+        message: "Only letters and numbers are allowed (no spaces)",
+      },
     },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Please choose an option" },
+    onBlur: (e, errors) => {
+      if (errors?.profilecode) {
+        const input = document.querySelector(`[name="profilecode"]`);
+        if (input) input.focus();
+      }
     },
-  ];
+  },
+  {
+    name: "alternativebarcode",
+    label: "Alternative Barcode",
+    type: "radio",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+    validation: { required: "Please choose an option" },
+    // no cursor-preserving needed for radio
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+    validation: { required: "Please choose an option" },
+    // no cursor-preserving needed for radio
+  },
+];
+
 
   return (
     <>
@@ -166,7 +198,10 @@ const AddProfileEntryMaster = () => {
                     {type === "radio" ? (
                       <div className="flex space-x-4 pt-2">
                         {options.map((opt) => (
-                          <label key={opt.value} className="inline-flex items-center">
+                          <label
+                            key={opt.value}
+                            className="inline-flex items-center"
+                          >
                             <input
                               type="radio"
                               {...register(name, validation)}
@@ -181,8 +216,22 @@ const AddProfileEntryMaster = () => {
                       <input
                         type={type}
                         {...register(name, validation)}
-                        onBlur={() => trigger(name)}
                         placeholder={placeholder}
+                        onInput={(e) => {
+                          if (name === "profileName") {
+                            e.target.value = e.target.value.replace(
+                              /[^A-Za-z\s]/g,
+                              ""
+                            );
+                          }
+                          if (name === "profilecode") {
+                            e.target.value = e.target.value.replace(
+                              /[^A-Za-z0-9]/g,
+                              ""
+                            );
+                          }
+                        }}
+                        onKeyUp={() => trigger(name)}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
                             ? "border-red-500 focus:ring-red-500"

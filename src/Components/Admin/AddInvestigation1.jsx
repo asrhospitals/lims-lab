@@ -35,11 +35,11 @@ const AddInvestigation1 = () => {
     const fetchData = async () => {
       try {
         const [dept, subDept, role, hosp, spec] = await Promise.all([
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-department", { headers }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-subdepartment", { headers }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-role", { headers }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-hsptltype", { headers }),
-          axios.get("https://asrlab-production.up.railway.app/lims/master/get-specimen", { headers })
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-department", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-subdepartment", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype", { headers }),
+          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-specimen", { headers })
         ]);
 
         setDepartments(dept.data.filter((d) => d.isActive));
@@ -98,7 +98,7 @@ const AddInvestigation1 = () => {
 
     try {
       await axios.post(
-        "https://asrlab-production.up.railway.app/lims/master/add-test",
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-test",
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -786,7 +786,7 @@ const [dependencyTests, setDependencyTests] = useState([]);
 
           <div className="px-6 py-4 border-t bg-gray-50 text-right">
             <button type="submit" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded">
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? "Saving..." : "Add Investigation"}
             </button>
           </div>
 

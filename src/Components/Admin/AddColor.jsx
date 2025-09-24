@@ -1,80 +1,65 @@
-// import React from "react";
 import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 
 const AddColor = () => {
+  const [selectedColor, setSelectedColor] = useState("#ff0000");
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
     trigger,
-  } = useForm({ mode: "onBlur" });
+    setValue,
+  } = useForm({ mode: "onChange" });
   const navigate = useNavigate();
+
+  // Keep react-hook-form value in sync with color picker
+  useEffect(() => {
+    setValue("color_status", selectedColor, { shouldValidate: true });
+  }, [selectedColor, setValue]);
+
+  const handleColorChange = (newColor) => {
+    setSelectedColor(newColor);
+    setValue("color_status", newColor, { shouldValidate: true });
+    trigger("color_status");
+  };
 
   const onSubmit = async (data) => {
     const token = localStorage.getItem("authToken");
-
     try {
       const payload = {
-        color_code: data.color_code,
-        color_status: data.color_status,
+        colorname: data.color_name.trim(),
+        colorcode: {
+          name: selectedColor,
+        },
       };
-
+  
       await axios.post(
-        "https://asrlabs.asrhospitalindia.in/lims/master/add-color",
+        "https://asrlabs.asrhospitalindia.in/api/lims/master/colors",
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      
+  
       toast.success("Color added successfully");
       reset();
-      setTimeout(() => navigate("/view-colors"), 1000);
-
-
+      setSelectedColor("#ff0000");
+      setTimeout(() => navigate("/view-color"), 1000);
     } catch (error) {
-      console.error("Error adding color:", error);
-      toast.error(
-        error.response?.data?.message || "❌ Failed to add color."
-      );
+      toast.error(error.response?.data?.message || "❌ Failed to add color.");
     }
   };
-
-  // Form fields configuration
-  const fields = [
-    {
-      name: "color_code",
-      label: "Color Code",
-      placeholder: "e.g., Red",
-      validation: {
-        required: "Color code is required",
-        pattern: {
-          value: /^[A-Za-z\s]+$/i,
-          message: "Only alphabets allowed",
-        },
-      },
-    },
-    {
-      name: "color_status",
-      label: "Color Status",
-      placeholder: "e.g., Accept / Reject",
-      validation: {
-        required: "Status is required",
-        pattern: {
-          value: /^[A-Za-z\s]+$/i,
-          message: "Only alphabets allowed",
-        },
-      },
-    },
-  ];
+  
+  
+  
+  
+  
+  
 
   return (
     <div className="container max-w-7xl mx-auto w-full mt-6 px-2 sm:px-4 text-sm">
@@ -89,39 +74,89 @@ const AddColor = () => {
 
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {fields.map(({ name, label, placeholder, validation }) => (
-              <div key={name} className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  {label}{" "}
-                  {validation?.required && (
-                    <span className="text-red-500">*</span>
-                  )}
-                </label>
-                <input
-                  type="text"
-                  {...register(name, validation)}
-                  onBlur={() => trigger(name)}
-                  placeholder={placeholder}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors[name]
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-teal-500"
-                  } focus:ring-2 focus:border-transparent transition`}
-                />
-                {errors[name] && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors[name].message}
-                  </p>
-                )}
+            {/* Color Name Input */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Color Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                {...register("color_name", {
+                  required: "Color name is required",
+                  pattern: {
+                    value: /^[A-Za-z\s]+$/i,
+                    message: "Only alphabets allowed",
+                  },
+                  onBlur: (e) => trigger("color_name"),
+                  onInput: (e) => trigger("color_name"),
+                  onKeyUp: (e) => trigger("color_name"),
+                })}
+                placeholder="e.g., Red, Blue, Green"
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  errors.color_name
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-teal-500"
+                } focus:ring-2 focus:border-transparent transition`}
+              />
+              {errors.color_name && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.color_name.message}
+                </p>
+              )}
+            </div>
+
+            {/* Color Picker */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Color Code <span className="text-red-500">*</span>
+              </label>
+              <div
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 cursor-pointer"
+                onClick={() => setShowColorPicker(true)}
+              >
+                {selectedColor.toUpperCase()}
               </div>
-            ))}
+              {errors.color_status && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.color_status.message}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="mt-8 flex justify-end">
+          {/* Color Picker Modal */}
+          {showColorPicker && (
+            <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-sm mx-auto mt-4">
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-16 h-16 rounded-full border-4 border-gray-200 shadow-inner"
+                  style={{ backgroundColor: selectedColor }}
+                />
+                <div className="font-mono text-gray-800 text-xl font-bold">
+                  {selectedColor.toUpperCase()}
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => handleColorChange(e.target.value)}
+                  className="w-24 h-24 p-0 border-none cursor-pointer rounded-full shadow"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="mt-8 flex justify-center space-x-4">
             <button
               type="button"
-              onClick={() => reset()}
-              className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              onClick={() => {
+                reset();
+                setSelectedColor("#ff0000");
+              }}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
             >
               Reset
             </button>

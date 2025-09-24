@@ -1,111 +1,121 @@
-import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { RiSearchLine, RiCircleFill } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
+import { viewInstruments } from "../../services/apiService";
 
 const ViewInstrument = () => {
+  const navigate = useNavigate();
+
+  const [instruments, setInstruments] = useState([]);
   const [filteredInstruments, setFilteredInstruments] = useState([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [instruments, setInstruments] = useState([]);
-  const { setInstrumentToUpdate } = useContext(AdminContext);
-  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Fetch instruments with pagination
+  const fetchInstruments = async (page = 1, limit = 10) => {
+    setLoading(true);
+    try {
+      const response = await viewInstruments({ page, limit });
+      setInstruments(response.data);
+      setFilteredInstruments(response.data);
+      setTotalItems(response.meta.totalItems);
+      setTotalPages(response.meta.totalPages);
+    } catch (err) {
+      console.error("Failed to fetch instruments:", err);
+      setError(err?.response?.data?.message || "Failed to fetch instruments.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAllInstruments = async () => {
-      try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-instrument",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        const data = response.data || [];
-        setInstruments(data);
-        setFilteredInstruments(data);
-      } catch (error) {
-        setError(
-          error.response?.data?.message || "Failed to fetch instruments."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchInstruments(currentPage, itemsPerPage);
+  }, [currentPage, itemsPerPage]);
 
-    fetchAllInstruments();
-  }, []);
-
+  // Client-side search
   useEffect(() => {
     if (!search.trim()) {
       setFilteredInstruments(instruments);
     } else {
       const lower = search.toLowerCase();
-      const filtered = instruments.filter((inst) =>
-        inst.instrumentname.toLowerCase().includes(lower)
+      setFilteredInstruments(
+        instruments.filter(
+          (inst) =>
+            (inst.instrumentname && inst.instrumentname.toLowerCase().includes(lower)) ||
+            (inst.make && inst.make.toLowerCase().includes(lower)) ||
+            (inst.short_code && inst.short_code.toLowerCase().includes(lower))
+        )
       );
-      setFilteredInstruments(filtered);
     }
   }, [search, instruments]);
 
-  const handleUpdate = (instrument) => {
-    setInstrumentToUpdate(instrument);
-    localStorage.setItem("instrumentToUpdate", JSON.stringify(instrument));
-    navigate("/update-instrument");
+  const handlePageChange = (page) => setCurrentPage(page);
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
   };
 
-  // const activeCount = instruments.filter((i) => i.isactive).length;
-  // const inactiveCount = instruments.length - activeCount;
+  const handleUpdate = (instrument) => {
+    navigate(`/update-instrument/${instrument.id}`);
+  };
 
   const columns = [
     { key: "id", label: "ID" },
     { key: "instrumentname", label: "Name" },
     { key: "make", label: "Make" },
     { key: "short_code", label: "Code" },
-    { key: "installDateFormatted", label: "Installed" },
+    { key: "installdate", label: "Installed" },
     { key: "status", label: "Status" },
   ];
 
-  const mappedItems = filteredInstruments.map((inst) => ({
-    id: inst.id ?? Math.random().toString(36).substring(2, 9),
-    instrumentname: inst.instrumentname,
-    make: inst.make,
-    short_code: inst.short_code,
-    installDateFormatted: new Date(inst.installDate).toLocaleDateString(
-      "en-CA"
-    ),
-    isActive: inst.isactive,
+  const mappedItems = (filteredInstruments || []).map((inst, index) => ({
+    id: inst.id ?? index + 1 + (currentPage - 1) * itemsPerPage,
+    instrumentname: inst.instrumentname || "-",
+    make: inst.make || "-",
+    short_code: inst.short_code || "-",
+    installdate: inst.installdate ? new Date(inst.installdate).toLocaleDateString("en-CA") : "-",
     status: inst.isactive ? "Active" : "Inactive",
   }));
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="/" className="hover:text-blue-600">
-            🏠︎ Home /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem
-            href="/view-instruments"
-            className="hover:text-blue-600"
-          >
-            Instruments /
-          </CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">
-            Library
-          </CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/admin-dashboard"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
+              >
+                🏠 Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Instruments
+            </li>
+             <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              View Instruments
+            </li>
+          </ol>
+        </nav>
       </div>
-      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
+
+      <div className="w-full mt-12 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-          {/* Header */}
+          {/* Header and Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               Instrument List
@@ -124,15 +134,21 @@ const ViewInstrument = () => {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            
+          {/* Stats and Add Button */}
+          <div className="flex flex-wrap justify-between mb-4 text-sm text-gray-600">
             <button
               onClick={() => navigate("/add-instrument")}
-              className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
+              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
             </button>
+            <div>
+              <span>Total: {totalItems} items</span>
+              <span> • </span>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+            </div>
           </div>
 
           {/* Data Table */}
@@ -141,14 +157,18 @@ const ViewInstrument = () => {
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
           ) : filteredInstruments.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              No instruments found.
-            </div>
+            <div className="text-center py-6 text-gray-500">No instruments found.</div>
           ) : (
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

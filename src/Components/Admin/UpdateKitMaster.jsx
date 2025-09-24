@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import AdminContext from "../../context/adminContext";
@@ -10,7 +10,9 @@ const UpdateKitMaster = () => {
   const { kitMasterToUpdate, setKitMasterToUpdate } = useContext(AdminContext);
   const [profiles, setProfiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
   const navigate = useNavigate();
+  const { id } = useParams(); // kit_id from URL
 
   const {
     register,
@@ -21,49 +23,97 @@ const UpdateKitMaster = () => {
     formState: { errors },
   } = useForm({ mode: "onBlur" });
 
+  // Fetch kit data by ID if context is empty (for page reload)
   useEffect(() => {
-    // Load kit data
-    const stored = localStorage.getItem("kitToUpdate");
-    if (!kitMasterToUpdate && stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setKitMasterToUpdate(parsed);
-      } catch {
-        console.error("Invalid kit data in localStorage");
+    const fetchKitById = async () => {
+      if (!kitMasterToUpdate && id) {
+        try {
+          const authToken = localStorage.getItem("authToken");
+          const response = await axios.get(
+            `https://asrlabs.asrhospitalindia.in/api/lims/master/kits/${id}`,
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+          setKitMasterToUpdate(response.data.data);
+        } catch (err) {
+          toast.error("Failed to load kit data", { position: "top-right" });
+        }
       }
-    } else if (kitMasterToUpdate) {
+    };
+    fetchKitById();
+  }, [id, kitMasterToUpdate, setKitMasterToUpdate]);
+
+  // Prefill form values when kitMasterToUpdate changes
+  useEffect(() => {
+    if (kitMasterToUpdate) {
       Object.keys(kitMasterToUpdate).forEach((key) => {
         if (kitMasterToUpdate[key] !== undefined) {
           setValue(key, kitMasterToUpdate[key]);
         }
       });
     }
-  }, [kitMasterToUpdate, setValue, setKitMasterToUpdate]);
+  }, [kitMasterToUpdate, setValue]);
 
+  // Fetch profiles for dropdown
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-profile",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }
+          `https://asrlabs.asrhospitalindia.in/lims/master/get-profile/${id}`,
+          { headers: { Authorization: `Bearer ${authToken}` } }
         );
-        setProfiles(response.data || []);
+
+        const profilesData = response.data?.data;
+
+        if (Array.isArray(profilesData)) {
+          setProfiles(profilesData);
+        } else if (typeof profilesData === "object" && profilesData !== null) {
+          // If API returns a single object instead of an array
+          setProfiles([profilesData]);
+        } else {
+          setProfiles([]);
+        }
       } catch (error) {
-        console.error("Failed to fetch profiles");
+        toast.error("Failed to load profiles", { position: "top-right" });
+      } finally {
+        setLoadingProfiles(false);
       }
     };
 
     fetchProfiles();
-  }, []);
+  }, [id]);
 
+
+  const selectProfileOnClick = async () => {
+    const authToken = localStorage.getItem("authToken");
+  
+    try {
+      const response = await axios.get(
+        "https://asrlabs.asrhospitalindia.in/lims/master/get-profile",
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
+  
+      setProfiles(response.data.data || []);
+      setHasFetchedProfiles(true);
+  
+    } catch (error) {
+      console.error("Failed to fetch profiles:", error);
+    }
+  };
+  
+
+
+
+
+  
+
+  // Handle form submit
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     const payload = {
-      kit_id: kitMasterToUpdate?.kit_id,
       profilename: data.profilename,
       manufacture: data.manufacture,
       kitname: data.kitname,
@@ -78,29 +128,22 @@ const UpdateKitMaster = () => {
       positiveinterpret: data.positiveinterpret,
     };
 
-
-
     try {
       const authToken = localStorage.getItem("authToken");
       await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-kit/${kitMasterToUpdate?.kit_id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-kit/${id}`,
         payload,
-        {
-            headers: {
-            Authorization: `Bearer ${authToken}`,
-            },
-        }
-        );
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
 
       toast.success("Kit updated successfully!", {
         position: "top-right",
         autoClose: 2000,
       });
-      
 
+      reset();
       setTimeout(() => {
         navigate("/view-kit-master");
-        localStorage.removeItem("kitToUpdate");
         setKitMasterToUpdate(null);
       }, 2000);
     } catch (error) {
@@ -116,18 +159,89 @@ const UpdateKitMaster = () => {
     }
   };
 
+  // Fields configuration
   const fields = [
-    { name: "manufacture", label: "Manufacture", placeholder: "Enter Manufacture", validation: { required: "Manufacture is required" }},
-    { name: "kitname", label: "Kit Name", placeholder: "Enter Kit Name", validation: { required: "Kit name is required" }},
-    { name: "negetiveindex", label: "Negative Index", placeholder: "e.g. <=1", validation: { required: "Negative index is required" }},
-    { name: "boderlineindex", label: "Borderline Index", placeholder: "e.g. =>2", validation: { required: "Borderline index is required" }},
-    { name: "positiveindex", label: "Positive Index", placeholder: "e.g. 1", validation: { required: "Positive index is required" }},
-    { name: "method", label: "Method", placeholder: "Enter Method (e.g. ELISHA)", validation: { required: "Method is required" }},
-    { name: "batchno", label: "Batch No", placeholder: "Enter Batch Number", type: "number", validation: { required: "Batch number is required" }},
-    { name: "units", label: "Units", placeholder: "Enter Units", type: "number", validation: { required: "Units are required" }},
-    { name: "negetiveinterpret", label: "Negative Interpretation", placeholder: "e.g. -09", validation: { required: "Negative interpretation is required" }},
-    { name: "borderlineinterpret", label: "Borderline Interpretation", placeholder: "e.g. +09", validation: { required: "Borderline interpretation is required" }},
-    { name: "positiveinterpret", label: "Positive Interpretation", placeholder: "e.g. 85", validation: { required: "Positive interpretation is required" }},
+    {
+  name: "manufacture",
+  label: "Manufacture",
+  placeholder: "Enter Manufacture",
+  validation: {
+    required: "Manufacture is required",
+    pattern: {
+      value: /^[A-Za-z\s]+$/,
+      message: "Only letters and spaces are allowed",
+    },
+  },
+},
+{
+  name: "kitname",
+  label: "Kit Name",
+  placeholder: "Enter Kit Name",
+  validation: {
+    required: "Kit name is required",
+    pattern: {
+      value: /^[A-Za-z\s]+$/,
+      message: "Only letters and spaces are allowed",
+    },
+  },
+},
+
+    {
+      name: "negetiveindex",
+      label: "Negative Index",
+      placeholder: "e.g. <=1",
+      validation: { required: "Negative index is required" },
+    },
+    {
+      name: "boderlineindex",
+      label: "Borderline Index",
+      placeholder: "e.g. =>2",
+      validation: { required: "Borderline index is required" },
+    },
+    {
+      name: "positiveindex",
+      label: "Positive Index",
+      placeholder: "e.g. 1",
+      validation: { required: "Positive index is required" },
+    },
+    {
+      name: "method",
+      label: "Method",
+      placeholder: "Enter Method (e.g. ELISA)",
+      validation: { required: "Method is required" },
+    },
+    {
+      name: "batchno",
+      label: "Batch No",
+      placeholder: "Enter Batch Number",
+      type: "number",
+      validation: { required: "Batch number is required" },
+    },
+    {
+      name: "units",
+      label: "Units",
+      placeholder: "Enter Units",
+      type: "number",
+      validation: { required: "Units are required" },
+    },
+    {
+      name: "negetiveinterpret",
+      label: "Negative Interpretation",
+      placeholder: "e.g. -09",
+      validation: { required: "Negative interpretation is required" },
+    },
+    {
+      name: "borderlineinterpret",
+      label: "Borderline Interpretation",
+      placeholder: "e.g. +09",
+      validation: { required: "Borderline interpretation is required" },
+    },
+    {
+      name: "positiveinterpret",
+      label: "Positive Interpretation",
+      placeholder: "e.g. 85",
+      validation: { required: "Positive interpretation is required" },
+    },
   ];
 
   return (
@@ -136,11 +250,18 @@ const UpdateKitMaster = () => {
         <nav className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
-              <Link to="/" className="text-gray-700 hover:text-teal-600">🏠 Home</Link>
+              <Link to="/" className="text-gray-700 hover:text-teal-600">
+                🏠 Home
+              </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <Link to="/view-kit-master" className="text-gray-700 hover:text-teal-600">Kit Master</Link>
+              <Link
+                to="/view-kit-master"
+                className="text-gray-700 hover:text-teal-600"
+              >
+                Kit Master
+              </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li className="text-gray-500">Update Kit</li>
@@ -159,62 +280,80 @@ const UpdateKitMaster = () => {
           </div>
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
             {/* Profile Dropdown */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
                 Profile Name <span className="text-red-500">*</span>
               </label>
               <select
-                {...register("profilename", { required: "Profile name is required" })}
+                {...register("profilename", {
+                  required: "Profile name is required",
+                })}
                 onBlur={() => trigger("profilename")}
+                disabled={loadingProfiles}
                 className={`w-full px-4 py-2 rounded-lg border ${
                   errors.profilename
                     ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 focus:ring-teal-500"
                 } focus:ring-2 transition`}
+                onClick={selectProfileOnClick}
               >
-                <option value="">-- Select Profile --</option>
                 {profiles.map((option) => (
-                  <option key={option.profileName} value={option.profileName} selected={kitMasterToUpdate.profilename === option.profileName ? true : false} >
-                    {option.profileName}
+                  <option key={option.id} value={option.profilename}>
+                    {option.profilename}
                   </option>
                 ))}
               </select>
+
               {errors.profilename && (
-                <p className="text-red-500 text-xs mt-1">{errors.profilename.message}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.profilename.message}
+                </p>
+              )}
+
+              {errors.profilename && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.profilename.message}
+                </p>
               )}
             </div>
 
-            {/* Rest of the fields */}
-            {fields.map(({ name, label, placeholder, type = "text", validation }, index) => (
-              <div key={index} className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  {label} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type={type}
-                  {...register(name, validation)}
-                  placeholder={placeholder}
-                  onBlur={() => trigger(name)}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors[name]
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-teal-500"
-                  } focus:ring-2 transition`}
-                />
-                {errors[name] && (
-                  <p className="text-red-500 text-xs mt-1">{errors[name].message}</p>
-                )}
-              </div>
-            ))}
-            
+            {/* Other fields */}
+            {fields.map(
+              (
+                { name, label, placeholder, type = "text", validation },
+                index
+              ) => (
+                <div key={index} className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {label} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type={type}
+                    {...register(name, validation)}
+                    placeholder={placeholder}
+                    onBlur={() => trigger(name)}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      errors[name]
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-teal-500"
+                    } focus:ring-2 transition`}
+                  />
+                  {errors[name] && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors[name].message}
+                    </p>
+                  )}
+                </div>
+              )
+            )}
           </div>
 
           <div className="p-6 flex justify-end">
             <button
               type="button"
               onClick={() => reset()}
+              disabled={isSubmitting}
               className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
             >
               Reset

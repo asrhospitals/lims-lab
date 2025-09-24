@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate, Link } from "react-router-dom";
+import { addPhlebotomist, viewNodals, viewHospitals } from "../../services/apiService";
 import axios from "axios";
-import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
-import { useNavigate } from "react-router-dom";
 
 const AddPhlebotomist = () => {
   const [nodalList, setNodalList] = useState([]);
@@ -21,24 +21,24 @@ const AddPhlebotomist = () => {
     trigger,
   } = useForm({ mode: "onBlur" });
 
+  // Get today's date (to restrict DOB)
+  const today = new Date().toISOString().split("T")[0];
+
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
-        const authToken = localStorage.getItem("authToken");
-
         const [nodalRes, hospitalRes] = await Promise.all([
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hospital", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
+          viewNodals(),
+          viewHospitals(),
         ]);
 
-        setNodalList(nodalRes.data || []);
-        setHospitalList(hospitalRes.data || []);
+        setNodalList(nodalRes?.data || []);
+        setHospitalList(hospitalRes?.data || []);
       } catch (error) {
-        setFetchError(error.response?.data?.message || "Failed to fetch nodal or hospital data.");
+        setFetchError(
+          error.response?.data?.message ||
+            "Failed to fetch nodal or hospital data."
+        );
       }
     };
 
@@ -48,214 +48,299 @@ const AddPhlebotomist = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
-        ...data,
+        phleboname: data.phleboname,
+        addressline: data.addressline,
+        city: data.city,
+        state: data.state,
         pincode: Number(data.pincode),
+        dob: data.dob,
         contactno: data.contactno.toString(),
+        gender: data.gender,
         isactive: data.isactive === "true",
       };
+
+      console.log("payload ===", payload);
+
+      const authToken = localStorage.getItem("authToken");
 
       await axios.post(
         "https://asrlabs.asrhospitalindia.in/lims/master/add-phlebo",
         payload,
         {
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         }
       );
 
-      toast.success("✅ Phlebotomist added successfully!");
+      toast.success("New Phlebotomist added successfully!");
       reset();
-      navigate("/view-phlebotomist");
+      setTimeout(() => navigate("/view-phlebotomist"), 1500);
     } catch (error) {
-      toast.error(error?.response?.data?.message || "❌ Failed to add phlebotomist. Please try again.");
+      toast.error(
+        error?.response?.data?.message ||
+          "❌ Failed to add phlebotomist. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Validation patterns
   const alphaNumPattern = {
     value: /^[A-Za-z0-9 _-]+$/,
     message: "Only letters, numbers, spaces, - and _ are allowed",
   };
 
+  const lettersOnlyPattern = {
+    value: /^[A-Za-z ]+$/,
+    message: "Only letters and spaces are allowed",
+  };
+
   const fields = [
-    {
-      name: "phleboname",
-      label: "Phlebotomist Name",
-      placeholder: "Enter Full Name",
-      validation: {
-        required: "Name is required",
-        pattern: alphaNumPattern,
+  {
+    name: "phleboname",
+    label: "Phlebotomist Name",
+    placeholder: "Enter Full Name",
+    validation: {
+      required: "Name is required",
+      pattern: lettersOnlyPattern,
+    },
+    onBlur: (e, errors) => {
+      if (errors?.phleboname) {
+        const input = document.querySelector(`[name="phleboname"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "addressline",
+    label: "Address",
+    placeholder: "Enter Address",
+    validation: { required: "Address is required", pattern: alphaNumPattern },
+    onBlur: (e, errors) => {
+      if (errors?.addressline) {
+        const input = document.querySelector(`[name="addressline"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "city",
+    label: "City",
+    placeholder: "Enter City",
+    validation: { required: "City is required", pattern: lettersOnlyPattern },
+    onBlur: (e, errors) => {
+      if (errors?.city) {
+        const input = document.querySelector(`[name="city"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "state",
+    label: "State",
+    placeholder: "Enter State",
+    validation: { required: "State is required", pattern: lettersOnlyPattern },
+    onBlur: (e, errors) => {
+      if (errors?.state) {
+        const input = document.querySelector(`[name="state"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "pincode",
+    label: "PIN Code",
+    type: "text",
+    placeholder: "Enter PIN Code",
+    validation: {
+      required: "PIN Code is required",
+      pattern: {
+        value: /^\d{6}$/,
+        message: "PIN must be exactly 6 digits",
       },
     },
-    {
-      name: "addressline",
-      label: "Address",
-      placeholder: "Enter Address",
-      validation: {
-        required: "Address is required",
-        pattern: alphaNumPattern,
+    onBlur: (e, errors) => {
+      if (errors?.pincode) {
+        const input = document.querySelector(`[name="pincode"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "dob",
+    label: "Date of Birth",
+    type: "date",
+    validation: { required: "Date of birth is required" },
+    max: today,
+    onBlur: (e, errors) => {
+      if (errors?.dob) {
+        const input = document.querySelector(`[name="dob"]`);
+        if (input) input.focus();
+      }
+    },
+  },
+  {
+    name: "contactno",
+    label: "Contact Number",
+    type: "text",
+    placeholder: "Enter Contact Number",
+    validation: {
+      required: "Contact number is required",
+      pattern: {
+        value: /^[6-9]\d{9}$/,
+        message: "Invalid contact number",
       },
     },
-    {
-      name: "city",
-      label: "City",
-      placeholder: "Enter City",
-      validation: {
-        required: "City is required",
-        pattern: alphaNumPattern,
-      },
+    onBlur: (e, errors) => {
+      if (errors?.contactno) {
+        const input = document.querySelector(`[name="contactno"]`);
+        if (input) input.focus();
+      }
     },
-    {
-      name: "state",
-      label: "State",
-      placeholder: "Enter State",
-      validation: {
-        required: "State is required",
-        pattern: alphaNumPattern,
-      },
-    },
-    {
-      name: "pincode",
-      label: "PIN Code",
-      type: "number",
-      placeholder: "Enter PIN Code",
-      validation: {
-        required: "PIN Code is required",
-        pattern: { value: /^\d{6}$/, message: "PIN must be 6 digits" },
-      },
-    },
-    {
-      name: "dob",
-      label: "Date of Birth",
-      type: "date",
-      validation: { required: "Date of birth is required" },
-    },
-    {
-      name: "contactno",
-      label: "Contact Number",
-      type: "text",
-      placeholder: "Enter Contact Number",
-      validation: {
-        required: "Contact number is required",
-        pattern: {
-          value: /^[6-9]\d{9}$/,
-          message: "Invalid contact number",
-        },
-      },
-    },
-    {
-      name: "gender",
-      label: "Gender",
-      type: "select",
-      options: [
-        { value: "Male", label: "Male" },
-        { value: "Female", label: "Female" },
-        { value: "Other", label: "Other" },
-      ],
-      validation: { required: "Gender is required" },
-    },
-    {
-      name: "nodal",
-      label: "Nodal Center",
-      type: "select",
-      options: nodalList.map((n) => ({
-        value: n.nodalname,
-        label: n.nodalname,
-      })),
-      validation: { required: "Nodal center is required" },
-    },
-    {
-      name: "hospital",
-      label: "Hospital",
-      type: "select",
-      options: hospitalList.map((h) => ({
-        value: h.hospitalname,
-        label: h.hospitalname,
-      })),
-      validation: { required: "Hospital is required" },
-    },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Status is required." },
-    },
-  ];
+  },
+  {
+    name: "gender",
+    label: "Gender",
+    type: "select",
+    options: [
+      { value: "Male", label: "Male" },
+      { value: "Female", label: "Female" },
+      { value: "Other", label: "Other" },
+    ],
+    validation: { required: "Gender is required" },
+    // no cursor-preserving needed for select
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+    validation: { required: "Status is required." },
+    // no cursor-preserving needed for radio
+  },
+];
+
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <CBreadcrumb className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <CBreadcrumbItem href="#" className="hover:text-blue-600">🏠︎ Home /</CBreadcrumbItem>
-          <CBreadcrumbItem href="/view-phlebotomist" className="hover:text-blue-600">Phlebotomist /</CBreadcrumbItem>
-          <CBreadcrumbItem active className="text-gray-500">Add Phlebotomist</CBreadcrumbItem>
-        </CBreadcrumb>
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-phlebotomist"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Phlebotomists
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Add Phlebotomist
+            </li>
+          </ol>
+        </nav>
       </div>
 
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
-        {fetchError && <p className="text-red-500 text-sm mb-4">{fetchError}</p>}
+        {fetchError && (
+          <p className="text-red-500 text-sm mb-4">{fetchError}</p>
+        )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
+        >
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add Phlebotomist</h4>
           </div>
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {fields.map(({ name, label, placeholder, type = "text", options, validation }) => (
-                <div key={name} className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    {label} {validation?.required && <span className="text-red-500">*</span>}
-                  </label>
-                  {type === "select" ? (
-                    <select
-                      {...register(name, validation)}
-                      onBlur={() => trigger(name)}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"
-                      } focus:ring-2 transition`}
-                    >
-                      <option value="">Select {label}</option>
-                      {options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  ) : type === "radio" ? (
-                    <div className="flex space-x-4 pt-2">
-                      {options.map((opt) => (
-                        <label key={opt.value} className="inline-flex items-center">
-                          <input
-                            type="radio"
-                            {...register(name, validation)}
-                            value={opt.value}
-                            className="h-4 w-4 text-teal-600"
-                          />
-                          <span className="ml-2">{opt.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <input
-                      type={type}
-                      {...register(name, validation)}
-                      onBlur={() => trigger(name)}
-                      placeholder={placeholder}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"
-                      } focus:ring-2 transition`}
-                    />
-                  )}
-                  {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]?.message}</p>}
-                </div>
-              ))}
+              {fields.map(
+                ({ name, label, placeholder, type = "text", options, validation, max }) => (
+                  <div key={name} className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {label}{" "}
+                      {validation?.required && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </label>
+
+                    {type === "select" ? (
+                      <select
+                        {...register(name, validation)}
+                        onBlur={() => trigger(name)}
+                        className={`w-full px-4 py-2 rounded-lg border ${
+                          errors[name]
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-teal-500"
+                        } focus:ring-2 transition`}
+                      >
+                        <option value="">Select {label}</option>
+                        {options.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : type === "radio" ? (
+                      <div className="flex space-x-4 pt-2">
+                        {options.map((opt) => (
+                          <label key={opt.value} className="inline-flex items-center">
+                            <input
+                              type="radio"
+                              {...register(name, validation)}
+                              value={opt.value}
+                              className="h-4 w-4 text-teal-600"
+                            />
+                            <span className="ml-2">{opt.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <input
+                        type={type}
+                        {...register(name, validation)}
+                        onBlur={() => trigger(name)}
+                        placeholder={placeholder}
+                        max={max}
+                        className={`w-full px-4 py-2 rounded-lg border ${
+                          errors[name]
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-teal-500"
+                        } focus:ring-2 transition`}
+                      />
+                    )}
+
+                    {errors[name] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[name]?.message}
+                      </p>
+                    )}
+                  </div>
+                )
+              )}
             </div>
 
             <div className="mt-6 flex justify-end">
@@ -264,7 +349,7 @@ const AddPhlebotomist = () => {
                 disabled={isSubmitting}
                 className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-2 rounded-md transition disabled:opacity-60"
               >
-                {isSubmitting ? "Submitting..." : "Submit"}
+                {isSubmitting ? "Submitting..." : "Add Phlebotomist"}
               </button>
             </div>
           </div>

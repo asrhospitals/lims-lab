@@ -1,567 +1,816 @@
-import { useEffect, useState, useContext } from "react"; 
+import { useEffect, useState } from "react"; 
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
-import { useNavigate, Link } from "react-router-dom";
-import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import AdminContext from "../../context/adminContext";
+import { useNavigate, Link, useParams } from "react-router-dom";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+
+import InvestigationDetails from './InvestigationDetails';
+// import AddInvestigationResult from './AddInvestigationResult';
+import UpdateInvestigationResult from './UpdateInvestigationResult';
+import { 
+  updateInvestigation, 
+  viewInvestigation,
+  viewDepartments, 
+  viewSubDepartments, 
+  viewRoles, 
+  viewSpecimenTypes, 
+  viewInstruments 
+} from "../../services/apiService";
 
 const UpdateInvestigation = () => {
-  const { investigationToUpdate, setInvestigationToUpdate } = useContext(AdminContext);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [nodalCenters, setNodalCenters] = useState([]);
-  const [roleTypes, setRoleTypes] = useState([]);
-  const [instruments, setInstruments] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [subDepartments, setSubDepartments] = useState([]);
-  const [hospitalTypes, setHospitalTypes] = useState([]);
-  const [specimens, setSpecimens] = useState([]);
-  const [isNablAccredited, setIsNablAccredited] = useState(false);
-  const navigate = useNavigate();
+    const [departments, setDepartments] = useState([]);
+    const [subDepartments, setSubDepartments] = useState([]);
+    const [roleTypes, setRoleTypes] = useState([]);
+    const [specimens, setSpecimens] = useState([]);
+    const [instruments, setInstruments] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [investigation, setInvestigation] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
-    mode: "onBlur",
-    defaultValues: {
-      department: "",
-      subdepartment: "",
-      testname: "",
-      aliasname: "",
-      testcode: "",
-      shortcode: "",
-      roletype: "",
-      sequesncecode: "",
-      reporttype: "",
-      mesuringunit: "",
-      refrange: "",
-      tat: "",
-      techtat: "",
-      specimentyepe: "",
-      volume: "",
-      tubecolor: "",
-      testcategory: "",
-      testcollectioncenter: "",
-      processingcenter: "",
-      samplecollection: "",
-      reportprint: "",
-      allowselecttestcode: true,
-      reportattachment: true,
-      printinreport: true,
-      uploadimage: true,
-      isactive: true,
-      addbarcode: true,
-      accredationname: "",
-      accredationdate: "",
-    },
-  });
+    const [results, setResults] = useState([]);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("investigationToUpdate");
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        reset,
+        setValue,
+    } = useForm();
 
-    if (!investigationToUpdate && stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setInvestigationToUpdate(parsed);
-      } catch {
-        console.error("Invalid investigationToUpdate in localStorage");
-      }
-    } else if (investigationToUpdate) {
-      reset({
-        department: investigationToUpdate.department || "",
-        subdepartment: investigationToUpdate.subdepartment || "",
-        testname: investigationToUpdate.testname || "",
-        aliasname: investigationToUpdate.aliasname || "",
-        testcode: investigationToUpdate.testcode || "",
-        shortcode: investigationToUpdate.shortcode || "",
-        roletype: investigationToUpdate.roletype || "",
-        sequesncecode: investigationToUpdate.sequesncecode || "",
-        reporttype: investigationToUpdate.reporttype || "",
-        mesuringunit: investigationToUpdate.mesuringunit || "",
-        refrange: investigationToUpdate.refrange || "",
-        tat: investigationToUpdate.tat || "",
-        techtat: investigationToUpdate.techtat || "",
-        specimentyepe: investigationToUpdate.specimentyepe || "",
-        volume: investigationToUpdate.volume || "",
-        tubecolor: investigationToUpdate.tubecolor || "",
-        testcategory: investigationToUpdate.testcategory || "",
-        testcollectioncenter: investigationToUpdate.testcollectioncenter || "",
-        processingcenter: investigationToUpdate.processingcenter || "",
-        samplecollection: investigationToUpdate.samplecollection || "",
-        reportprint: investigationToUpdate.reportprint || "",
-        allowselecttestcode: investigationToUpdate.allowselecttestcode ?? true,
-        reportattachment: investigationToUpdate.reportattachment ?? true,
-        printinreport: investigationToUpdate.printinreport ?? true,
-        uploadimage: investigationToUpdate.uploadimage ?? true,
-        isactive: String(investigationToUpdate.isactive ?? true),
-        addbarcode: investigationToUpdate.addbarcode ?? true,
-        accredationname: investigationToUpdate.accredationname || "",
-        accredationdate: investigationToUpdate.accredationdate || "",
-      });
-    }
-  }, [investigationToUpdate, reset, setInvestigationToUpdate]);
+    const navigate = useNavigate();
+    const { id } = useParams();
 
-  useEffect(() => {
-    const authToken = localStorage.getItem("authToken");
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [dept, subDept, role, spec, instruments] = await Promise.all([
+                    viewDepartments(),
+                    viewSubDepartments(),
+                    viewRoles(),
+                    viewSpecimenTypes(),
+                    viewInstruments(),
+                ]);
+                
+                setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
+                setSubDepartments((subDept?.data || subDept || []).filter((d) => d.isactive));
+                setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
+                setSpecimens((spec || []).filter((s) => s.isactive));
+                setInstruments((instruments?.data || instruments || []).filter((i) => i.isactive));
+            } catch (err) {
+                toast.error("❌ Failed to load master data");
+                console.error(err);
+            }
+        };
 
-    const fetchData = async () => {
-      try {
-        const [dept, subDept, role, nodal, instr, hosp, spec] = await Promise.all([
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-department", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-subdepartment", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-role", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-instrument", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-hsptltype", { headers: { Authorization: `Bearer ${authToken}` } }),
-          axios.get("https://asrlabs.asrhospitalindia.in/lims/master/get-specimen", { headers: { Authorization: `Bearer ${authToken}` } }),
-        ]);
+        fetchData();
+    }, []);
 
-        setDepartments(dept.data.filter((d) => d.isActive));
-        setSubDepartments(subDept.data.filter((d) => d.isActive));
-        setRoleTypes(role.data.filter((r) => r.isactive));
-        setNodalCenters(nodal.data.filter((n) => n.isactive));
-        setInstruments(instr.data.filter((i) => i.isactive));
-        setHospitalTypes(hosp.data.filter((h) => h.isActive));
-        setSpecimens(spec.data.filter((s) => s.isactive));
-      } catch (error) {
-        toast.error("❌ Failed to fetch master data.");
-      }
+    useEffect(() => {
+        const fetchInvestigationData = async () => {
+            if (!id) {
+                toast.error("❌ No investigation ID provided");
+                navigate("/view-investigation");
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const data = await viewInvestigation(id);
+                console.log("Investigation data:", data);
+                
+                setInvestigation(data);
+                setResults(data.results || []);
+                
+                // Populate the form with the investigation data
+                reset({
+                    loniccode: data.loniccode || "",
+                    cptcode: data.cptcode || "",
+                    testname: data.testname || "",
+                    testcategory: data.testcategory || "",
+                    shortname: data.shortname || "",
+                    shortcode: data.shortcode || "",
+                    department: data.department || "",
+                    subdepartment: data.subdepartment || "",
+                    roletype: data.roletype || "",
+                    reporttype: data.reporttype || "",
+                    sampletype: data.sampletype || "",
+                    sampleqty: data.sampleqty || "",
+                    sampletemp: data.sampletemp || "",
+                    testmethod: data.testmethod || "",
+                    instrumenttype: data.instrumenttype || "",
+                    description: data.description || "",
+                    sac: data.sac || "",
+                    order: data.order || "",
+                    derivedtest: data.derivedtest || "",
+                    extranaltest: data.extranaltest || "",
+                    containertype: data.containertype || "",
+                    seperateprint: data.seperateprint || false,
+                    qrcode: data.qrcode || false,
+                    labreg: data.labreg || false,
+                    noheader: data.noheader || false,
+                    enableautoemail: data.enableautoemail || false,
+                    enaautosms: data.enaautosms || false,
+                    enableautowhatsap: data.enableautowhatsap || false,
+                    enableintermidiate: data.enableintermidiate || false,
+                    enablestags: data.enablestags || false,
+                    showtext: data.showtext || false,
+                    walkinprice: data.walkinprice || "",
+                    b2bprice: data.b2bprice || "",
+                    ppprice: data.ppprice || "",
+                    govtprice: data.govtprice || "",
+                    normalprice: data.normalprice || "",
+                    checkimage: data.checkimage || false,
+                    template: data.template || "",
+                    checkoutsrc: data.checkoutsrc || false,
+                    barcodelngt: data.barcodelngt || "",
+                    barcode: data.barcode || "",
+                    spbarcode: data.spbarcode || "",
+                    suffbarcode: data.suffbarcode || "",
+                    tat: data.tat || "",
+                    tatunit: data.tatunit || "",
+                    stat: data.stat || "",
+                    statunit: data.statunit || "",
+                    status: data.status || "Active"
+                });
+
+                // Set the rich text editor values
+                setInstruction(data.instruction || "");
+                setInterpretation(data.interpretation || "");
+                setRemarks(data.remark || "");
+                
+            } catch (err) {
+                toast.error("❌ Failed to load investigation data");
+                console.error(err);
+                navigate("/view-investigation");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchInvestigationData();
+    }, [id, reset, navigate]);
+
+    const onSubmit = async (data) => {
+        setIsSubmitting(true);
+
+        const payload = {
+            loniccode: data.loniccode || null,
+            cptcode: data.cptcode || null,
+            testname: data.testname,
+            testcategory: data.testcategory,
+            shortname: data.shortname || null,
+            shortcode: data.shortcode || null,
+            department: data.department || null,
+            subdepartment: data.subdepartment || null,
+            roletype: data.roletype || null,
+            reporttype: data.reportType || null,
+            sampletype: data.sampletype || null,
+            sampleqty: data.sampleqty || null,
+            sampletemp: data.sampletemp || null,
+            testmethod: data.testmethod || null,
+            instrumenttype: data.instrumenttype || null,
+            description: data.description || null,
+            sac: data.sac || null,
+            order: data.order || null,
+            derivedtest: data.derivedtest || null,
+            extranaltest: data.extranaltest || null,
+            containertype: data.containertype || null,
+            seperateprint: data.seperateprint || false,
+            qrcode: data.qrcode || false,
+            labreg: data.labreg || false,
+            noheader: data.noheader || false,
+            enableautoemail: data.enableautoemail || false,
+            enaautosms: data.enaautosms || false,
+            enableautowhatsap: data.enableautowhatsap || false,
+            enableintermidiate: data.enableintermidiate || false,
+            enablestags: data.enablestags || false,
+            showtext: data.showtext || false,
+            walkinprice: parseFloat(data.walkinprice) || null,
+            b2bprice: parseFloat(data.b2bprice) || null,
+            ppprice: parseFloat(data.ppprice) || null,
+            govtprice: parseFloat(data.govtPrice) || null,
+            normalprice: parseFloat(data.normalPrice) || null,
+            checkimage: data.checkimage || false,
+            template: data.template || null,
+            checkoutsrc: data.checkoutsrc || false,
+            barcodelngt: parseInt(data.barcodelngt) || null,
+            barcode: data.barcode || null,
+            spbarcode: data.spbarcode || null,
+            suffbarcode: data.suffbarcode || null,
+            tat: data.tat,
+            tatunit: data.tatunit || null,
+            stat: data.stat || null,
+            statunit: data.statunit || null,
+            status: data.status || "Active",
+            instruction: instruction || null,
+            interpretation: interpretation || null,
+            remark: remark || null,
+        };
+
+        
+        try {
+            await updateInvestigation(investigation.id, payload);
+            toast.success("✅ Investigation updated successfully");
+           
+            setTimeout(() => {
+                reset();
+                navigate("/view-investigation");
+            }, 2500);
+            
+        } catch (err) {
+            toast.error("❌ Failed to update investigation");
+            console.error(err);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    fetchData();
-  }, []);
-
-  const onSubmit = async (data) => {
-    if (!investigationToUpdate?.investigation_id) {
-      toast.error("❌ Investigation ID not found.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const authToken = localStorage.getItem("authToken");
-      const payload = {
-        department: data.department,
-        subdepartment: data.subdepartment,
-        testname: data.testname,
-        aliasname: data.aliasname,
-        testcode: Number(data.testcode),
-        shortcode: Number(data.shortcode),
-        roletype: data.roletype,
-        sequesncecode: data.sequesncecode,
-        reporttype: data.reporttype,
-        mesuringunit: data.mesuringunit,
-        refrange: data.refrange,
-        tat: data.tat,
-        techtat: data.techtat,
-        specimentyepe: data.specimentyepe,
-        volume: data.volume,
-        tubecolor: data.tubecolor,
-        hospitaltype: ["DH", "CHC", "PHC"], // Example, adjust as needed
-        testcategory: data.testcategory,
-        testcollectioncenter: data.testcollectioncenter,
-        processingcenter: data.processingcenter,
-        samplecollection: data.samplecollection,
-        reportprint: data.reportprint,
-        allowselecttestcode: data.allowselecttestcode,
-        reportattachment: data.reportattachment,
-        printinreport: data.printinreport,
-        uploadimage: data.uploadimage,
-        isactive: data.isactive === "true",
-        addbarcode: data.addbarcode,
-        accredationname: data.accredationname,
-        accredationdate: data.accredationdate,
-      };
-
-      await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-test/${investigationToUpdate.investigation_id}`,
-        payload,
-        { headers: { Authorization: `Bearer ${authToken}` } }
-      );
-
-      toast.success("Investigation updated successfully!", { autoClose: 2000 });
-
-      setTimeout(() => {
-        setInvestigationToUpdate(null);
-        localStorage.removeItem("investigationToUpdate");
-        navigate("/view-investigation");
-      }, 2000);
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "❌ Failed to update investigation. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (!investigationToUpdate) {
-    return <div className="text-center py-10 text-gray-500">No investigation selected for update.</div>;
-  }
 
 
+     const modules = {
+            toolbar: [
+                [{ 'font': [] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'script': 'super' }, { 'script': 'sub' }],
+                [{ 'size': [] }],
+                [{ 'color': [] }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'align': [] }],
+                [{ 'background': [] }],
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                ['link'],
+                ['blockquote', 'code-block'],
+                ['clean']
+            ]
+        };
+    
+        const formats = [
+            'font', 'size',
+            'bold', 'italic', 'underline', 'strike',
+            'script',
+            'color', 'background',
+            'list', 'bullet', 'align',
+            'header',
+            'link',
+            'blockquote', 'code-block',
+            'clean'
+        ];
+    
+        const [instruction, setInstruction] = useState("");
+        const [interpretation, setInterpretation] = useState("");
+        const [remark, setRemarks] = useState("");
 
-   const yesNoOptions = [
-    { label: "Yes", value: true },
-    { label: "No", value: false },
-  ];
-
-
-
-  return (
+return (
     <>
-      <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
-          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-            <li><Link to="/" className="text-gray-700 hover:text-teal-600">🏠︎ Home</Link></li>
-            <li className="text-gray-400">/</li>
-            <li><Link to="/view-investigation" className="text-gray-700 hover:text-teal-600">Investigation</Link></li>
-            <li className="text-gray-400">/</li>
-            <li className="text-gray-500">Update Investigation</li>
-          </ol>
-        </nav>
-      </div>
+        <div className="fixed top-[61px] w-full z-10">
+            <nav className="flex items-center text-sm font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
+                <ol className="inline-flex items-center space-x-1 md:space-x-3">
+                    <li>
+                        <Link to="/" className="text-gray-700 hover:text-teal-600">🏠 Home</Link>
+                    </li>
+                    <li className="text-gray-400">/</li>
+                    <li>
+                        <Link to="/view-investigation" className="text-gray-700 hover:text-teal-600">Investigations</Link>
+                    </li>
+                    <li className="text-gray-400">/</li>
+                    <li className="text-gray-500">Update Investigation</li>
+                </ol>
+            </nav>
+        </div>
 
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
-        <ToastContainer />
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
-          <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
-            <h4 className="text-white font-semibold">Update Investigation</h4>
-          </div>
-
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-
-            {/* Test Name */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Test Name *</label>
-                <input {...register("testname", { required: true })} placeholder="Test Name" className="w-full border px-3 py-2 rounded" />
-                {errors.testname && <p className="text-red-600 text-xs mt-1">Required</p>}
-            </div>
-
-            {/* Alias Name */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Alias Name</label>
-                <input {...register("aliasname")} placeholder="Alias Name" className="w-full border px-3 py-2 rounded" />
-            </div>
-
-            {/* Test Code */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Test Code *</label>
-                <input type="number" {...register("testcode", { required: true })} className="w-full border px-3 py-2 rounded" />
-                {errors.testcode && <p className="text-red-600 text-xs mt-1">Required</p>}
-            </div>
-
-            {/* Short Code */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Short Code *</label>
-                <input type="number" {...register("shortcode", { required: true })} className="w-full border px-3 py-2 rounded" />
-                {errors.shortcode && <p className="text-red-600 text-xs mt-1">Required</p>}
-            </div>
-
-            {/* Department */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Department *</label>
-                <select {...register("department", { required: true })} className="w-full border px-3 py-2 rounded">
-                <option value="">Select Department</option>
-                {departments.map((d, i) => (
-                    <option key={i} value={d.dptName} selected={investigationToUpdate.department === d.dptName}>{d.dptName}</option>
-                ))}
-                </select>
-                {errors.department && <p className="text-red-600 text-xs mt-1">Required</p>}
-            </div>
-
-            {/* Sub-Department */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Sub-Department *</label>
-                <select {...register("subdepartment", { required: true })} className="w-full border px-3 py-2 rounded">
-                <option value="">Select Sub-Department</option>
-                {subDepartments.map((s, i) => (
-                    <option key={i} value={s.subDptName} selected={investigationToUpdate.subdepartment === s.subDptName}>{s.subDptName}</option>
-                ))}
-                </select>
-                {errors.subdepartment && <p className="text-red-600 text-xs mt-1">Required</p>}
-            </div>
-
-            {/* Role Type */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Role Type *</label>
-                <select {...register("roletype", { required: true })} className="w-full border px-3 py-2 rounded">
-                <option value="">Select Role Type</option>
-                {roleTypes.map((r, i) => (
-                    <option key={i} value={r.roleType} selected={investigationToUpdate.roletype === r.roleType}>{r.roleType}</option>
-                ))}
-                </select>
-                {errors.roletype && <p className="text-red-600 text-xs mt-1">Required</p>}
-            </div>
-
-            {/* Sequence Code */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Sequence Code</label>
-                <input {...register("sequencecode")} className="w-full border px-3 py-2 rounded" />
-            </div>
-
-            <div className="col-span-full border-b border-gray-300 my-4"></div>
-
-            {/* Report Type */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Report Type *</label>
-                <select {...register("reporttype", { required: true })} className="w-full border px-3 py-2 rounded">
-                <option value="">Select Report Type</option>
-                <option value="Document" selected={investigationToUpdate.reporttype === "Document"}>Document</option>
-                <option value="Data" selected={investigationToUpdate.reporttype === "Data"}>Data</option>
-                <option value="Text" selected={investigationToUpdate.reporttype === "Text"}>Text</option>
-                <option value="Number" selected={investigationToUpdate.reporttype === "Number"}>Number</option>
-                <option value="Image" selected={investigationToUpdate.reporttype === "Image"}>Image</option>
-                <option value="Other" selected={investigationToUpdate.reporttype === "Other"}>Other</option>
-                </select>
-                {errors.reporttype && <p className="text-red-600 text-xs mt-1">Required</p>}
-            </div>
-
-            {/* Measuring Unit */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Measuring Unit</label>
-                <input {...register("mesuringunit")} placeholder="Measuring Unit" className="w-full border px-3 py-2 rounded" />
-            </div>
-
-            {/* Reference Range */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Reference Range</label>
-                <textarea {...register("refrange")} placeholder="Enter reference range / Note ..." className="w-full border px-3 py-2 rounded" rows={3}></textarea>
-            </div>
-
-            <div className="col-span-full border-b border-gray-300 my-4"></div>
-
-
-            {/* TAT Hour */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">TAT Hour</label>
-            <input type="number" {...register("tatHour")} placeholder="Hours" className="w-full border px-3 py-2 rounded" min={0} />
-          </div>
-
-          {/* TAT Minute */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">TAT Minute</label>
-            <input type="number" {...register("tatMin")} placeholder="Minutes" className="w-full border px-3 py-2 rounded" min={0} max={59} />
-          </div>
-
-          {/* Disease */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Disease</label>
-            <select {...register("dieases", { required: true })} className="w-full border px-3 py-2 rounded">
-              <option value="">Select Disease</option>
-              <option value="Contaminated" selected={investigationToUpdate.dieases === "Contaminated"}>Contaminated</option>
-              <option value="Infectious" selected={investigationToUpdate.dieases === "Infectious"}>Infectious</option>
-              <option value="Chronic" selected={investigationToUpdate.dieases === "Chronic"}>Chronic</option>
-              <option value="Other" selected={investigationToUpdate.dieases === "Other"}>Other</option>
-            </select>
-            {errors.dieases && <p className="text-red-600 text-xs mt-1">Disease is required</p>}
-          </div>
-
-          {/* Test Done */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Test Done</label>
-            <select {...register("testdone", { required: true })} className="w-full border px-3 py-2 rounded">
-              <option value="">Select Test Done</option>
-              <option value="Automatic" selected={investigationToUpdate.testdone === "Automatic"}>Automatic</option>
-              <option value="Manual" selected={investigationToUpdate.testdone === "Manual"}>Manual</option>
-              <option value="Pending" selected={investigationToUpdate.testdone === "Pending"}>Pending</option>
-              <option value="Other" selected={investigationToUpdate.testdone === "Other"}>Other</option>
-            </select>
-            {errors.testdone && <p className="text-red-600 text-xs mt-1">Test Done is required</p>}
-          </div>
-
-          {/* Specimen Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Specimen Type *</label>
-            <select {...register("specimentyepe", { required: true })} className="w-full border px-3 py-2 rounded">
-              <option value="">Select Specimen Type</option>
-              {specimens.map((d) => (
-                <option key={d.specimenname} value={d.specimenname} selected={investigationToUpdate.specimentyepe === d.specimenname}>
-                  {d.specimenname}
-                </option>
-              ))}
-            </select>
-            {errors.specimen && <p className="text-red-600 text-xs mt-1">Specimen is required</p>}
-          </div>
-
-          {/* Volume */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Volume</label>
-            <input {...register("volume")} placeholder="Volume" className="w-full border px-3 py-2 rounded" />
-          </div>
-
-          {/* Tube Color */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Tube Color</label>
-            <select {...register("tubecolor", { required: true })} className="w-full border px-3 py-2 rounded">
-              <option value="">Select Tube Color</option>
-              <option value="Red" selected={investigationToUpdate.tubecolor === "Red"}>Red</option>
-              <option value="Blue" selected={investigationToUpdate.tubecolor === "Blue"}>Blue</option>
-              <option value="Yellow" selected={investigationToUpdate.tubecolor === "Yellow"}>Yellow</option>
-              <option value="Green" selected={investigationToUpdate.tubecolor === "Green"}>Green</option>
-              <option value="Purple" selected={investigationToUpdate.tubecolor === "Purple"}>Purple</option>
-            </select>
-            {errors.tubecolor && <p className="text-red-600 text-xs mt-1">Tube Color is required</p>}
-          </div>
-
-
-            <div className="col-span-full border-b border-gray-300 my-4"></div>
-
-
-                {/* Hospital Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Hospital Type *</label>
-                    <select
-                      {...register("hospitaltype", { required: true })}
-                      multiple
-                      className="w-full border px-3 py-2 rounded h-32"
-                    >
-                      {hospitalTypes.map((d) => (
-                        <option key={d.hsptltype} value={d.hsptltype} selected={investigationToUpdate.hospitaltype === d.hsptltype} >
-                          {d.hsptltype}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.hospitaltype && (
-                      <p className="text-red-600 text-xs mt-1">Hospital Type is required</p>
-                    )}
-                  </div>
-
-
-                {/* Test Category */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700">Test Category</label>
-                <input {...register("testcategory")} placeholder="Test Category" className="w-full border px-3 py-2 rounded" />
+        <div className="w-full mt-16 px-4 space-y-4 text-sm">
+            <ToastContainer />
+            
+            {loading ? (
+                <div className="flex justify-center items-center min-h-[400px]">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Loading investigation data...</p>
+                    </div>
+                </div>
+            ) : !investigation ? (
+                <div className="flex justify-center items-center min-h-[400px]">
+                    <div className="text-center">
+                        <p className="text-red-600">Investigation not found</p>
+                        <Link to="/view-investigation" className="text-teal-600 hover:text-teal-700 mt-2 inline-block">
+                            Back to Investigations
+                        </Link>
+                    </div>
+                </div>
+            ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+                <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
+                    <h4 className="font-semibold text-white">Update Investigation</h4>
                 </div>
 
-                {/* Test Collection Center */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700">Test Collection Center</label>
-                <input {...register("testcollectioncenter")} placeholder="Test Collection Center" className="w-full border px-3 py-2 rounded" />
+                <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">LOINC CODE</label>
+                        <input {...register("loniccode")} placeholder="LOINC CODE" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">CPT CODE</label>
+                        <input {...register("cptcode")} placeholder="CPT CODE" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div className="col-span-full"></div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Test Name <span className="text-red-500">*</span></label>
+                        <input {...register("testname", { required: true })} placeholder="Test Name" className="w-full border px-3 py-2 rounded" />
+                        {errors.testname && <p className="text-red-600 text-xs mt-1">Test Name is required</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Test Category<span className="text-red-500">*</span></label>
+                        <input {...register("testcategory", { required: true })} placeholder="Test Category" className="w-full border px-3 py-2 rounded" />
+                        {errors.testcategory && <p className="text-red-600 text-xs mt-1">Test Category is required</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Short Name</label>
+                        <input {...register("shortname")} className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Short Code</label>
+                        <input {...register("shortcode")} type="number" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Department</label>
+                        <select {...register("department")} className="w-full border px-3 py-2 rounded">
+                            <option value={""}>Select Department</option>
+                            {departments.map((d, i) => (
+                                <option key={i} value={d.dptname}>{d.dptname}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Sub-Department</label>
+                        <select {...register("subdepartment")} className="w-full border px-3 py-2 rounded">
+                            <option value="">Select Sub-Department</option>
+                            {subDepartments.map((d, i) => (
+                                <option key={i} value={d.subdptname}>{d.subdptname}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Role Type</label>
+                        <select {...register("roletype")} className="w-full border px-3 py-2 rounded">
+                            <option value="">Select Role Type</option>
+                            {roleTypes.map((r, i) => (
+                                <option key={i} value={r.roletype}>{r.roletype}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                  
+                 
+
+
+                     <div>
+                            <label className="block text-sm font-medium text-gray-700">Report Type</label>
+                            <select {...register("reporttype")} className="w-full border px-3 py-2 rounded">
+                                <option value="">Select Report Type</option>
+                                <option value="Range">Range</option>
+                                <option value="Format">Format</option>
+                                <option value="Positive/Negative">Positive/Negative</option>
+                                <option value="Reactive/Non-reactive">Reactive/Non-reactive</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+
+
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Sample Type</label>
+                        <select {...register("sampletype")} className="w-full border px-3 py-2 rounded">
+                            <option value="">Select Sample Type</option>
+                            {specimens.map((s, i) => (
+                                <option key={i} value={s.specimenname}>{s.specimenname}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Sample Quantity</label>
+                        <input {...register("sampleqty")} type="number" placeholder="Enter quantity" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Sample Temperature</label>
+                        <input {...register("sampletemp")} type="number" placeholder="Enter temperature" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Test Method</label>
+                        <input {...register("testmethod")} placeholder="Test method" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Instrument Type</label>
+                        <select {...register("instrumenttype")} className="w-full border px-3 py-2 rounded">
+                            <option value="">Select Instrument Type</option>
+                            {instruments.map((inst, i) => (
+                                <option key={i} value={inst.instrumentname}>{inst.instrumentname}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Description</label>
+                        <input {...register("description")} placeholder="Description" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">SAC</label>
+                        <input {...register("sac")} placeholder="SAC" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Order</label>
+                        <input {...register("order")} placeholder="100000" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Derived Test</label>
+                        <input {...register("derivedtest")} placeholder="Derived Test" className="w-full border px-3 py-2 rounded" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">External Test ID</label>
+                        <input {...register("extranaltest")} placeholder="External Test ID" className="w-full border px-3 py-2 rounded" />
+                    </div>
                 </div>
 
-                
+                <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="col-span-full">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Container Type & Color</label>
+                        <div className="mx-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {[
+                                { name: "Red", hex: "#a6121d" },
+                                { name: "Blue", hex: "#02B4E5" },
+                                { name: "Yellow", hex: "#DBB634" },
+                                { name: "Gold", hex: "#FFD700" },
+                                { name: "Green", hex: "#21443a" },
+                                { name: "Pink", hex: "#E342AD" },
+                                { name: "Purple", hex: "#8D82CF" },
+                                { name: "Dark Blue", hex: "#224E98" }
+                            ].map((color) => (
+                                <label
+                                    key={`Tube_${color.name}`}
+                                    className="flex items-center space-x-3 border p-3 rounded-md cursor-pointer hover:shadow-lg transition-all duration-200"
+                                >
+                                    <input
+                                        type="radio"
+                                        value={`Tube_${color.name}`}
+                                        {...register("containertype", { required: true })}
+                                        className="form-radio text-indigo-600"
+                                    />
+                                    <div className="flex items-center space-x-3">
+                                        <div className="relative w-4 h-8 rounded-b-full border-2 border-gray-300 overflow-hidden shadow-inner bg-white">
+                                            <div
+                                                className="absolute bottom-0 w-full"
+                                                style={{ height: '70%', backgroundColor: color.hex }}
+                                            ></div>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10 pointer-events-none" />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-800">{color.name}</span>
+                                    </div>
+                                </label>
+                            ))}
 
-                {/* Processing Center */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700">Processing Center</label>
-                <select
-                    {...register("processingcenter", { required: true })}
-                    className="w-full border px-3 py-2 rounded"
-                >
-                    <option value="">Select Processing Center</option>
-                    <option value="Motherlab">Motherlab</option>
-                    <option value="LabCorp">LabCorp</option>
-                    <option value="Quest Diagnostics">Quest Diagnostics</option>
-                    <option value="BioReference">BioReference</option>
-                    <option value="Other">Other</option>
-                </select>
-                {errors.processingcenter && (
-                    <p className="text-red-600 text-xs mt-1">Processing Center is required</p>
-                )}
+                            <label
+                                key="Block"
+                                className="flex items-center space-x-3 border p-3 rounded-md cursor-pointer hover:shadow-lg transition-all duration-200"
+                            >
+                                <input
+                                    type="radio"
+                                    value="Block"
+                                    {...register("containertype", { required: true })}
+                                    className="form-radio text-indigo-600"
+                                />
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-6 h-6 bg-gray-400 border-2 border-gray-300 rounded-sm shadow-inner"></div>
+                                    <span className="text-sm font-medium text-gray-800">Block</span>
+                                </div>
+                            </label>
+
+                            <label
+                                key="Slide"
+                                className="flex items-center space-x-3 border p-3 rounded-md cursor-pointer hover:shadow-lg transition-all duration-200"
+                            >
+                                <input
+                                    type="radio"
+                                    value="Slide"
+                                    {...register("containertype", { required: true })}
+                                    className="form-radio text-indigo-600"
+                                />
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-4 bg-gray-200 border-2 border-gray-300 rounded-sm shadow-inner relative">
+                                        <div className="absolute inset-1 bg-gray-300 rounded-sm" />
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-800">Slide</span>
+                                </div>
+                            </label>
+                        </div>
+                        {errors.containertype && (
+                            <p className="text-red-600 text-xs mt-1">Please select a container type or color</p>
+                        )}
+                    </div>
                 </div>
 
 
-
-
-
-                {/* Sample Collection */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700">Sample Collection</label>
-                <input {...register("samplecollection")} placeholder="Sample Collection" className="w-full border px-3 py-2 rounded" />
-                </div>
-
-                {/* Report Print */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700">Report Print</label>
-                <input {...register("reportprint")} placeholder="Report Print" className="w-full border px-3 py-2 rounded" />
-                </div>
-
-                {/* Result Entry By */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700">Result Entry By</label>
-                <input {...register("resultentryby")} placeholder="Result Entry By" className="w-full border px-3 py-2 rounded" />
-                </div>
-
-               
-
-                {/* Accreditation Name */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700">Accreditation Name</label>
-                <input {...register("accredationname")} placeholder="Accreditation Name" className="w-full border px-3 py-2 rounded" />
-                </div>
-
-                {/* Accreditation Date */}
-                <div>
-                <label className="block text-sm font-medium text-gray-700">Accreditation Date</label>
-                <input type="date" {...register("accredationdate")} className="w-full border px-3 py-2 rounded" />
-                </div>
-
-                                
-
-
-                 {/* Radio button fields */}
-                {[
-                    { label: "Allow Select Test Code", name: "allowselecttestcode" },
-                    { label: "Report Attachment", name: "reportattachment" },
-                    { label: "Print In Report", name: "printinreport" },
-                    { label: "Upload Image", name: "uploadimage" },
-                    { label: "Is Active", name: "isactive" },
-                    { label: "Add Barcode", name: "addbarcode" },
-                ].map(({ label, name }) => (
-                    <div key={name} className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700">{label} *</label>
-                    <div className="flex space-x-4 pt-2">
-                        {yesNoOptions.map((opt) => (
-                        <label key={opt.value.toString()} className="inline-flex items-center">
+                <div className="mx-10 p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {[
+                        { id: "seperateprint", label: "Separate Print" },
+                        { id: "qrcode", label: "QR Code" },
+                        { id: "labreg", label: "Lab Reg No" },
+                        { id: "noheader", label: "No Header Report" },
+                        { id: "enableautoemail", label: "Enable Auto Email At Approval" },
+                        { id: "enaautosms", label: "Enable Auto SMS at Approval" },
+                        { id: "enableautowhatsap", label: "Enable Auto Whatsapp at Approval" },
+                        { id: "enableintermidiate", label: "Enable Intermediate Result" },
+                        { id: "enablestags", label: "Enable Stages" },
+                        { id: "showtext", label: "Show Test Docs" },
+                    ].map((option) => (
+                        <div key={option.id} className="mb-4 flex items-center space-x-2">
                             <input
-                            type="radio"
-                            {...register(name, { required: true })}
-                            value={opt.value.toString()}
-                            className="h-4 w-4 text-teal-600"
+                                type="checkbox"
+                                id={option.id}
+                                {...register(option.id)}
+                                className="h-4 w-4 text-teal-600"
                             />
-                            <span className="ml-2">{opt.label}</span>
-                        </label>
+                            <label htmlFor={option.id} className="text-sm font-medium text-gray-700 cursor-pointer">
+                                {option.label}
+                            </label>
+                        </div>
+                    ))}
+                </div>
+
+
+                {/* <AddInvestigationResult setResults={setResults} /> */}
+                               {/* <AddInvestigationResult results={results} setResults={setResults} /> */}
+               {/* <UpdateInvestigationResult investigationId={investigation.id} results={results} setResults={setResults} /> */}
+
+
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <div className="col-span-full">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-2">Test Price</h2>
+                            <div className="col-span-full border-b border-gray-300"></div>
+                        </div>
+                    </div>
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {[
+                            { label: "Walk-in Price", name: "walkinprice", defaultValue: investigation?.walkinprice || "" },
+                            { label: "B2B Price", name: "b2bprice", defaultValue: investigation?.b2bprice || "" },
+                            { label: "PPP Price", name: "ppprice", defaultValue: investigation?.ppprice || "" },
+                            { label: "Govt. Price", name: "govtprice", defaultValue: investigation?.govtprice || "" },
+                            { label: "Normal Price", name: "normalprice", defaultValue: investigation?.normalprice || "" },
+                        ].map((price) => (
+                            <div key={price.name}>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">{price.label}</label>
+                                <input
+                                    {...register(price.name)}
+                                    type="number"
+                                    placeholder={`Enter ${price.label}`}
+                                    defaultValue={price.defaultValue}
+                                    className="w-full border px-3 py-2 rounded"
+                                />
+                            </div>
                         ))}
                     </div>
-                    {errors[name] && (
-                        <p className="text-red-600 text-xs mt-1">{label} is required</p>
-                    )}
+
+
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <div className="col-span-full">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-2">Output Template</h2>
+                            <div className="col-span-full border-b border-gray-300 mb-4"></div>
+
+                            <div className="flex items-center mb-4">
+                                <input 
+                                    {...register("checkimage")} 
+                                    type="checkbox" 
+                                    id="showImagesSide" 
+                                    className="mr-2" 
+                                    defaultChecked={investigation?.checkimage || false} 
+                                />
+                                <label htmlFor="showImagesSide" className="text-sm text-gray-700">
+                                    Check if images need to be shown on the side of test data instead of below
+                                </label>
+                            </div>
+
+                            <div className="flex items-center gap-4 w-full max-w-md">
+                                <label className="text-sm font-medium text-gray-700 whitespace-nowrap w-40">
+                                    Choose Template
+                                </label>
+                                <select 
+                                    {...register("template")}  
+                                    className="flex-1 border px-3 py-2 rounded" 
+                                    defaultValue={investigation?.template || ""}
+                                >
+                                    <option value="">Select Template</option>
+                                    <option value="template1">Template 1</option>
+                                    <option value="template2">Template 2</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="col-span-full mt-6">
+                            <h2 className="text-lg font-semibold text-gray-800">Outsourcing Information</h2>
+                            <div className="col-span-full border-b border-gray-300 mb-4"></div>
+
+                            <div className="flex items-center">
+                                <input 
+                                    {...register("checkoutsrc")}  
+                                    type="checkbox" 
+                                    id="checkoutsrc" 
+                                    className="mr-2" 
+                                    defaultChecked={investigation?.checkoutsrc || false} 
+                                />
+                                <label htmlFor="checkoutsrc" className="text-sm text-gray-700">
+                                    Check if this is an outsourced test
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                ))}
-
-
-                
 
 
 
+                    
+               
 
-          </div>
 
-          <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={() => navigate("/view-investigation")}
-              className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-60"
-            >
-              {isSubmitting ? "Updating..." : "Update Investigation"}
-            </button>
-          </div>
-        </form>
-      </div>
+
+
+                <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <h2 className="font-bold ">General Information</h2>
+                    <div className="col-span-full border-b mb-4 border-gray-300"></div>
+
+                    <div className="col-span-full grid grid-cols-4 items-start gap-4 mb-4">
+                        {/* Barcode Length */}
+                        <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700">Barcode Length<span className="text-red-500">*</span></label>
+                            <input type="number" {...register("barcodelngt")} placeholder="Enter length" className="w-full border px-3 py-2 rounded" />
+                        </div>
+
+                        {/* Barcodes */}   
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Barcode <span className="text-red-500">*</span></label>
+                            <input {...register("barcode")} type="number" placeholder="Enter Barcode" className="w-full border px-3 py-2 rounded" />
+                        </div>
+
+                        {/* Separate Barcodes */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Separate Barcode </label>
+                            <input {...register("spbarcode")} type="number" placeholder="Enter Separate Barcode" className="w-full border px-3 py-2 rounded" />
+                        </div>
+
+                        {/* Suffixed Barcodes */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Suffixed Barcode</label>
+                            <input
+                                {...register("suffbarcode")}
+                                placeholder="e.g., -A, -B"
+                                className="w-full border px-3 py-2 rounded"
+                            />
+                        </div>
+
+                        {/* TAT (Turnaround Time) */}
+                        <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">TAT (Turnaround Time)<span className="text-red-500">*</span></label>
+                            <div className="flex gap-0">
+                                <input
+                                    {...register("tat")}
+                                    type="number"
+                                    placeholder="Enter value"
+                                    className="w-1/2 border px-3 py-2 rounded"
+                                />
+                                <select {...register("tatunit")} className="w-1/2 border px-3 py-2 rounded">
+                                    <option value="">Select Unit</option>
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* STAT */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">STAT</label>
+                            <div className="flex gap-0">
+                                <input
+                                    {...register("stat")}
+                                    type="number"
+                                    placeholder="Enter value"
+                                    className="w-1/2 border px-3 py-2 rounded"
+                                />
+                                <select {...register("statunit")} className="w-1/2 border px-3 py-2 rounded">
+                                    <option value="">Select Unit</option>
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Status (Active/Inactive) */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Status</label>
+                            <select {...register("status")} className="w-full border px-3 py-2 rounded">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                  {/* Embed the InvestigationDetails component */}
+                 <InvestigationDetails />
+
+
+                 {/* Instruction */}
+                    <div className="col-span-full grid grid-cols-6 items-start gap-4 mx-20">
+                        <div className="col-span-1 font-bold mt-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
+                                Instruction :
+                            </label>
+                        </div>
+                        <div className="col-span-5">
+                            <ReactQuill
+                                value={instruction || investigation?.instruction || ""}
+                                onChange={setInstruction}
+                                theme="snow"
+                                className="mt-2 bg-white"
+                                modules={modules}
+                                formats={formats}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Interpretation */}
+                    <div className="col-span-full grid grid-cols-6 items-start gap-4 mx-20">
+                        <div className="col-span-1 font-bold mt-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
+                                Interpretation :
+                            </label>
+                        </div>
+                        <div className="col-span-5">
+                            <ReactQuill
+                                value={interpretation || investigation?.interpretation || ""}
+                                onChange={setInterpretation}
+                                theme="snow"
+                                className="mt-2 bg-white"
+                                modules={modules}
+                                formats={formats}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Remarks */}
+                    <div className="col-span-full grid grid-cols-6 items-start gap-4 mx-20 mb-4">
+                        <div className="col-span-1 font-bold mt-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
+                                Remarks :
+                            </label>
+                        </div>
+                        <div className="col-span-5">
+                            <ReactQuill
+                                value={remark || investigation?.remark || ""}
+                                onChange={setRemarks}
+                                theme="snow"
+                                className="mt-2 bg-white"
+                                modules={modules}
+                                formats={formats}
+                            />
+                        </div>
+                    </div>
+
+                    <style>
+                        {`
+                            .ql-container {
+                                min-height: 100px; /* Change this value as needed */
+                            }
+                        `}
+                    </style>
+
+                <div className="px-6 py-4 border-t bg-gray-50 text-right">
+                    <button type="submit" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded">
+                        {isSubmitting ? "Updating..." : "Update Investigation"}
+                    </button>
+                </div>
+            </form>
+            )}
+        </div>
     </>
-  );
+);
+
 
 };
 

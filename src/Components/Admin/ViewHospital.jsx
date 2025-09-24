@@ -1,9 +1,9 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
+import { viewHospitals } from "../../services/apiService";
 
 const ViewHospital = () => {
   const [hospitals, setHospitals] = useState([]);
@@ -11,25 +11,29 @@ const ViewHospital = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { setHospitalToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchHospitals = async () => {
+      setLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-hospital",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
-        const data = response.data.sort((a, b) => a.id - b.id);
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const res = await viewHospitals(params);
+        const data = res.data.sort((a, b) => a.id - b.id);
+        
         setHospitals(data);
         setFilteredHospitals(data);
+        setTotalPages(res?.meta?.totalPages || 1);
+        setTotalItems(res?.meta?.totalItems || 0);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch hospitals.");
       } finally {
@@ -38,8 +42,9 @@ const ViewHospital = () => {
     };
 
     fetchHospitals();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
+  // Client-side search filtering
   useEffect(() => {
     if (!search.trim()) {
       setFilteredHospitals(hospitals);
@@ -50,21 +55,30 @@ const ViewHospital = () => {
           (h.hospitalname && h.hospitalname.toLowerCase().includes(lower)) ||
           (h.city && h.city.toLowerCase().includes(lower)) ||
           (h.district && h.district.toLowerCase().includes(lower)) ||
-          (h.hsptltype && h.hsptltype.toLowerCase().includes(lower)) ||
+          (h.hospitalType.hsptltype &&
+            h.hospitalType.hsptltype.toLowerCase().includes(lower)) ||
           (h.address && h.address.toLowerCase().includes(lower)) ||
           (h.email && h.email.toLowerCase().includes(lower)) ||
           (h.phoneno && h.phoneno.toLowerCase().includes(lower)) ||
           (h.cntprsn && h.cntprsn.toLowerCase().includes(lower)) ||
           (h.cntprsnmob && h.cntprsnmob.toLowerCase().includes(lower))
       );
+      console.log(filtered);
       setFilteredHospitals(filtered);
     }
   }, [search, hospitals]);
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   const handleUpdate = (hospital) => {
-    setHospitalToUpdate(hospital);
-    localStorage.setItem("hospitalToUpdate", JSON.stringify(hospital));
-    navigate("/update-hospital");
+    navigate(`/update-hospital/${hospital.id}`);
   };
 
   // const activeCount = (hospitals || []).filter((h) => h.isactive).length;
@@ -73,7 +87,7 @@ const ViewHospital = () => {
   const columns = [
     { key: "id", label: "ID" },
     { key: "hospitalname", label: "Hospital Name" },
-    { key: "hsptltype", label: "Type" },
+    { key: "hospitalType.hsptltype", label: "Type" },
     { key: "city", label: "City" },
     { key: "district", label: "District" },
     { key: "phoneno", label: "Phone" },
@@ -152,6 +166,13 @@ const ViewHospital = () => {
             </div>
           </div>
 
+          {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>Page {currentPage} of {totalPages}</span>
+          </div>
+
           {/* Add New */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
@@ -175,7 +196,13 @@ const ViewHospital = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

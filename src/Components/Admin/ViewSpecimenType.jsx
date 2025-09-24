@@ -1,9 +1,9 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
+import axios from "axios";
+import { viewSpecimenTypes } from "../../services/apiService";
 
 const ViewSpecimenType = () => {
   const [specimenTypes, setSpecimenTypes] = useState([]);
@@ -12,28 +12,27 @@ const ViewSpecimenType = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const { setSpecimenTypeToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   // Fetch data
   useEffect(() => {
     const fetchSpecimenTypes = async () => {
+      const token = localStorage.getItem("authToken");
+
       try {
-        const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",
+          "https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types",
           {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        const data = (response.data || []).sort((a, b) => Number(a.id) - Number(b.id));
+        const data = response.data.data || [];
+
         setSpecimenTypes(data);
         setFilteredSpecimenTypes(data);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch Specimen Types.");
+      } catch (error) {
+        console.error("Error fetching specimen types:", error);
       } finally {
         setLoading(false);
       }
@@ -48,18 +47,18 @@ const ViewSpecimenType = () => {
       setFilteredSpecimenTypes(specimenTypes);
     } else {
       const lower = search.toLowerCase();
-      const filtered = specimenTypes.filter((item) =>
-        (item.specimenname || "").toLowerCase().includes(lower) ||
-        (item.specimendes || "").toLowerCase().includes(lower)
+      const filtered = specimenTypes.filter(
+        (item) =>
+          (item.specimenname || "").toLowerCase().includes(lower) ||
+          (item.specimendes || "").toLowerCase().includes(lower)
       );
       setFilteredSpecimenTypes(filtered);
     }
   }, [search, specimenTypes]);
 
   const handleUpdate = (specimenType) => {
-    setSpecimenTypeToUpdate(specimenType);
-    localStorage.setItem("specimenTypeToUpdate", JSON.stringify(specimenType));
-    navigate("/update-specimen-type");
+    // Navigate and pass the ID in URL
+    navigate(`/update-specimen-type/${specimenType.id}`);
   };
 
   const columns = [
@@ -79,16 +78,25 @@ const ViewSpecimenType = () => {
     <>
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center text-sm font-medium px-4 py-2 bg-gray-50 border-b shadow-md">
-          <ol className="inline-flex items-center space-x-2 sm:space-x-3">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
-              <Link to="/" className="text-gray-700 hover:text-teal-600">
+              <Link
+                to="/admin-dashboard"
+                className="text-gray-700 hover:text-teal-600"
+              >
                 🏠︎ Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <Link to="/view-specimenType" className="text-gray-700 hover:text-teal-600">
+              <Link
+                to="/view-specimenType"
+                className="text-gray-700 hover:text-teal-600"
+              >
                 Specimen Types
               </Link>
             </li>
@@ -100,10 +108,11 @@ const ViewSpecimenType = () => {
 
       <div className="w-full mt-16 px-2 sm:px-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4 space-y-4">
-
           {/* Header + Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-xl font-bold text-gray-800">Specimen Type List</h2>
+            <h2 className="text-xl font-bold text-gray-800">
+              Specimen Type List
+            </h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
                 <input
@@ -142,7 +151,9 @@ const ViewSpecimenType = () => {
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
           ) : mappedItems.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">No Specimen Types found.</div>
+            <div className="text-center py-6 text-gray-500">
+              No Specimen Types found.
+            </div>
           ) : (
             <DataTable
               items={mappedItems}
