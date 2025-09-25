@@ -11,13 +11,21 @@ const ViewInvestigation = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchInvestigations = async () => {
       try {
-        const response = await viewInvestigations();
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const response = await viewInvestigations(params);
 
         const data = (response.data || []).sort(
           (a, b) => Number(a.investigation_id) - Number(b.investigation_id)
@@ -25,6 +33,8 @@ const ViewInvestigation = () => {
 
         setInvestigations(data);
         setFilteredInvestigations(data);
+        setTotalPages(response?.meta?.totalPages || 1);
+        setTotalItems(response?.meta?.totalItems || 0);
       } catch (err) {
         setError(
           err.response?.data?.message || "Failed to fetch Investigations."
@@ -35,7 +45,17 @@ const ViewInvestigation = () => {
     };
 
     fetchInvestigations();
-  }, []);
+  }, [currentPage, itemsPerPage]);
+
+  
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
 
   useEffect(() => {
     if (!search.trim()) {
@@ -73,10 +93,13 @@ const ViewInvestigation = () => {
     investigation_id: item.investigation_id,
     shortcode: item.shortcode,
     testname: item.testname,
-    department: item.department,
+    department:
+      item.department && typeof item.department === "object"
+        ? item.department.dptname
+        : item.department || "-", // fallback if null or undefined
     status: item.status ? "Active" : "Inactive",
   }));
-
+  
   return (
     <>
       {/* Breadcrumb */}
@@ -153,16 +176,21 @@ const ViewInvestigation = () => {
             </div>
           ) : (
             <DataTable
-              items={mappedItems}
-              columns={columns}
-              itemsPerPage={10}
-              showDetailsButtons={false}
-              onUpdate={handleUpdate}
-              onView={handleViewDetails} // Pass the view handler
-            />
+            items={mappedItems}
+            columns={columns}
+            serverSidePagination={true}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showDetailsButtons={false}
+            onUpdate={handleUpdate}
+          />
           )}
         </div>
-      </div>
+      </div> 
     </>
   );
 };

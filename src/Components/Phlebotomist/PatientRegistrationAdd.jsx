@@ -1,9 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import ProfileTestBilling from "./ProfileTestBilling";
+import Barcode from "react-barcode";
+
+import {
+  Tabs,
+  TabsHeader,
+  TabsBody,
+  Tab,
+  TabPanel,
+} from "@material-tailwind/react";
 
 const PatientRegistrationAdd = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -13,9 +22,163 @@ const PatientRegistrationAdd = () => {
   const [abhaMode, setAbhaMode] = useState("mobile");
   const [abhaValue, setAbhaValue] = useState("");
   const [showPhotoCapture, setShowPhotoCapture] = useState(false);
-  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [p_image, setCapturedPhoto] = useState(null);
+  const [tempPhoto, setTempPhoto] = useState(null);
+  const [stream, setStream] = useState(null);
+
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  const [showCamera, setShowCamera] = useState(false);
   const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(false);
   const [age, setAge] = useState("");
+
+  const [numberType, setNumberType] = useState("OP");
+  // Format today's date as YYYY-MM-DD
+  const today = new Date();
+  const formattedDate = today.toISOString().split("T")[0];
+
+  const [billingItems, setBillingItems] = useState([]);
+  const [billingData, setBillingData] = useState([]);
+  const [tests, setTests] = useState([]);
+  const [addedTests, setAddedTests] = useState([]);
+  const [testCodeInput, setTestCodeInput] = useState("");
+  const [selectedProfile, setSelectedProfile] = useState("");
+  const [shortCodeInput, setShortCodeInput] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Billing states
+  const [pdisc, setDiscount] = useState({ type: "%", value: 0 });
+  const [amountReceived, setAmountReceived] = useState(0);
+  const [note, setNote] = useState("");
+  const [payments, setPayments] = useState([{ method: "Cash", amount: 0 }]);
+  const [prescriptionFile, setPrescriptionFile] = useState(null);
+  const [paymentModeType, setPaymentModeType] = useState("single"); // single or multiple
+  // Tab state
+  const [activeTab, setActiveTab] = useState("investigation");
+
+  // State for obbill if needed
+  const [obbill, setObbill] = useState(0);
+  const [isBillingCompleted, setIsBillingCompleted] = useState(false);
+  const [billingError, setBillingError] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [barcodeGenerationValue, setBarcodeGenerationValue] = useState("");
+
+  // Example: calculate obbill whenever receivable or totalPaid changes
+
+  // Handle payment mode changes
+  useEffect(() => {
+    if (paymentModeType === "single" && payments.length > 1) {
+      // Keep only the first payment method when switching to single mode
+      setPayments([payments[0]]);
+    }
+  }, [paymentModeType]);
+
+  const handleAddBill = (bill) => {
+    const updated = [...billingItems, bill];
+    setBillingItems(updated);
+    if (onBillingChange) onBillingChange(updated);
+  };
+
+  // Fetch test profiles from the API
+  useEffect(() => {
+    const fetchTests = async () => {
+      setLoading(true); // Start loading
+      try {
+        const authToken = localStorage.getItem("authToken");
+        const hospitalName = localStorage.getItem("hospital_name");
+        const response = await axios.get(
+          `https://asrlabs.asrhospitalindia.in/lims/master/get-test`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+
+        const data = (response.data || []).sort(
+          (a, b) => Number(a.id) - Number(b.id)
+        );
+        setTests(data);
+      } catch (err) {
+        console.error("Error fetching tests:", err);
+        setError(err.response?.data?.message || "Failed to fetch tests.");
+      } finally {
+        setLoading(false); // End loading
+      }
+    };
+
+    fetchTests();
+  }, []);
+
+  const handleAddTest = (e) => {
+    if (e) e.preventDefault();
+    let profile = null;
+
+    if (selectedProfile) {
+      profile = tests.find((p) => p.id.toString() === selectedProfile);
+    } else if (testCodeInput) {
+      profile = tests.find(
+        (p) => p.shortname.toLowerCase() === testCodeInput.toLowerCase()
+      );
+    }
+
+    if (!profile) return;
+
+    setAddedTests((prev) => [...prev, { ...profile, uid: Date.now() }]);
+    setTestCodeInput("");
+    setSelectedProfile("");
+  };
+
+  const handleShortCodeAdd = (e) => {
+    e.preventDefault();
+    if (!shortCodeInput.trim()) return;
+
+    const codes = shortCodeInput.split(",").map((c) => c.trim().toLowerCase());
+    const foundTests = tests.filter((p) =>
+      codes.includes(p.shortname.toLowerCase())
+    );
+
+    if (foundTests.length) {
+      setAddedTests((prev) => [
+        ...prev,
+        ...foundTests.map((ft) => ({ ...ft, uid: Date.now() + Math.random() })),
+      ]);
+    }
+    setShortCodeInput("");
+  };
+
+  const handleRemoveTest = (uid) => {
+    setAddedTests((prev) => prev.filter((t) => t.uid !== uid));
+  };
+
+  const ptotal = addedTests.reduce((sum, t) => sum + t.walkinprice, 0);
+  const discountValue =
+    pdisc.type === "%" ? (ptotal * pdisc.value) / 100 : pdisc.value;
+  const receivable = ptotal - discountValue;
+
+  const totalPaid =
+    paymentModeType === "single"
+      ? payments[0]?.amount || 0
+      : payments.reduce((sum, payment) => sum + payment.amount, 0);
+
+  const dueAmount = receivable - totalPaid;
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size <= 2 * 1024 * 1024) {
+      setPrescriptionFile(file);
+    } else {
+      alert("File too large (max 2MB)");
+      e.target.value = null;
+    }
+  };
+
+  const addPaymentMethod = (e) => {
+    e.preventDefault();
+    setPayments([...payments, { method: "Cash", amount: 0 }]);
+  };
 
   const {
     register,
@@ -52,42 +215,211 @@ const PatientRegistrationAdd = () => {
   const handleWhatsappAutoFill = (checked) => {
     setWhatsappSameAsMobile(checked);
     if (checked) {
-      const mobileValue = watch("mobileNumber");
+      const mobileValue = watch("p_mobile");
       setValue("whatsappNumber", mobileValue);
     }
   };
 
+  {
+    /* Barcode geenration  */
+  }
+
+  // Watch for changes in barcodeOption
+  const barcodeOption = watch("barcodeOption");
+
+  // Open popup if "preprinted" is selected
+  useEffect(() => {
+    if (barcodeOption === "preprinted") {
+      setShowPopup(true);
+    } else {
+      setShowPopup(false);
+    }
+  }, [barcodeOption]);
+
+  const handleBarcodeSave = () => {
+    // Suppose barcodeValue is already generated (from your logic)
+    const generatedValue = `${sampleData.year}${sampleData.locationId}${sampleData.containerId}${sampleData.sampleId}`;
+    console.log("generatedValue==", generatedValue);
+
+    setBarcodeGenerationValue(generatedValue);
+
+    // Push that value into react-hook-form field
+    // setValue("barcodeNumber", generatedValue);
+    setValue("barcodeNumber", generatedValue, { shouldValidate: true });
+
+    // Close popup (optional)
+    setShowPopup(false);
+  };
+
+  const [settings, setSettings] = useState({
+    enableLocation: false,
+    enableContainer: false,
+    addYear: false,
+    addDepartment: false,
+    digitLength: "4",
+    patientId: true,
+  });
+
+  const [sampleData] = useState({
+    patientName: "Anand  Kumar",
+    patientCode: "HMI-123",
+    testName: "CBC",
+    year: "2025",
+    locationId: "0001",
+    containerId: "C-123",
+    department: "Pathology",
+    sampleId: "00000024",
+  });
+
+  const barcodeValue =
+    (settings.addYear ? sampleData.year : "") +
+    (settings.enableLocation ? sampleData.locationId : "") +
+    (settings.enableContainer ? sampleData.containerId : "") +
+    (settings.addDepartment ? sampleData.department : "") +
+    (settings.digitLength
+      ? sampleData.sampleId.slice(-settings.digitLength)
+      : "");
+
+  const handleCheckbox = (key) => {
+    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleDigitChange = (e) => {
+    setSettings((prev) => ({ ...prev, digitLength: e.target.value }));
+  };
+
+  const handleBillingSubmit = () => {
+    if (payments.length === 0) {
+      setBillingError(
+        "Please add billing information before completing billing."
+      );
+      return;
+    }
+
+    setBillingError("");
+
+    const opbillPayload = payments.map((p) => ({
+      ptotal: ptotal.toFixed(2),
+      pdisc: discountValue.toFixed(2),
+      pamt: receivable.toFixed(2),
+      pamtrcv: p.amount.toFixed(2),
+      pamtdue: (receivable - totalPaid).toFixed(2),
+      pamtmode: payments.length > 1 ? "Multiple" : "Single",
+      pamtmthd: p.method || "UPI",
+      pnote: p.note || "Payment received",
+      billstatus: receivable - totalPaid <= 0 ? "Paid" : "Pending",
+    }));
+
+    console.log("opbillPayload ===", opbillPayload);
+
+    setIsBillingCompleted(true);
+    setBillingData(opbillPayload);
+  };
+
   const onSubmit = async (data) => {
+    if (!isBillingCompleted) {
+      toast.error("Please fill the billing information before submitting");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const hospitalName = localStorage.getItem("hospital_name");
       const nodalname = localStorage.getItem("nodalname");
       const authToken = localStorage.getItem("authToken");
 
-      // Format today's date as YYYY-MM-DD
-      const today = new Date();
-      const formattedDate = today.toISOString().split("T")[0];
+      // Calculate billing totals
+      const ptotal = addedTests.reduce((sum, t) => sum + t.walkinprice, 0);
+      const discountValue =
+        pdisc.type === "%" ? (ptotal * pdisc.value) / 100 : pdisc.value;
+      const receivable = ptotal - discountValue;
+      const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+      const dueAmount = receivable - totalPaid;
+
+      const pptestPayload =
+        addedTests.length > 0
+          ? addedTests.map((test) => ({
+              pop: data.opNumber || "",
+              popno: data.registrationNumber || "",
+              pipno: numberType || "",
+              pscheme: data.schemeType || "",
+              refdoc: data.referralDoctorName || "",
+              pbarcode: data.barcodeNumber || test.uid || "",
+              trfno: data.trfNumber || "",
+              remark: data.remarks || note || "",
+              attatchfile: null, // ✅ no error
+            }))
+          : [
+              {
+                pop: data.opNumber || "",
+                popno: data.registrationNumber || "",
+                pipno: numberType || "",
+                pscheme: data.schemeType || "",
+                refdoc: data.referralDoctorName || "",
+                pbarcode: data.barcodeNumber,
+                trfno: data.trfNumber || "",
+                remark: data.remarks || note || "",
+                attatchfile: null, // ✅ no error
+              },
+            ];
+
+      console.log("pptestPayload==", pptestPayload);
+
+      let abhaPayload = [];
+
+      if (abhaMode === "mobile") {
+        abhaPayload = [
+          {
+            isaadhar: false,
+            ismobile: true,
+            aadhar: null,
+            mobile: abhaValue || null,
+            abha: null,
+          },
+        ];
+      } else if (abhaMode === "abha") {
+        abhaPayload = [
+          {
+            isaadhar: false,
+            ismobile: false,
+            aadhar: null,
+            mobile: null,
+            abha: abhaValue || null,
+          },
+        ];
+      } else if (abhaMode === "aadhaar") {
+        abhaPayload = [
+          {
+            isaadhar: true,
+            ismobile: false,
+            aadhar: abhaValue || null,
+            mobile: null,
+            abha: null,
+          },
+        ];
+      }
 
       const payload = {
-        ptitle: data.title,
+        p_title: data.p_title,
         city: data.city,
         state: data.state,
-        pname: data.patientName,
-        page: data.dob,
-        pgender: data.gender,
-        pregdate: formattedDate,
-        pmobile: data.mobileNumber,
-        registration_status: nodalname,
-        hospital_name: hospitalName,
-        investigation_ids: [],
-        opbill: [],
-        pptest: [],
-        abha: [],
+        p_name: data.p_name,
+        p_age: data.p_age,
+        p_gender: data.p_gender,
+        p_regdate: data.p_regdate,
+        p_mobile: data.p_mobile,
+        p_image:
+          "https://asrtrfs.s3.ap-south-1.amazonaws.com/patients/b71d7980-03bd-4123-a28a-b4515dd55ae1-Learning Steps of a Programming language.png", // optional
+        investigation_ids: 1,
+        opbill: billingData,
+        pptest: pptestPayload,
+        abha: abhaPayload,
       };
+      console.log("paylaod ", payload);
 
-      // Send the POST request to the API
       const response = await axios.post(
-        `https://asrphleb.asrhospitalindia.in/phelb/add-patient-test/${hospitalName}`,
+        // `https://asrphleb.asrhospitalindia.in/phelb/add-patient-test/${hospitalName}`,
+        `https://asrphleb.asrhospitalindia.in/phelb/add-patient-test`,
         payload,
         {
           headers: {
@@ -115,10 +447,68 @@ const PatientRegistrationAdd = () => {
     }
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files[0]) {
+      setPImage(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
+  // Start camera when modal opens
+  useEffect(() => {
+    if (showPhotoCapture && !tempPhoto) {
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((mediaStream) => {
+          setStream(mediaStream);
+          if (videoRef.current) videoRef.current.srcObject = mediaStream;
+        })
+        .catch((err) => console.error("Camera error:", err));
+    }
+  }, [showPhotoCapture, tempPhoto]);
+
+  // Stop camera safely
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (video && canvas) {
+      const context = canvas.getContext("2d");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      setTempPhoto(canvas.toDataURL("image/png"));
+    }
+  };
+
+  const confirmPhoto = () => {
+    setCapturedPhoto(tempPhoto);
+    setTempPhoto(null);
+    stopCamera(); // camera stops here
+    setShowPhotoCapture(false);
+  };
+  const cancelCapturePhoto = () => {
+    stopCamera(); // stop the webcam
+    setTempPhoto(null); // clear any temporary captured photo
+    setShowPhotoCapture(false); // close the modal
+  };
+  const retakePhoto = () => {
+    setTempPhoto(null);
+  };
+
   return (
     <>
       <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center text-sm font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
+        <nav className="flex items-center text-sm font-medium justify-start px-4 py-4 bg-gray-50 border-b shadow-lg">
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
             <li>
               <Link to="/" className="text-gray-700 hover:text-teal-600">
@@ -141,6 +531,7 @@ const PatientRegistrationAdd = () => {
           </ol>
         </nav>
       </div>
+
       {showAbhaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-xl mx-auto p-6 relative">
@@ -242,6 +633,7 @@ const PatientRegistrationAdd = () => {
 
       <div className="w-full mt-16 px-4 space-y-4 text-sm">
         <ToastContainer />
+
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
@@ -282,18 +674,21 @@ const PatientRegistrationAdd = () => {
 
           {/* ABHA Verification Interface */}
           <div className="px-6 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-0">
-              ABHA Verification Interface
-            </h3>
-            <button
-              type="button"
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              onClick={() => setShowAbhaModal(true)}
-            >
-              Create/Verify ABHA
-            </button>
+            <div className="flex items-center justify-end space-x-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-0">
+                ABHA Verification Interface
+              </h3>
+              <button
+                type="button"
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                onClick={() => setShowAbhaModal(true)}
+              >
+                Create/Verify ABHA
+              </button>
+            </div>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
+
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -351,7 +746,6 @@ const PatientRegistrationAdd = () => {
               <input
                 {...register("username")}
                 defaultValue={localStorage.getItem("username") || ""}
-                disabled
                 className="w-full border px-3 py-2 rounded bg-gray-100"
               />
             </div>
@@ -427,13 +821,13 @@ const PatientRegistrationAdd = () => {
                 Mobile Number
               </label>
               <input
-                {...register("mobileNumber", {
+                {...register("p_mobile", {
                   required: true,
                   pattern: /^[0-9]{10}$/,
                 })}
                 className="w-full border px-3 py-2 rounded"
               />
-              {errors.mobileNumber && (
+              {errors.p_mobile && (
                 <p className="text-red-600 text-xs mt-1">Must be 10 digits</p>
               )}
             </div>
@@ -443,7 +837,7 @@ const PatientRegistrationAdd = () => {
                 Title
               </label>
               <select
-                {...register("title", { required: true })}
+                {...register("p_title", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
                 <option value="">Select Title</option>
@@ -462,7 +856,7 @@ const PatientRegistrationAdd = () => {
                 Patient Name
               </label>
               <input
-                {...register("patientName", {
+                {...register("p_name", {
                   required: true,
                   pattern: /^[A-Za-z\s.]+$/,
                 })}
@@ -490,7 +884,7 @@ const PatientRegistrationAdd = () => {
                 Gender
               </label>
               <select
-                {...register("gender", { required: true })}
+                {...register("p_gender", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
                 <option value="">Select Gender</option>
@@ -501,6 +895,32 @@ const PatientRegistrationAdd = () => {
               </select>
               {errors.gender && (
                 <p className="text-red-600 text-xs mt-1">Gender is required</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Registration Date
+              </label>
+              <input
+                type="date"
+                {...register("p_regdate", {
+                  required: "Date is required",
+                  validate: (value) => {
+                    const selectedDate = new Date(value);
+                    return (
+                      selectedDate <= today || "Date cannot be in the future"
+                    );
+                  },
+                })}
+                defaultValue={formattedDate}
+                max={formattedDate}
+                className="w-full border px-3 py-2 rounded"
+              />
+              {errors.p_regdate && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.p_regdate.message}
+                </p>
               )}
             </div>
 
@@ -535,7 +955,7 @@ const PatientRegistrationAdd = () => {
               </label>
               <input
                 type="number"
-                {...register("age", {
+                {...register("p_age", {
                   required: true,
                   min: 0,
                   max: 100,
@@ -637,12 +1057,14 @@ const PatientRegistrationAdd = () => {
                 </p>
               )}
             </div>
+          </div>
 
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 WhatsApp Number
               </label>
-              <div className="flex items-center space-x-2">
+              <div className="flex mt-2 items-center space-x-2">
                 <input
                   {...register("whatsappNumber", { pattern: /^[0-9]{10}$/ })}
                   className="flex-1 border px-3 py-2 rounded"
@@ -673,14 +1095,8 @@ const PatientRegistrationAdd = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Photo Capture
               </label>
-              <div className="flex space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPhotoCapture(true)}
-                  className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
-                >
-                  Capture Photo
-                </button>
+
+              <div className="border mt-2 p-2 w-full rounded flex items-center space-x-2">
                 <input
                   type="file"
                   accept="image/*"
@@ -689,15 +1105,131 @@ const PatientRegistrationAdd = () => {
                       setCapturedPhoto(URL.createObjectURL(e.target.files[0]));
                     }
                   }}
-                  className="text-sm"
+                  className="text-sm flex-1"
                 />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempPhoto(null);
+                    setShowPhotoCapture(true);
+                  }}
+                  className="flex items-center bg-white px-3 py-2 rounded text-sm space-x-2 
+             transform transition-transform duration-200 hover:scale-105"
+                >
+                  <img
+                    src="capture-new.png"
+                    alt="Capture Icon"
+                    className="w-5 h-5"
+                  />
+                  <span className="text-black">Capture Photo</span>
+                </button>
               </div>
-              {capturedPhoto && (
-                <img
-                  src={capturedPhoto}
-                  alt="Captured"
-                  className="mt-2 w-16 h-16 object-cover rounded"
-                />
+
+              {p_image && (
+                <div className="mt-2 relative flex justify-center items-center mt-4 bg-[#efefef] py-4">
+                  <img
+                    src={p_image}
+                    alt="Captured"
+                    className="w-124 h-124 object-cover rounded"
+                  />
+                  <button
+                    onClick={() => setCapturedPhoto(null)}
+                    className="absolute top-0 right-0 bg-red-600 text-white text-xs px-2 py-1 rounded-full hover:bg-red-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              {showPhotoCapture && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70">
+                  <div className="bg-white p-4 rounded-lg shadow-lg">
+                    {!tempPhoto ? (
+                      <>
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          className="w-[500px] h-[400px] rounded"
+                        />
+                        <div className="flex justify-between mt-2">
+                          <button
+                            onClick={capturePhoto}
+                            className="bg-white-600 text-white px-4 py-2 rounded flex items-center space-x-2"
+                          >
+                            <img
+                              src="focus.gif"
+                              alt="Capture Icon"
+                              className="w-8 h-8"
+                            />
+                            <span className="text-black">Capture</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              stopCamera();
+                              setShowPhotoCapture(false);
+                            }}
+                            className="bg-white-600 text-white px-4 py-2 rounded  flex items-center space-x-2"
+                          >
+                            <img
+                              src="cancel.png"
+                              alt="Capture Icon"
+                              className="w-5 h-5"
+                            />
+                            <span className="text-black">Cancel</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <img
+                          src={tempPhoto}
+                          alt="Preview"
+                          className="w-[500px] h-[400px] object-cover rounded"
+                        />
+                        <div className="flex justify-between mt-2">
+                          <button
+                            onClick={confirmPhoto}
+                            className="bg-white-600 text-white px-4 py-2 rounded  flex items-center space-x-2"
+                          >
+                            <img
+                              src="checkmark.png"
+                              alt="Capture Icon"
+                              className="w-5 h-5"
+                            />
+                            <span className="text-black">Use Photo</span>
+                          </button>
+
+                          <button
+                            onClick={retakePhoto}
+                            className="bg-white-600 text-white px-4 py-2 rounded  flex items-center space-x-2"
+                          >
+                            <img
+                              src="arrow.png"
+                              alt="Capture Icon"
+                              className="w-5 h-5"
+                            />
+                            <span className="text-black">Retake</span>
+                          </button>
+
+                          <button
+                            onClick={cancelCapturePhoto}
+                            className="bg-white-600 text-white px-4 py-2 rounded  flex items-center space-x-2"
+                          >
+                            <img
+                              src="cancel.png"
+                              alt="Capture Icon"
+                              className="w-5 h-5"
+                            />
+                            <span className="text-black">Cancel</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                    <canvas ref={canvasRef} className="hidden"></canvas>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -982,54 +1514,170 @@ const PatientRegistrationAdd = () => {
             </div>
           </div>
 
+          {/* Barcode Generatin  */}
+
+          {showPopup && (
+            // 🔹 Fullscreen dark overlay
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              {/* 🔹 Your popup box */}
+              <div className="flex gap-6 p-6 bg-gradient-to-br from-green-100 via-white to-green-50 rounded-2xl shadow-2xl w-[90%] max-w-6xl min-h-[70vh] relative">
+                {/* Close button (top-right corner) */}
+                <button
+                  onClick={() => setShowPopup(false)}
+                  className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl"
+                >
+                  ✕
+                </button>
+
+                {/* Left Panel */}
+                <div className="w-1/4 bg-white/90 backdrop-blur border rounded-2xl shadow-xl p-5 space-y-5">
+                  <h2 className="text-lg font-semibold text-green-600 border-b pb-2">
+                    Barcode Settings
+                  </h2>
+
+                  {[
+                    {
+                      key: "patientId",
+                      label: "Add Patient ID",
+                      disabled: true,
+                      preSelected: true,
+                    },
+                    { key: "enableLocation", label: "Enable Hospital ID" },
+                    { key: "enableContainer", label: "Enable Container ID" },
+                    { key: "addYear", label: "Add Current Year" },
+                    { key: "addDepartment", label: "Add Department" },
+                  ].map((item) => (
+                    <label
+                      key={item.key}
+                      className="flex items-center gap-3 cursor-pointer hover:bg-green-50 rounded-lg p-2 transition"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={settings[item.key]}
+                        onChange={() => handleCheckbox(item.key)}
+                        className="w-4 h-4 accent-green-600"
+                      />
+                      <span className="text-gray-700">{item.label}</span>
+                    </label>
+                  ))}
+
+                  <div>
+                    <label className="block mb-1 font-medium text-gray-600">
+                      Digit Length
+                    </label>
+                    <select
+                      value={settings.digitLength}
+                      onChange={handleDigitChange}
+                      className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-green-500 focus:outline-none"
+                    >
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={handleBarcodeSave}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg w-full shadow transition"
+                  >
+                    Save
+                  </button>
+                </div>
+
+                {/* Right Panel */}
+                <div className="w-3/4 bg-white/90 backdrop-blur border rounded-2xl shadow-xl p-6">
+                  <h2 className="text-lg font-semibold text-gray-700 mb-4">
+                    Barcode Preview
+                  </h2>
+
+                  <table className="w-full border mb-6 text-center rounded-lg overflow-hidden">
+                    <thead>
+                      <tr className="bg-green-50 text-green-600 font-semibold">
+                        {settings.addYear && <th className="p-2">Year</th>}
+                        {settings.enableLocation && (
+                          <th className="p-2">Location ID</th>
+                        )}
+                        {settings.enableContainer && (
+                          <th className="p-2">Container ID</th>
+                        )}
+                        {settings.addDepartment && (
+                          <th className="p-2">Department</th>
+                        )}
+                        <th className="p-2">Sample ID</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="font-medium text-gray-700">
+                        {settings.addYear && <td>{sampleData.year}</td>}
+                        {settings.enableLocation && (
+                          <td>{sampleData.locationId}</td>
+                        )}
+                        {settings.enableContainer && (
+                          <td>{sampleData.containerId}</td>
+                        )}
+                        {settings.addDepartment && (
+                          <td>{sampleData.department}</td>
+                        )}
+                        <td>{sampleData.sampleId}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  {/* Patient Info */}
+                  <div className="text-center mb-4">
+                    <span className="font-semibold text-gray-800">
+                      {sampleData.patientName}
+                    </span>{" "}
+                    <span className="text-gray-500">
+                      ({sampleData.patientCode})
+                    </span>
+                  </div>
+
+                  {/* Barcode */}
+                  {barcodeValue ? (
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="bg-gradient-to-r from-green-100 to-green-50 border rounded-lg p-4 shadow-inner">
+                        {/* Make sure you imported Barcode from "react-barcode" */}
+                        <Barcode value={barcodeValue} height={60} />
+                      </div>
+                      <div className="text-gray-700 font-medium">
+                        {barcodeValue}
+                      </div>
+                      <div className="text-green-600 font-semibold">
+                        {sampleData.testName}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-500 italic">
+                      Select at least one option to generate barcode
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Barcode Generatin  */}
+
           <div className="px-6 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-0">
+            <h3 className="text-lg font-medium text-center text-gray-900 mb-0">
               Payment Mode Selection
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
-          <div className="p-6">
-            <div className="flex space-x-6">
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="pp-mode"
-                  name="paymentMode"
-                  value="pp"
-                  checked={paymentMode === "pp"}
-                  onChange={(e) => setPaymentMode(e.target.value)}
-                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
-                />
-                <label
-                  htmlFor="pp-mode"
-                  className="ml-2 text-sm font-medium text-gray-700"
-                >
-                  PP Mode
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="paid-mode"
-                  name="paymentMode"
-                  value="paid"
-                  checked={paymentMode === "paid"}
-                  onChange={(e) => setPaymentMode(e.target.value)}
-                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
-                />
-                <label
-                  htmlFor="paid-mode"
-                  className="ml-2 text-sm font-medium text-gray-700"
-                >
-                  Paid Mode
-                </label>
-              </div>
-            </div>
-          </div>
 
-          <div>
-            {paymentMode === "pp" && (
-              <>
+          <Tabs value="react">
+            <TabsHeader
+              className="p-2 rounded"
+              style={{ background: "#eef6f7" }}
+            >
+              <Tab value="react">PP MODE</Tab>
+              <Tab value="html">PAID MODE </Tab>
+            </TabsHeader>
+
+            <TabsBody>
+              <TabPanel value="react">
                 <div className="px-6 pt-6">
                   <h3 className=" text-lg font-medium text-gray-900 mb-0">
                     Hospital / Scheme Information
@@ -1043,6 +1691,8 @@ const PatientRegistrationAdd = () => {
                     </label>
                     <select
                       id="numberType"
+                      onChange={(e) => setNumberType(e.target.value)}
+                      value={numberType}
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="OP">OP Number</option>
@@ -1099,7 +1749,7 @@ const PatientRegistrationAdd = () => {
                       Barcode No
                     </label>
                     <input
-                      name="barcodeNo"
+                      {...register("barcodeNo")}
                       type="text"
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -1109,7 +1759,7 @@ const PatientRegistrationAdd = () => {
                       TRF Number
                     </label>
                     <input
-                      name="trfNumber"
+                      {...register("trfNumber")}
                       type="text"
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -1120,23 +1770,631 @@ const PatientRegistrationAdd = () => {
                       Remarks
                     </label>
                     <textarea
-                      name="remarks"
+                      {...register("remarks")}
                       rows="3"
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     ></textarea>
                   </div>
                 </div>
+              </TabPanel>
+              <TabPanel value="html">
+                <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-6xl mx-auto my-8">
+                  <div className="p-6 bg-gray-50 border-b">
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Patient Test & Billing System
+                    </h2>
+                  </div>
+
+                  {/* Tabs Navigation */}
+                  <div className="flex border-b">
+                    <button
+                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${
+                        activeTab === "investigation"
+                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab("investigation");
+                      }}
+                    >
+                      Add Test
+                    </button>
+                    <button
+                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${
+                        activeTab === "billing"
+                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab("billing");
+                      }}
+                    >
+                      Billing
+                    </button>
+                  </div>
+
+                  {/* Investigation Section */}
+                  {activeTab === "investigation" && (
+                    <div className="p-6 space-y-6">
+                      {loading && <p>Loading tests...</p>}
+                      {error && <p className="text-red-600">{error}</p>}
+
+                      {/* Add Test Forms */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Add by Shortcode */}
+                        <div className="bg-gray-50 p-4 rounded-lg border">
+                          <h3 className="text-lg font-medium text-gray-800 mb-3">
+                            Add Tests by Code
+                          </h3>
+                          <form
+                            onSubmit={(e) => e.preventDefault()}
+                            className="space-y-3"
+                          >
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Enter Test Codes (comma separated):
+                              </label>
+                              <input
+                                value={shortCodeInput}
+                                onChange={(e) =>
+                                  setShortCodeInput(e.target.value)
+                                }
+                                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="e.g. CBC, BMP, LIPID"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleShortCodeAdd}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+                            >
+                              Add Tests
+                            </button>
+                          </form>
+                        </div>
+
+                        {/* Add by Dropdown or Code */}
+                        <div className="bg-gray-50 p-4 rounded-lg border">
+                          <h3 className="text-lg font-medium text-gray-800 mb-3">
+                            Add Single Test
+                          </h3>
+                          <form onSubmit={handleAddTest} className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Select Test:
+                              </label>
+                              <select
+                                value={selectedProfile}
+                                onChange={(e) =>
+                                  setSelectedProfile(e.target.value)
+                                }
+                                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">-- Select a Test --</option>
+                                {tests.map((test) => (
+                                  <option key={test.id} value={test.id}>
+                                    {test.testname} ({test.shortname}) - ₹
+                                    {test.walkinprice}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="text-center text-gray-500">OR</div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Enter Test Code:
+                              </label>
+                              <input
+                                type="text"
+                                value={testCodeInput}
+                                onChange={(e) =>
+                                  setTestCodeInput(e.target.value)
+                                }
+                                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="e.g. CBC, BMP"
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handleAddTest}
+                              className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded"
+                            >
+                              Add Test
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+
+                      {/* Tests Table */}
+                      {addedTests.length > 0 ? (
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    SL No
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Department
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Test Name
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Code
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Tube Color
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Volume
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Sample Type
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Amount
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Action
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {addedTests.map((test, index) => (
+                                  <tr key={test.uid}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {index + 1}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.department}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.testname}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.shortname}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.containertype}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.sampleqty} mL
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.sampletype}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      ₹{test.walkinprice}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      <button
+                                        onClick={() =>
+                                          handleRemoveTest(test.uid)
+                                        }
+                                        className="text-red-600 hover:text-red-800 font-medium"
+                                      >
+                                        Remove
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                              <tfoot className="bg-gray-50">
+                                <tr>
+                                  <td
+                                    colSpan="7"
+                                    className="px-6 py-3 text-right text-sm font-medium text-gray-700"
+                                  >
+                                    Total
+                                  </td>
+                                  <td className="px-6 py-3 text-sm font-medium text-gray-700">
+                                    ₹{ptotal}
+                                  </td>
+                                  <td className="px-6 py-3"></td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                          <p className="text-gray-500">
+                            No tests added yet. Please add tests using the forms
+                            above.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Billing Section */}
+                  {activeTab === "billing" && (
+                    <div className="p-6 space-y-6">
+                      {/* Summary Card */}
+                      <div className="bg-gray-50 p-4 rounded-lg border grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="border-r border-gray-200 pr-4">
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Total Amount
+                          </h3>
+                          <p className="text-xl font-bold">₹{ptotal}</p>
+                        </div>
+                        <div className="border-r border-gray-200 pr-4">
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Discount ({pdisc.type})
+                          </h3>
+                          <p className="text-xl font-bold">
+                            {pdisc.value} {pdisc.type === "%" ? "" : "₹"}
+                          </p>
+                        </div>
+                        <div className="border-r border-gray-200 pr-4">
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Receivable
+                          </h3>
+                          <p className="text-xl font-bold text-blue-600">
+                            ₹{receivable}
+                          </p>
+                        </div>
+                        <div className="border-r border-gray-200 pr-4">
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Total Paid
+                          </h3>
+                          <p className="text-xl font-bold text-green-600">
+                            ₹{totalPaid}
+                          </p>
+                        </div>
+                        <div className="">
+                          <h3 className="text-sm font-medium text-gray-500">
+                            Due Amount
+                          </h3>
+                          <p
+                            className={`text-xl font-bold ${
+                              dueAmount > 0 ? "text-red-600" : "text-green-600"
+                            }`}
+                          >
+                            ₹{dueAmount}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Discount Controls */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <h3 className="text-lg font-medium text-gray-800 mb-3">
+                          Discount
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Discount Type
+                            </label>
+                            <select
+                              value={pdisc.type}
+                              onChange={(e) =>
+                                setDiscount({ ...pdisc, type: e.target.value })
+                              }
+                              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="%">Percentage (%)</option>
+                              <option value="₹">Fixed Amount (₹)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Discount Value
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={pdisc.value}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setDiscount({
+                                  ...pdisc,
+                                  value: value === "" ? "" : Number(value),
+                                });
+                              }}
+                              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setDiscount({ type: "%", value: 0 });
+                              }}
+                              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded"
+                            >
+                              Reset Discount
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment Mode Section */}
+                      <div className="bg-white border rounded-lg p-4 mb-4">
+                        <h3 className="text-lg font-medium text-gray-800 mb-3">
+                          Payment Mode
+                        </h3>
+                        <div className="flex space-x-6">
+                          <div className="flex items-center">
+                            <input
+                              type="radio"
+                              id="single-payment"
+                              name="paymentModeType"
+                              value="single"
+                              checked={paymentModeType === "single"}
+                              onChange={(e) =>
+                                setPaymentModeType(e.target.value)
+                              }
+                              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                            />
+                            <label
+                              htmlFor="single-payment"
+                              className="ml-2 text-sm font-medium text-gray-700"
+                            >
+                              Single
+                            </label>
+                          </div>
+                          <div className="flex items-center">
+                            <input
+                              type="radio"
+                              id="multiple-payment"
+                              name="paymentModeType"
+                              value="multiple"
+                              checked={paymentModeType === "multiple"}
+                              onChange={(e) =>
+                                setPaymentModeType(e.target.value)
+                              }
+                              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                            />
+                            <label
+                              htmlFor="multiple-payment"
+                              className="ml-2 text-sm font-medium text-gray-700"
+                            >
+                              Multiple
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payments Section */}
+                      <div className="bg-white border rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-3">
+                          <h3 className="text-lg font-medium text-gray-800">
+                            Payments
+                          </h3>
+                          {paymentModeType === "multiple" && (
+                            <button
+                              onClick={addPaymentMethod}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                            >
+                              + Add Payment
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="space-y-4">
+                          {(paymentModeType === "single"
+                            ? payments.slice(0, 1)
+                            : payments
+                          ).map((payment, index) => (
+                            <div
+                              key={index}
+                              className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4"
+                            >
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Method
+                                </label>
+                                <select
+                                  value={payment.method}
+                                  onChange={(e) => {
+                                    const newPayments = [...payments];
+                                    newPayments[index].method = e.target.value;
+                                    setPayments(newPayments);
+                                  }}
+                                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  <option>Cash</option>
+                                  <option>Credit</option>
+                                  <option>Card</option>
+                                  <option>UPI</option>
+                                  <option>Cheque</option>
+                                  <option>Bank Transfer</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Amount
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={
+                                    payment.amount === 0 ? "" : payment.amount
+                                  }
+                                  onChange={(e) => {
+                                    const newPayments = [...payments];
+                                    newPayments[index].amount =
+                                      e.target.value === ""
+                                        ? 0
+                                        : Number(e.target.value);
+                                    setPayments(newPayments);
+                                  }}
+                                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Amount"
+                                />
+                              </div>
+                              <div className="flex items-end justify-end">
+                                {paymentModeType === "multiple" &&
+                                  payments.length > 1 && (
+                                    <button
+                                      onClick={() => {
+                                        const newPayments = [...payments];
+                                        newPayments.splice(index, 1);
+                                        setPayments(newPayments);
+                                      }}
+                                      className="text-red-600 hover:text-red-800 px-3 py-1"
+                                    >
+                                      Remove
+                                    </button>
+                                  )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Notes & File Upload */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Notes */}
+                        <div className="bg-white border rounded-lg p-4">
+                          <h3 className="text-lg font-medium text-gray-800 mb-3">
+                            Notes
+                          </h3>
+                          <textarea
+                            rows="4"
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Any additional notes..."
+                            maxLength={200}
+                          />
+                        </div>
+
+                        {/* File Upload */}
+                        <div className="bg-white border rounded-lg p-4">
+                          <h3 className="text-lg font-medium text-gray-800 mb-3">
+                            Prescription / TRF - Upload
+                          </h3>
+                          <div className="space-y-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Upload (PDF/JPG/PNG, max 2MB)
+                            </label>
+                            <div className="flex items-center gap-4">
+                              <label className="block w-full">
+                                <div className="border border-gray-300 border-dashed rounded-lg px-6 py-4 cursor-pointer hover:bg-gray-50 transition">
+                                  <div className="flex flex-col items-center justify-center gap-1">
+                                    <svg
+                                      className="h-10 w-10 text-gray-400"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                      />
+                                    </svg>
+                                    <span className="text-sm font-medium text-gray-600">
+                                      {prescriptionFile
+                                        ? prescriptionFile.name
+                                        : "Click to upload"}
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="file"
+                                    accept=".jpg,.jpeg,.png"
+                                    onChange={handleFileUpload}
+                                    className="hidden"
+                                  />
+                                </div>
+                              </label>
+                              {prescriptionFile && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPrescriptionFile(null)}
+                                  className="text-red-600 hover:text-red-800 ml-2"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Submit Button */}
+                      <div className="flex justify-end">
+                        <button
+                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleBillingSubmit();
+                          }}
+                        >
+                          Complete Billing
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabPanel>
+            </TabsBody>
+          </Tabs>
+
+          {/* 
+          <div className="p-6">
+            <div className="flex space-x-6">
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="pp-mode"
+                  name="paymentMode"
+                  value="pp"
+                  checked={paymentMode === "pp"}
+                  onChange={(e) => setPaymentMode(e.target.value)}
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
+                />
+                <label
+                  htmlFor="pp-mode"
+                  className="ml-2 text-sm font-medium text-gray-700"
+                >
+                  PP Mode
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="paid-mode"
+                  name="paymentMode"
+                  value="paid"
+                  checked={paymentMode === "paid"}
+                  onChange={(e) => setPaymentMode(e.target.value)}
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
+                />
+                <label
+                  htmlFor="paid-mode"
+                  className="ml-2 text-sm font-medium text-gray-700"
+                >
+                  Paid Mode
+                </label>
+              </div>
+            </div>
+          </div> */}
+
+          {/* <div>
+            {paymentMode === "pp" && (
+              <>
+             
               </>
             )}
-          </div>
+          </div> */}
 
-          {paymentMode === "paid" && <ProfileTestBilling />}
+          {/* {paymentMode === "paid" && <ProfileTestBilling />} */}
 
-          <div className="px-6 py-4 border-t bg-gray-50 text-right">
+          <div className="px-8 py-6 border-t bg-gray-50 text-center">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded"
             >
               {isSubmitting ? "Saving..." : "Add Patient"}
             </button>

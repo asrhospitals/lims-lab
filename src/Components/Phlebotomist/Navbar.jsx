@@ -22,6 +22,7 @@ function classNames(...classes) {
 export default function Navbar({ isCollapsed, isHovered, sidebarWidth, setIsCollapsed }) {
   const [showDropdown, setShowDropdown] = useState(null);
   const navigate = useNavigate();
+ const storedHospitalName = localStorage.getItem('hospital_name')
 
   useEffect(() => {
     console.log(`Sidebar is now ${isCollapsed ? "collapsed" : "expanded"}`);
@@ -72,18 +73,20 @@ export default function Navbar({ isCollapsed, isHovered, sidebarWidth, setIsColl
             </button>
 
             {/* Search bar */}
-            <div className="hidden sm:flex relative w-full max-w-md">
-              <input
+            <div className="hidden sm:flex relative w-full max-w-md justify-center items-center">
+       
+              {/* <input
                 type="text"
                 placeholder="Search..."
                 className="w-full h-10 pl-8 pr-2 text-sm text-gray-800 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
               />
-              <RiSearchLine className="absolute top-2.5 left-2.5 text-gray-500 size-4" />
+              <RiSearchLine className="absolute top-2.5 left-2.5 text-gray-500 size-4" /> */}
             </div>
           </div>
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <h3>       <h4>{storedHospitalName}</h4></h3>
             {/* Notification button */}
             <button
               onClick={() => setShowDropdown(showDropdown === "notifications" ? null : "notifications")}

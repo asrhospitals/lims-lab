@@ -198,8 +198,8 @@ const AccrediationDetails = ({
         </table>
       </div>
 
-      <div className="col-span-full">
-        <h3 className="font-bold mb-2">Add Consumables</h3>
+      {/* <div className="col-span-full">
+        <h3 className="font-bold mb-2">Add Consumables123</h3>
         <table className="mb-4 w-full border">
           <thead>
             <tr className="bg-gray-100">
@@ -213,7 +213,7 @@ const AccrediationDetails = ({
             {renderRows("consumable")}
           </tbody>
         </table>
-      </div>
+      </div> */}
 
       <div className="col-span-full">
         <h3 className="font-bold mb-2">Lab Consumables</h3>

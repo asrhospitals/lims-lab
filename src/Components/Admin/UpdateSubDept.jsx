@@ -2,19 +2,21 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import {
   updateSubDepartment,
   viewDepartments,
   viewSubDepartment,
+  viewSubDepartments, // ✅ make sure your API service has this
 } from "../../services/apiService";
 
 const UpdateSubDpt = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [departments, setDepartments] = useState([]);
+  const [allSubDepartments, setAllSubDepartments] = useState([]); // ✅ keep all for duplicate check
   const [subDptToUpdate, setSubDptToUpdate] = useState(null);
+
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -24,8 +26,9 @@ const UpdateSubDpt = () => {
     formState: { errors },
     reset,
     trigger,
+    watch,
   } = useForm({
-    mode: "onBlur",
+    mode: "onChange", // ✅ validates live while typing
     defaultValues: {
       dptname: "",
       subdptname: "",
@@ -33,7 +36,7 @@ const UpdateSubDpt = () => {
     },
   });
 
-  // Fetch both departments and sub-department data
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
@@ -44,23 +47,32 @@ const UpdateSubDpt = () => {
 
       setIsLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
-
-        // Fetch departments and sub-department data in parallel
-        const [departmentsResponse, subDeptResponse] = await Promise.all([
-          viewDepartments(),
-          viewSubDepartment(id),
-        ]);
+        const [departmentsResponse, subDeptResponse, subDeptsResponse] =
+          await Promise.all([
+            viewDepartments(),
+            viewSubDepartment(id),
+            viewSubDepartments(), // ✅ fetch all for duplicate validation
+          ]);
 
         setDepartments(departmentsResponse.data || []);
+        setAllSubDepartments(subDeptsResponse.data || []);
         setSubDptToUpdate(subDeptResponse);
-        console.log(subDeptResponse);
-        // Set form values - use department ID for the select field
+
+        console.log("departmentsResponse.data==", departmentsResponse.data);
+        console.log("selectedDeptName==", subDeptsResponse.data);
+
+        const selectedDeptName = (departmentsResponse.data || []).find(
+          (dept) => dept.id === subDeptResponse.department_id
+        )?.dptname;
+
+        console.log("selectedDeptName==", selectedDeptName);
+
         reset({
-          dptname: subDeptResponse.department_id || "",
-          subdptname: subDeptResponse.subdptname || "",
+          dptname: subDeptResponse.department_id || "",      // the dropdown expects the ID
+          subdptname: subDeptResponse.subdptname || "",      // the text input expects sub-department name
           isactive: String(subDeptResponse.isactive),
         });
+        
       } catch (error) {
         console.error("Failed to fetch data:", error);
         toast.error(
@@ -83,12 +95,11 @@ const UpdateSubDpt = () => {
     try {
       await updateSubDepartment(id, {
         department_id: parseInt(data.dptname),
-        subdptname: data.subdptname,
+        subdptname: data.subdptname.trim(),
         isactive: data.isactive === "true",
       });
 
       toast.success("✅ Sub-department updated successfully!");
-      setSubDptToUpdate(null);
       navigate("/view-subDpt");
     } catch (error) {
       console.error(error);
@@ -171,11 +182,10 @@ const UpdateSubDpt = () => {
                   className={`w-full px-4 py-2 rounded-lg border ${
                     errors.dptname ? "border-red-500" : "border-gray-300"
                   } focus:ring-2 focus:ring-teal-500`}
-                  onBlur={() => trigger("dptname")}
                 >
                   <option value="">-- Select Department --</option>
-                  {departments.map((dept, index) => (
-                    <option key={index} value={dept.id}>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
                       {dept.dptname}
                     </option>
                   ))}
@@ -188,28 +198,44 @@ const UpdateSubDpt = () => {
               </div>
 
               {/* Sub-Department Name */}
+              {/* Sub-Department Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Sub-Department Name <span className="text-red-500">*</span>
+                  Sub Department Name <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
-                  {...register("subdptname", {
-                    required: "Sub-department name is required",
-                    minLength: { value: 2, message: "Minimum 2 characters" },
-                    maxLength: { value: 50, message: "Maximum 50 characters" },
-                    pattern: {
-                      value: /^[A-Za-z0-9-_ ]+$/,
-                      message:
-                        "Only letters, numbers, hyphens, and underscores allowed",
-                    },
-                  })}
-                  onBlur={() => trigger("subdptname")}
-                  placeholder="Enter Sub-Department Name"
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.subdptname ? "border-red-500" : "border-gray-300"
-                  } focus:ring-2 focus:ring-teal-500`}
-                />
+  type="text"
+  {...register("subdptname", {
+    required: "Sub-department name is required",
+    minLength: { value: 2, message: "Minimum 2 characters" },
+    maxLength: { value: 50, message: "Maximum 50 characters" },
+    pattern: {
+      value: /^[A-Za-z\s]+$/,
+      message: "Only letters and spaces are allowed",
+    },
+    validate: (value) => {
+      const cleaned = value.trim();
+      const duplicate = allSubDepartments.find(
+        (sub) =>
+          sub.subdptname.toLowerCase() === cleaned.toLowerCase() &&
+          sub.id !== subDptToUpdate.id
+      );
+      return duplicate ? "This sub-department already exists" : true;
+    },
+  })}
+  placeholder="Enter Sub-Department Name"
+  className={`w-full px-4 py-2 rounded-lg border ${
+    errors.subdptname ? "border-red-500" : "border-gray-300"
+  } focus:ring-2 focus:ring-teal-500`}
+  onInput={(e) => {
+    // Prevent typing invalid characters
+    e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+  }}
+/>
+
+
+
+
                 {errors.subdptname && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.subdptname.message}

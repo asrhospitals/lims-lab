@@ -29,7 +29,7 @@ const UpdateNodalHospital = () => {
     defaultValues: {
       nodalid: "",
       hospitalid: "",
-      isactive: "true",
+      isactive: "Yes",
     },
   });
 
@@ -44,7 +44,6 @@ const UpdateNodalHospital = () => {
       try {
         setLoading(true);
 
-        // Fetch all data in parallel
         const [nodalRes, hospitalRes, nodalHospitalRes] = await Promise.all([
           viewNodals(),
           viewHospitals(),
@@ -59,9 +58,7 @@ const UpdateNodalHospital = () => {
         setHospitalList(hospitalData);
         setNodalHospitalData(nodalHospitalData);
 
-        // Populate form after fetching data
         if (nodalHospitalData && nodalData.length && hospitalData.length) {
-          // Find the IDs based on the names from the API response
           const nodalNameToIdMap = new Map();
           nodalData.forEach((n) => nodalNameToIdMap.set(n.nodalname, n.id));
 
@@ -78,7 +75,7 @@ const UpdateNodalHospital = () => {
           reset({
             nodalid: nodalId.toString(),
             hospitalid: hospitalId.toString(),
-            isactive: nodalHospitalData.isactive ? "true" : "false",
+            isactive: nodalHospitalData.isactive ? "Yes" : "No",
           });
         }
       } catch (err) {
@@ -93,8 +90,6 @@ const UpdateNodalHospital = () => {
     fetchData();
   }, [id, navigate, reset]);
 
-  // Remove the separate useEffect for form population since it's now handled in the main useEffect
-
   const onSubmit = async (data) => {
     if (!id) {
       toast.error("❌ No valid nodal hospital ID to update.");
@@ -106,7 +101,7 @@ const UpdateNodalHospital = () => {
       const payload = {
         nodalid: parseInt(data.nodalid, 10),
         hospitalid: parseInt(data.hospitalid, 10),
-        isactive: data.isactive === "true",
+        isactive: data.isactive === "Yes",
       };
 
       await updateNodalHospital(id, payload);
@@ -179,7 +174,7 @@ const UpdateNodalHospital = () => {
           </div>
 
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Nodal Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -234,7 +229,7 @@ const UpdateNodalHospital = () => {
                 )}
               </div>
 
-              {/* Is Active */}
+              {/* Active Status */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Is Active? <span className="text-red-500">*</span>
@@ -243,24 +238,24 @@ const UpdateNodalHospital = () => {
                   <label className="inline-flex items-center">
                     <input
                       type="radio"
-                      value="true"
+                      value="Yes"
                       {...register("isactive", {
                         required: "Please select status",
                       })}
                       className="h-4 w-4 text-teal-600"
                     />
-                    <span className="ml-2">True</span>
+                    <span className="ml-2">Yes</span>
                   </label>
                   <label className="inline-flex items-center">
                     <input
                       type="radio"
-                      value="false"
+                      value="No"
                       {...register("isactive", {
                         required: "Please select status",
                       })}
                       className="h-4 w-4 text-teal-600"
                     />
-                    <span className="ml-2">False</span>
+                    <span className="ml-2">No</span>
                   </label>
                 </div>
                 {errors.isactive && (

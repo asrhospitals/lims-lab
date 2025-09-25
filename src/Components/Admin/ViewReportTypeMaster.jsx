@@ -20,15 +20,15 @@ const ViewReportTypeMaster = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-report",
+          "https://asrlabs.asrhospitalindia.in/api/lims/master/report-types",
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
             },
           }
         );
-
-        const data = (response.data || []).sort((a, b) => Number(a.id) - Number(b.id));
+  
+        const data = (response.data.data || []).sort((a, b) => Number(a.id) - Number(b.id));
         setReportTypes(data);
         setFilteredReportTypes(data);
       } catch (err) {
@@ -37,9 +37,10 @@ const ViewReportTypeMaster = () => {
         setLoading(false);
       }
     };
-
+  
     fetchReportTypes();
   }, []);
+  
 
   useEffect(() => {
     if (!search.trim()) {
@@ -74,13 +75,15 @@ const ViewReportTypeMaster = () => {
     // { key: "updatedAt", label: "Updated At" },
   ];
 
-  const mappedItems = filteredReportTypes.map((r) => ({
-    ...r,
-    entryvalues: (r.entryvalues || []).join(", "),
-    createdAt: new Date(r.createdAt).toLocaleString("en-IN"),
-    updatedAt: new Date(r.updatedAt).toLocaleString("en-IN"),
-    status: r.isactive ? "Active" : "Inactive",
+  const mappedItems = reportTypes.map(rt => ({
+    id: rt.id,
+    reporttype: rt.reporttype,
+    reportdescription: rt.reportdescription,
+    entrytype: rt.entrytype,
+    entryvalues: rt.entryvalues.join(", "),  // Convert array to string
+    status: rt.isactive ? "Active" : "Inactive"
   }));
+  
 
   return (
     <>
@@ -158,12 +161,13 @@ const ViewReportTypeMaster = () => {
             </div>
           ) : (
             <DataTable
-              items={mappedItems}
-              columns={columns}
-              itemsPerPage={10}
-              showDetailsButtons={false}
-              onUpdate={handleUpdate}
-            />
+            items={mappedItems}
+            columns={columns}
+            itemsPerPage={10}
+            showDetailsButtons={false}
+            onUpdate={handleUpdate}
+          />
+          
           )}
         </div>
       </div>

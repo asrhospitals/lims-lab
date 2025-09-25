@@ -4,7 +4,6 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import { addHospitalType } from "../../services/apiService";
 
 const AddHospitalType = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,36 +14,38 @@ const AddHospitalType = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    trigger,
-    watch,
   } = useForm({
-    mode: "onBlur",
-    defaultValues: {
-      isactive: "true", // default radio selection
-    },
+    mode: "onChange",
+    defaultValues: { isactive: "true" },
   });
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      // Convert isactive to boolean because API expects boolean
       const payload = {
         ...data,
         isactive: data.isactive === "true",
       };
 
-      await addHospitalType(payload);
+      const authToken = localStorage.getItem("authToken");
 
-      toast.success("✅ Hospital type created successfully!", {
-        position: "top-right",
-        autoClose: 5000,
-      });
+      const response = await axios.post(
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-hsptltype",
+        payload,
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
+
+      console.log("API Response:", response.data);
+      toast.success("New hospital type created successfully!");
       reset({ isactive: "true" });
-      navigate("/view-hospitaltype");
+      setTimeout(() => navigate("/view-hospitaltype"), 1500);
     } catch (error) {
-      console.error(error.response || error.message);
+      console.error("Error creating hospital type:", error);
       toast.error(
         error?.response?.data?.message ||
+          error.message ||
           "❌ Failed to create hospital type. Please try again."
       );
     } finally {
@@ -90,7 +91,6 @@ const AddHospitalType = () => {
         </nav>
       </div>
 
-
       <div className="w-full mt-14 px-0 sm:px-6 max-w-7xl mx-auto text-sm">
         <ToastContainer />
         <form
@@ -113,16 +113,14 @@ const AddHospitalType = () => {
                   {...register("hsptltype", {
                     required: "Hospital type code is required",
                     pattern: {
-                      value: /^[a-zA-Z0-9_,]+$/,
-                      message:
-                        "Only letters, numbers, underscore (_) and comma (,) allowed",
+                      value: /^[A-Za-z\s]+$/, // ✅ only letters and spaces
+                      message: "Only letters and spaces are allowed",
                     },
                     maxLength: {
                       value: 20,
                       message: "Max length is 20 characters",
                     },
                   })}
-                  onBlur={() => trigger("hsptltype")}
                   placeholder="Enter code (e.g., DH)"
                   className={`w-full px-4 py-2 rounded-lg border ${
                     errors.hsptltype
@@ -132,18 +130,6 @@ const AddHospitalType = () => {
                 />
                 {errors.hsptltype && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-1"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
                     {errors.hsptltype.message}
                   </p>
                 )}
@@ -167,12 +153,11 @@ const AddHospitalType = () => {
                       message: "Maximum 100 characters",
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9_, ]+$/,
+                      value: /^[A-Za-z\s]+$/, // ✅ only letters and spaces
                       message:
-                        "Only letters, numbers, spaces, underscore (_) and comma (,) allowed",
+                        "Only letters and spaces are allowed (no numbers or special characters)",
                     },
                   })}
-                  onBlur={() => trigger("hsptldsc")}
                   placeholder="Enter full description"
                   className={`w-full px-4 py-2 rounded-lg border ${
                     errors.hsptldsc
@@ -182,18 +167,6 @@ const AddHospitalType = () => {
                 />
                 {errors.hsptldsc && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-1"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
                     {errors.hsptldsc.message}
                   </p>
                 )}
@@ -211,8 +184,8 @@ const AddHospitalType = () => {
                       {...register("isactive", {
                         required: "Please choose active status",
                       })}
-                      value="true"
-                      defaultChecked={watch("isactive") === "true"}
+                      value="false"
+                      defaultChecked
                       className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
                     />
                     <span className="ml-2 text-gray-700">True</span>
@@ -224,8 +197,7 @@ const AddHospitalType = () => {
                       {...register("isactive", {
                         required: "Please choose active status",
                       })}
-                      value="false"
-                      defaultChecked={watch("isactive") === "false"}
+                      value="true"
                       className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
                     />
                     <span className="ml-2 text-gray-700">False</span>
@@ -233,18 +205,6 @@ const AddHospitalType = () => {
                 </div>
                 {errors.isactive && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-1"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
                     {errors.isactive.message}
                   </p>
                 )}

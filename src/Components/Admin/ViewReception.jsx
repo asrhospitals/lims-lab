@@ -56,8 +56,7 @@ const ViewReception = () => {
           (h.addressline || "").toLowerCase().includes(lower) ||
           (h.city || "").toLowerCase().includes(lower) ||
           (h.state || "").toLowerCase().includes(lower) ||
-          (h.contactno || "").toLowerCase().includes(lower) ||
-          (h.nodal || "").toLowerCase().includes(lower)
+          (h.contactno || "").toLowerCase().includes(lower)
       );
       setFilteredReceptions(filtered);
     }
@@ -76,22 +75,16 @@ const ViewReception = () => {
     navigate(`/update-reception/${reception.id}`);
   };
 
-  //   const activeCount = (receptions || []).filter((h) => h.isactive).length;
-  //   const inactiveCount = (receptions || []).length - activeCount;
-
   const columns = [
     { key: "id", label: "ID" },
-    { key: "receptionistname", label: "Reception Name" },
+    { key: "receptionistname", label: "Receptionist Name" },
     { key: "contactno", label: "Phone" },
-    { key: "nodal", label: "Nodal" },
     { key: "dob", label: "DOB" },
     { key: "gender", label: "Gender" },
     { key: "pincode", label: "Pin Code" },
     { key: "city", label: "City" },
-    // { key: "state", label: "State" },
+    { key: "state", label: "State" },
     { key: "status", label: "Status" },
-
-    // status & action handled by DataTable
   ];
 
   const mappedItems = (filteredReceptions || []).map((h) => ({
@@ -99,7 +92,6 @@ const ViewReception = () => {
     id: h.id,
     receptionistname: h.receptionistname || "",
     contactno: h.contactno || "",
-    nodal: h.nodal || "",
     dob: h.dob ? new Date(h.dob).toLocaleDateString("en-IN") : "-",
     gender: h.gender || "",
     pincode: h.pincode || "",
@@ -178,7 +170,7 @@ const ViewReception = () => {
           </div>
 
           {/* Add New */}
-          <div className="flex  flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => navigate("/add-reception")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"

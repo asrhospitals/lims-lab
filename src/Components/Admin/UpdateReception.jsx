@@ -185,54 +185,36 @@ const UpdateReception = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Reception Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Reception Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  {...register("receptionistname", { // Fixed field name
-                    required: "Reception Name is required.",
-                  })}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.receptionistname
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  } focus:ring-2 focus:ring-teal-500`}
-                />
-                {errors.receptionistname && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.receptionistname.message}
-                  </p>
-                )}
-              </div>
+  <label className="block text-sm font-medium text-gray-700">
+    Reception Name
+  </label>
+  <input
+    type="text"
+    placeholder="Full Name"
+    {...register("receptionistname", {
+      required: "Reception Name is required.",
+      pattern: {
+        value: /^[A-Za-z\s]+$/,
+        message: "Name can only contain letters and spaces",
+      },
+      validate: async (value) => {
+        // Replace this with your actual API call to check duplicates
+        const isDuplicate = await checkDuplicateReceptionistName(value); 
+        return !isDuplicate || "This name is already in use";
+      },
+    })}
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.receptionistname ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.receptionistname && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.receptionistname.message}
+    </p>
+  )}
+</div>
 
-              {/* Nodal Center */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nodal Center
-                </label>
-                <select
-                  {...register("nodal", {
-                    required: "Nodal Center is required.",
-                  })}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.nodal ? "border-red-500" : "border-gray-300"
-                  } focus:ring-2 focus:ring-teal-500`}
-                >
-                  <option value="">Select Nodal Center</option>
-                  {nodalCenters.map((n) => (
-                    <option key={n.nodalname} value={n.nodalname}>
-                      {n.nodalname}
-                    </option>
-                  ))}
-                </select>
-                {errors.nodal && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.nodal.message}
-                  </p>
-                )}
-              </div>
+             
 
               {/* Address */}
               <div>
@@ -258,43 +240,56 @@ const UpdateReception = () => {
 
               {/* City */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  City
-                </label>
-                <input
-                  type="text"
-                  placeholder="City"
-                  {...register("city", { required: "City is required." })}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.city ? "border-red-500" : "border-gray-300"
-                  } focus:ring-2 focus:ring-teal-500`}
-                />
-                {errors.city && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.city.message}
-                  </p>
-                )}
-              </div>
+  <label className="block text-sm font-medium text-gray-700">
+    City
+  </label>
+  <input
+    type="text"
+    placeholder="City"
+    {...register("city", {
+      required: "City is required.",
+      pattern: {
+        value: /^[A-Za-z\s]+$/,
+        message: "City can only contain letters and spaces",
+      },
+    })}
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.city ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.city && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.city.message}
+    </p>
+  )}
+</div>
+
 
               {/* State */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  State
-                </label>
-                <input
-                  type="text"
-                  placeholder="State"
-                  {...register("state", { required: "State is required." })}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.state ? "border-red-500" : "border-gray-300"
-                  } focus:ring-2 focus:ring-teal-500`}
-                />
-                {errors.state && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.state.message}
-                  </p>
-                )}
-              </div>
+  <label className="block text-sm font-medium text-gray-700">
+    State
+  </label>
+  <input
+    type="text"
+    placeholder="State"
+    {...register("state", {
+      required: "State is required.",
+      pattern: {
+        value: /^[A-Za-z\s]+$/,
+        message: "Only letters and spaces are allowed.",
+      },
+    })}
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.state ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.state && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.state.message}
+    </p>
+  )}
+</div>
 
               {/* Pin Code */}
               <div>
@@ -320,24 +315,26 @@ const UpdateReception = () => {
 
               {/* Date of Birth */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Date of Birth
-                </label>
-                <input
-                  type="date"
-                  {...register("dob", {
-                    required: "Date of Birth is required.",
-                  })}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.dob ? "border-red-500" : "border-gray-300"
-                  } focus:ring-2 focus:ring-teal-500`}
-                />
-                {errors.dob && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.dob.message}
-                  </p>
-                )}
-              </div>
+  <label className="block text-sm font-medium text-gray-700">
+    Date of Birth
+  </label>
+  <input
+    type="date"
+    {...register("dob", {
+      required: "Date of Birth is required.",
+    })}
+    max={new Date().toISOString().split("T")[0]} // restrict to present date
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.dob ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.dob && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.dob.message}
+    </p>
+  )}
+</div>
+
 
               {/* Contact No. */}
               <div>

@@ -42,7 +42,7 @@ const LoginPage = () => {
         window.location.reload();
       }
     } catch (err) {
-      toast.error("Login failed. Please check your credentials.");
+      toast.error("Login failed. Please check your credentials2.");
       setLoginClicked(false);
     }
   };

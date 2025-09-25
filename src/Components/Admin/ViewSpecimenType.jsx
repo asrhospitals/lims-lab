@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
+import axios from "axios";
 import { viewSpecimenTypes } from "../../services/apiService";
 
 const ViewSpecimenType = () => {
@@ -16,13 +17,22 @@ const ViewSpecimenType = () => {
   // Fetch data
   useEffect(() => {
     const fetchSpecimenTypes = async () => {
+      const token = localStorage.getItem("authToken");
+
       try {
-        const data = await viewSpecimenTypes();
-        const sortedData = (data || []).sort((a, b) => Number(a.id) - Number(b.id));
-        setSpecimenTypes(sortedData);
-        setFilteredSpecimenTypes(sortedData);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch Specimen Types.");
+        const response = await axios.get(
+          "https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        const data = response.data.data || [];
+
+        setSpecimenTypes(data);
+        setFilteredSpecimenTypes(data);
+      } catch (error) {
+        console.error("Error fetching specimen types:", error);
       } finally {
         setLoading(false);
       }
@@ -37,15 +47,17 @@ const ViewSpecimenType = () => {
       setFilteredSpecimenTypes(specimenTypes);
     } else {
       const lower = search.toLowerCase();
-      const filtered = specimenTypes.filter((item) =>
-        (item.specimenname || "").toLowerCase().includes(lower) ||
-        (item.specimendes || "").toLowerCase().includes(lower)
+      const filtered = specimenTypes.filter(
+        (item) =>
+          (item.specimenname || "").toLowerCase().includes(lower) ||
+          (item.specimendes || "").toLowerCase().includes(lower)
       );
       setFilteredSpecimenTypes(filtered);
     }
   }, [search, specimenTypes]);
 
   const handleUpdate = (specimenType) => {
+    // Navigate and pass the ID in URL
     navigate(`/update-specimen-type/${specimenType.id}`);
   };
 
@@ -96,10 +108,11 @@ const ViewSpecimenType = () => {
 
       <div className="w-full mt-16 px-2 sm:px-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4 space-y-4">
-
           {/* Header + Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-xl font-bold text-gray-800">Specimen Type List</h2>
+            <h2 className="text-xl font-bold text-gray-800">
+              Specimen Type List
+            </h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
                 <input
@@ -138,7 +151,9 @@ const ViewSpecimenType = () => {
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
           ) : mappedItems.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">No Specimen Types found.</div>
+            <div className="text-center py-6 text-gray-500">
+              No Specimen Types found.
+            </div>
           ) : (
             <DataTable
               items={mappedItems}

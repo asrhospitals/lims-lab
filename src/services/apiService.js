@@ -13,18 +13,31 @@ const httpOptions = {
 const API_ROOT_URL = "https://asrlabs.asrhospitalindia.in/lims";
 
 export const addDepartment = async (departmentData) => {
-  try {
-    await axios.post(`${API_ROOT_URL}/master/add-department`, departmentData);
-  } catch (error) {
-    console.error("Error adding department:", error);
-    throw error;
-  }
+  // no try/catch here
+  return await axios.post(`${API_ROOT_URL}/master/add-department`, departmentData);
 };
+
+
 
 export const viewDepartments = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
     const url = `${API_ROOT_URL}/master/get-department${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    const res = await axios.get(url);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Investigation API functions
+export const viewInvestigations = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_ROOT_URL}/master/get-test${
       queryString ? `?${queryString}` : ""
     }`;
 
@@ -82,7 +95,7 @@ export const viewSubDepartment = async (id) => {
 
 export const addSubDepartments = async (subDepartmentData) => {
   try {
-    await axios.post(
+    return await axios.post(
       `${API_ROOT_URL}/master/add-subdepartment`,
       subDepartmentData
     );
@@ -91,6 +104,8 @@ export const addSubDepartments = async (subDepartmentData) => {
     throw error;
   }
 };
+
+
 
 export const updateSubDepartment = async (id, subDepartmentData) => {
   try {
@@ -294,6 +309,20 @@ export const viewInstruments = async () => {
   }
 };
 
+
+// https://asrlabs.asrhospitalindia.in/lims/master/get-hospital?page=1&limit=10
+
+
+export const getHospitalList = async (id) => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-hospital`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
 export const viewInstrument = async (id) => {
   try {
     const res = await axios.get(`${API_ROOT_URL}/master/get-instrument/${id}`);
@@ -306,6 +335,7 @@ export const viewInstrument = async (id) => {
 export const addInstrument = async (instrumentData) => {
   try {
     await axios.post(`${API_ROOT_URL}/master/add-instrument`, instrumentData);
+    return response;
   } catch (error) {
     console.error("Error adding instrument:", error);
     throw error;
@@ -630,20 +660,7 @@ export const updateSpecimenType = async (id, specimenTypeData) => {
   }
 };
 
-// Investigation API functions
-export const viewInvestigations = async (params = {}) => {
-  try {
-    const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-test${
-      queryString ? `?${queryString}` : ""
-    }`;
 
-    const res = await axios.get(url);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
-};
 
 export const viewInvestigation = async (id) => {
   try {

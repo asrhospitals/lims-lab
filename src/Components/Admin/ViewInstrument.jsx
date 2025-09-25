@@ -5,115 +5,105 @@ import DataTable from "../utils/DataTable";
 import { viewInstruments } from "../../services/apiService";
 
 const ViewInstrument = () => {
-  const [filteredInstruments, setFilteredInstruments] = useState([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-
-  const [instruments, setInstruments] = useState([]);
   const navigate = useNavigate();
 
+  const [instruments, setInstruments] = useState([]);
+  const [filteredInstruments, setFilteredInstruments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchInstruments = async (page = 1, limit = 10) => {
+    setLoading(true);
+    try {
+      const params = { page, limit };
+      const response = await viewInstruments(params);
+      const data = response.data || [];
+
+      setInstruments(data);
+      setFilteredInstruments(data);
+
+      setTotalItems(response.meta?.totalItems || data.length);
+      setTotalPages(response.meta?.totalPages || 1);
+    } catch (err) {
+      console.error("Failed to fetch instruments:", err);
+      setError(err?.response?.data?.message || "Failed to fetch instruments.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchAllInstruments = async () => {
-      setLoading(true);
-      try {
-        const params = {
-          page: currentPage,
-          limit: itemsPerPage,
-        };
-
-        const response = await viewInstruments(params);
-        const instrumentsData = response.data.sort(
-          (a, b) => Number(a.id) - Number(b.id)
-        );
-        setInstruments(instrumentsData);
-        setFilteredInstruments(instrumentsData);
-        setTotalPages(response?.meta?.totalPages || 1);
-        setTotalItems(response?.meta?.totalItems || 0);
-      } catch (error) {
-        console.error("Failed to fetch instruments:", error);
-        setError(
-          error.response?.data?.message || "Failed to fetch instruments."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllInstruments();
+    fetchInstruments(currentPage, itemsPerPage);
   }, [currentPage, itemsPerPage]);
 
-  // Client-side search filtering
+  // Client-side search
   useEffect(() => {
     if (!search.trim()) {
       setFilteredInstruments(instruments);
     } else {
       const lower = search.toLowerCase();
-      const filtered = (instruments || []).filter((inst) =>
-        (inst.instrumentname && inst.instrumentname.toLowerCase().includes(lower)) ||
-        (inst.make && inst.make.toLowerCase().includes(lower)) ||
-        (inst.short_code && inst.short_code.toLowerCase().includes(lower))
+      setFilteredInstruments(
+        instruments.filter(
+          (inst) =>
+            (inst.instrumentname &&
+              inst.instrumentname.toLowerCase().includes(lower)) ||
+            (inst.make && inst.make.toLowerCase().includes(lower)) ||
+            (inst.short_code && inst.short_code.toLowerCase().includes(lower))
+        )
       );
-      setFilteredInstruments(filtered);
     }
   }, [search, instruments]);
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  const handlePageSizeChange = (newSize) => {
-    setItemsPerPage(newSize);
-    setCurrentPage(1); // Reset to first page when changing page size
+  const handlePageChange = (page) => setCurrentPage(page);
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
   };
 
   const handleUpdate = (instrument) => {
     navigate(`/update-instrument/${instrument.id}`);
   };
 
-  // const activeCount = instruments.filter((i) => i.isactive).length;
-  // const inactiveCount = instruments.length - activeCount;
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "instrumentname", label: "Name" },
+    { key: "make", label: "Make" },
+    { key: "short_code", label: "Code" },
+    { key: "installdate", label: "Installed" },
+    { key: "status", label: "Status" },
+  ];
 
-
-
-const columns = [
-  { key: "id", label: "ID" },
-  { key: "instrumentname", label: "Name" },
-  { key: "make", label: "Make" },
-  { key: "short_code", label: "Code" },
-  { key: "installdate", label: "Installed" },
-  { key: "status", label: "Status" },
-];
-
-const mappedItems = (filteredInstruments || []).map((inst) => ({
-  id: inst.id ?? Math.random().toString(36).substring(2, 9),
+ const mappedItems = (filteredInstruments || []).map((inst, index) => ({
+  id: inst.id ?? (index + 1 + (currentPage - 1) * itemsPerPage), // Correct global index
   instrumentname: inst.instrumentname || "-",
   make: inst.make || "-",
   short_code: inst.short_code || "-",
-  installdate: inst.installdate ? new Date(inst.installdate).toLocaleDateString("en-CA") : "-",
+  installdate: inst.installdate
+    ? new Date(inst.installdate).toLocaleDateString("en-CA")
+    : "-",
   status: inst.isactive ? "Active" : "Inactive",
 }));
-
-
   return (
     <>
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
               <Link
                 to="/admin-dashboard"
-                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
               >
-                🏠︎ Home
+                🏠 Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
@@ -124,9 +114,9 @@ const mappedItems = (filteredInstruments || []).map((inst) => ({
         </nav>
       </div>
 
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-12 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-          {/* Header */}
+          {/* Header and Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               Instrument List
@@ -137,11 +127,8 @@ const mappedItems = (filteredInstruments || []).map((inst) => ({
                   type="text"
                   value={search}
                   onChange={(e) => {
-                    // Optional: Restrict input to alphabets, numbers, underscore, comma
                     const val = e.target.value;
-                    if (/^[a-zA-Z0-9_,\s]*$/.test(val)) {
-                      setSearch(val);
-                    }
+                    if (/^[a-zA-Z0-9_,\s]*$/.test(val)) setSearch(val);
                   }}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
                   placeholder="Search instrument..."
@@ -151,21 +138,22 @@ const mappedItems = (filteredInstruments || []).map((inst) => ({
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
-            <span>Total: {totalItems} items</span>
-            <span>•</span>
-            <span>Page {currentPage} of {totalPages}</span>
-          </div>
-
-          {/* Add Button */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <button
+          {/* Stats and Add Button */}
+          <div className="flex flex-wrap justify-between mb-4 text-sm text-gray-600">
+          <button
               onClick={() => navigate("/add-instrument")}
-              className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
+              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
             </button>
+            <div>
+              <span>Total: {totalItems} items</span>
+              <span> • </span>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+            </div>
+       
           </div>
 
           {/* Data Table */}

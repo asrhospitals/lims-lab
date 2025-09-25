@@ -49,7 +49,6 @@ const UpdateLabToLab = () => {
         if (data) {
           setLabData(data);
 
-          // Populate form with fetched data
           reset({
             labname: data.labname || "",
             addressline: data.addressline || "",
@@ -109,95 +108,108 @@ const UpdateLabToLab = () => {
     }
   };
 
-  const alphaNumericPattern = /^[a-zA-Z0-9\s\-_]+$/;
+  // Validation regex
+  const alphanumericRegex = /^[a-zA-Z0-9\s\-_]+$/;
+  const pinCodeRegex = /^\d{6}$/;
+  const phoneRegex = /^[6-9]\d{9}$/;
+  const lettersOnlyRegex = /^[a-zA-Z\s]+$/;
 
   const fields = [
     {
       name: "labname",
       label: "Lab Name",
+      placeholder: "Enter Lab Name",
       validation: {
         required: "Lab name is required",
         pattern: {
-          value: alphaNumericPattern,
-          message: "Only letters, numbers, spaces, -, _ allowed",
+          value: lettersOnlyRegex,
+          message: "Only letters and spaces are allowed",
         },
       },
     },
     {
       name: "addressline",
       label: "Address",
+      placeholder: "Enter Address",
       validation: {
         required: "Address is required",
         pattern: {
-          value: alphaNumericPattern,
-          message: "Only letters, numbers, spaces, -, _ allowed",
+          value: alphanumericRegex,
+          message: "Only letters, numbers, space, - and _ are allowed",
         },
       },
     },
     {
       name: "city",
       label: "City",
+      placeholder: "Enter City",
       validation: {
         required: "City is required",
         pattern: {
-          value: alphaNumericPattern,
-          message: "Only letters, numbers, spaces, -, _ allowed",
+          value: lettersOnlyRegex,
+          message: "Only letters and spaces are allowed",
         },
       },
     },
     {
       name: "state",
       label: "State",
+      placeholder: "Enter State",
       validation: {
         required: "State is required",
         pattern: {
-          value: alphaNumericPattern,
-          message: "Only letters, numbers, spaces, -, _ allowed",
+          value: lettersOnlyRegex,
+          message: "Only letters and spaces are allowed",
         },
       },
     },
     {
       name: "pincode",
-      label: "Pin Code",
-      type: "number",
+      label: "PIN Code",
+      placeholder: "Enter PIN Code",
+      type: "text",
       validation: {
-        required: "Pincode is required",
+        required: "PIN code is required",
         pattern: {
-          value: /^[0-9]{5,6}$/,
-          message: "Enter a valid 5 or 6 digit pin code",
+          value: pinCodeRegex,
+          message: "PIN must be exactly 6 digits",
         },
       },
     },
     {
       name: "contactperson",
       label: "Contact Person",
+      placeholder: "Enter Contact Person",
       validation: {
         required: "Contact person is required",
         pattern: {
-          value: alphaNumericPattern,
-          message: "Only letters, numbers, spaces, -, _ allowed",
+          value: lettersOnlyRegex,
+          message: "Only letters and spaces are allowed",
         },
       },
     },
     {
       name: "contactno",
       label: "Contact Number",
+      type: "text",
+      placeholder: "Enter Contact Number",
       validation: {
         required: "Contact number is required",
         pattern: {
-          value: /^[0-9]{10}$/,
-          message: "Enter a valid 10-digit number",
+          value: phoneRegex,
+          message: "Enter valid 10-digit mobile number",
         },
       },
     },
     {
       name: "email",
       label: "Email",
+      placeholder: "Enter Email",
       validation: {
         required: "Email is required",
         pattern: {
           value: /^\S+@\S+\.\S+$/,
-          message: "Enter a valid email address",
+          message: "Invalid email format",
         },
       },
     },
@@ -206,11 +218,11 @@ const UpdateLabToLab = () => {
       label: "Is Active?",
       type: "radio",
       options: [
-        { value: "true", label: "True" },
-        { value: "false", label: "False" },
+        { value: "true", label: "Yes" },
+        { value: "false", label: "No" },
       ],
       validation: {
-        required: "This field is required.",
+        required: "Status is required",
       },
     },
   ];
@@ -227,40 +239,42 @@ const UpdateLabToLab = () => {
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-50">
         <nav
-          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium px-4 py-2 bg-gray-50 border-b shadow-lg"
           aria-label="breadcrumb"
         >
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item">
-              <Link to="/" className="hover:text-blue-600">
-                🏠︎ Home
+          <ol className="flex space-x-2 text-sm">
+            <li>
+              <Link to="/" className="hover:text-teal-600">
+                🏠 Home
               </Link>
             </li>
-            <li className="breadcrumb-item">
-              <Link to="/view-labtolab" className="hover:text-blue-600">
+            <li>/</li>
+            <li>
+              <Link to="/view-labtolab" className="hover:text-teal-600">
                 Lab To Lab
               </Link>
             </li>
-            <li
-              className="breadcrumb-item active text-gray-500"
-              aria-current="page"
-            >
-              Update Lab
-            </li>
+            <li>/</li>
+            <li className="text-gray-500">Update Lab</li>
           </ol>
         </nav>
       </div>
-      <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
+
+      {/* Form */}
+      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
         >
+          {/* Page Title Bar */}
           <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="text-white font-semibold">Update Lab</h4>
           </div>
+
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {fields.map(
@@ -320,12 +334,11 @@ const UpdateLabToLab = () => {
               )}
             </div>
 
+            {/* Buttons */}
             <div className="flex justify-end space-x-4">
               <button
                 type="button"
-                onClick={() => {
-                  navigate("/view-labtolab");
-                }}
+                onClick={() => navigate("/view-labtolab")}
                 className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
               >
                 Cancel

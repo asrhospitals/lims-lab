@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { viewTechnicians } from "../../services/apiService";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
-// import { CBreadcrumb, CBreadcrumbItem } from "@coreui/react";
 
 const ViewTechnician = () => {
   const [technicians, setTechnicians] = useState([]);
@@ -18,23 +17,19 @@ const ViewTechnician = () => {
 
   const navigate = useNavigate();
 
+  // Fetch technicians with pagination
   useEffect(() => {
     const fetchTechnicians = async () => {
       try {
         setLoading(true);
-        const params = {
-          page: currentPage,
-          limit: itemsPerPage,
-        };
-
+        const params = { page: currentPage, limit: itemsPerPage };
         const response = await viewTechnicians(params);
-        
+
         if (response?.data) {
           const data = response.data.sort((a, b) => Number(a.id) - Number(b.id));
           setTechnicians(data);
           setFilteredTechnicians(data);
-          
-          // Update pagination info
+
           setTotalPages(response?.meta?.totalPages || 1);
           setTotalItems(response?.meta?.totalItems || 0);
         }
@@ -48,22 +43,20 @@ const ViewTechnician = () => {
     fetchTechnicians();
   }, [currentPage, itemsPerPage]);
 
-
-  // Client-side search filtering
+  // Client-side search
   useEffect(() => {
     if (!search.trim()) {
       setFilteredTechnicians(technicians);
     } else {
       const lower = search.toLowerCase();
-      const filtered = (technicians || []).filter((h) =>
-        (h.technicianname || "").toLowerCase().includes(lower) ||
-        (h.addressline || "").toLowerCase().includes(lower) ||
-        (h.city || "").toLowerCase().includes(lower) ||
-        (h.state || "").toLowerCase().includes(lower) ||
-        (h.contactno || "").toLowerCase().includes(lower) ||
-        (h.nodal || "").toLowerCase().includes(lower) ||
-        (h.roletype || "").toLowerCase().includes(lower) ||
-        (h.instrument || "").toLowerCase().includes(lower)
+      const filtered = (technicians || []).filter(
+        (t) =>
+          (t.technicianname || "").toLowerCase().includes(lower) ||
+          (t.addressline || "").toLowerCase().includes(lower) ||
+          (t.city || "").toLowerCase().includes(lower) ||
+          (t.state || "").toLowerCase().includes(lower) ||
+          (t.contactno || "").toLowerCase().includes(lower) ||
+          (String(t.pincode) || "").toLowerCase().includes(lower)
       );
       setFilteredTechnicians(filtered);
     }
@@ -75,81 +68,60 @@ const ViewTechnician = () => {
 
   const handlePageSizeChange = (newSize) => {
     setItemsPerPage(newSize);
-    setCurrentPage(1); // Reset to first page when changing page size
+    setCurrentPage(1);
   };
 
   const handleUpdate = (technician) => {
     navigate(`/update-technician/${technician.id}`);
   };
 
+  // Columns based on schema
   const columns = [
     { key: "id", label: "ID" },
     { key: "technicianname", label: "Technician Name" },
     { key: "contactno", label: "Phone" },
-    { key: "nodal", label: "Nodal" },
-    { key: "roletype", label: "Role Type" },
-    { key: "instrument", label: "Instrument" },
+    { key: "addressline", label: "Address" },
+    { key: "city", label: "City" },
+    { key: "state", label: "State" },
+    { key: "pincode", label: "PIN Code" },
     { key: "dob", label: "DOB" },
     { key: "gender", label: "Gender" },
-    { key: "pincode", label: "Pin Code" },
-    // { key: "city", label: "City" },
-    // { key: "state", label: "State" },
-    
-    
-    // status & action handled by DataTable
+    { key: "status", label: "Status" }, // Active / Inactive
   ];
 
-  const mappedItems = (filteredTechnicians || []).map((h) => ({
-    ...h,
-    id: h.id,
-    technicianname: h.technicianname,
-    contactno: h.contactno,
-    nodal: h.nodal,
-    roletype: h.roletype,
-    instrument: h.instrument,
-    dob: new Date(h.dob).toLocaleDateString("en-IN") || "-",
-    gender: h.gender,
-    pincode: h.pincode,
-    city: h.city,
-    state: h.state,
-    status: h.isactive ? "Active" : "Inactive",
+  const mappedItems = (filteredTechnicians || []).map((t) => ({
+    ...t,
+    dob: t.dob ? new Date(t.dob).toLocaleDateString("en-IN") : "-",
+    status: t.isactive ? "Active" : "Inactive",
   }));
 
   return (
-    <>    
-
-    {/* Breadcrumb */}
-    <div className="fixed top-[61px] w-full z-10">
-    <nav
-        className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
-        aria-label="Breadcrumb"
-    >
-        <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-
-        <li>
-            <Link
-            to="/admin-dashboard"
-            className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
-            >
-            🏠︎ Home
-            </Link>
-        </li>
-
-        <li className="text-gray-400">/</li>
-
-        <li aria-current="page" className="text-gray-500">
-            Technicians
-        </li>
-        </ol>
-    </nav>
-    </div>
-
-
+    <>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/admin-dashboard"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Technicians
+            </li>
+          </ol>
+        </nav>
+      </div>
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-
-
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
@@ -173,9 +145,10 @@ const ViewTechnician = () => {
           <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
             <span>Total: {totalItems} items</span>
             <span>•</span>
-            <span>Page {currentPage} of {totalPages}</span>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
           </div>
-
 
           {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4">
@@ -186,9 +159,6 @@ const ViewTechnician = () => {
               Add New
             </button>
           </div>
-          
-
-
 
           {/* Data Table */}
           {loading ? (

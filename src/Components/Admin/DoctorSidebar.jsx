@@ -16,7 +16,7 @@ const DoctorSidebar = ({
   const [expandedItem, setExpandedItem] = useState(null);
   
   // Get user role from localStorage
-  const userRole = localStorage.getItem("role") || "";
+  const userRole = localStorage.getItem("roleType") || "";
   
   const user = {
     name: "DrReddy",
@@ -68,12 +68,19 @@ const DoctorSidebar = ({
         { name: "Profile Entry Master", link: "/view-profile-entry-master" },
         { name: "Profile Master", link: "/view-profile-master" },
         { name: "Investigation Master", link: "/view-investigation" },
+        { name: "Patient Registration", link: "/admin-view-patient-details" },
         { name: "Report Type Master", link: "/view-report-type-master" },
         { name: "Kit Master", link: "/view-kit-master" },
         { name: "Specimen Type Master", link: "/view-specimen-types" },
         { name: "Color Master", link: "/view-colors" },
         { name: "Doctor Registration", link: "/doctor-registration" },
       ],
+    },
+    {
+      name: "Patient Registration",
+      icon: <FaUserDoctor />,
+      roles: ["admin", "doctor"],
+      link: "/admin-add-patient-details",
     },
   ];
 

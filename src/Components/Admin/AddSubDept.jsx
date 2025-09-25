@@ -16,9 +16,22 @@ const AddSubDpt = () => {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
     reset,
-    trigger,
-  } = useForm({ mode: "onBlur" });
+    clearErrors,
+    watch,
+  } = useForm({
+    mode: "onChange",
+  });
+  const watchedFields = watch(); // watch all fields
+
+  // const {
+  //   register,
+  //   handleSubmit,
+  //   formState: { errors },
+  //   reset,
+  //   trigger,
+  // } = useForm({ mode: "onBlur" });
 
   // Fetch all departments on load
   useEffect(() => {
@@ -36,26 +49,34 @@ const AddSubDpt = () => {
     fetchDepartments();
   }, []);
 
-  // Form submit handler
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     try {
-      const authToken = localStorage.getItem("authToken");
-
       const payload = {
         department_id: data.dptname,
         subdptname: data.subdptname,
         isactive: data.isactive === "true",
       };
 
-      await addSubDepartments(payload);
+      const authToken = localStorage.getItem("authToken");
 
-      toast.success("✅ New sub-department created successfully!");
+      const response = await axios.post(
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-subdepartment",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+      toast.success("New Sub Department created successfully!");
       reset();
-      navigate("/view-subDpt");
+      setTimeout(() => navigate("/view-subDpt"), 1500);
     } catch (error) {
-      console.error(error);
+      console.error("Error creating sub-department:", error);
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to create sub-department. Please try again."
@@ -86,12 +107,14 @@ const AddSubDpt = () => {
         minLength: { value: 5, message: "Minimum 5 characters" },
         maxLength: { value: 30, message: "Maximum 30 characters" },
         pattern: {
-          value: /^[A-Za-z0-9_\-\s]+$/,
+          // Allows letters, spaces, underscores, hyphens, but not numbers only
+          value: /^(?!\d+$)[A-Za-z\s_-]+$/,
           message:
-            "Only alphabets, numbers, spaces, underscores (_) and hyphens (-) are allowed",
+            "Only letters, spaces, underscores (_) and hyphens (-) are allowed. Numbers alone are not allowed.",
         },
       },
     },
+
     {
       name: "isactive",
       label: "Is Active?",
@@ -217,6 +240,34 @@ const AddSubDpt = () => {
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:ring-teal-500"
                         } focus:ring-2 focus:border-transparent transition`}
+                        onKeyUp={(e) => {
+                          const value = e.target.value;
+                          if (["dptname", "city", "state"].includes(name)) {
+                            const isValid = /^[a-zA-Z\s]*$/.test(value); // Only letters and spaces
+                            if (!isValid) {
+                              setError(name, {
+                                type: "manual",
+                                message: "Only letters are allowed",
+                              });
+                            } else {
+                              clearErrors(name);
+                            }
+                          }
+                        }}
+                        onInput={(e) => {
+                          const value = e.target.value;
+                          if (["dptname", "city", "state"].includes(name)) {
+                            const isValid = /^[a-zA-Z\s]*$/.test(value); // Only letters and spaces
+                            if (!isValid) {
+                              setError(name, {
+                                type: "manual",
+                                message: "Only letters are allowed",
+                              });
+                            } else {
+                              clearErrors(name);
+                            }
+                          }
+                        }}
                       />
                     )}
 

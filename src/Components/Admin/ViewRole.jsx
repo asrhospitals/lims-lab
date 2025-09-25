@@ -19,21 +19,46 @@ const ViewRole = () => {
     const fetchAllRoles = async () => {
       setLoading(true);
       try {
-        const params = {}; // Keep params for future pagination if needed
-        
-        const rolesData = await viewRoles(params);
+        // Get token from localStorage
+        const token = localStorage.getItem("authToken"); // make sure you stored it as "token"
+  
+        if (!token) {
+          throw new Error("No token found in localStorage");
+        }
+  
+        const response = await fetch(
+          'https://asrlabs.asrhospitalindia.in/lims/master/get-role',
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`, // use the token from localStorage
+            },
+          }
+        );
+  
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+  
+        const data = await response.json();
+        const rolesData = data.data;
+  
         const sortedRoles = rolesData.sort((a, b) => a.id - b.id);
+  
         setRoles(sortedRoles);
         setFilteredRoles(sortedRoles);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch roles.");
+        console.error("API error:", err);
+        setError(err.message || "Failed to fetch roles.");
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchAllRoles();
   }, []);
+  
 
   useEffect(() => {
     if (!search.trim()) {
@@ -59,14 +84,14 @@ const ViewRole = () => {
     { key: "id", label: "ID" },
     { key: "roletype", label: "Role Type" },
     { key: "roledescription", label: "Role Description" },
-    { key: "status", label: "Status" }, // Derived from isactive
+    { key: "status", label: "Status" }, // derived from isactive
   ];
 
   const mappedItems = filteredRoles.map((r) => ({
     id: r.id ?? Math.random().toString(36).substr(2, 9),
     roletype: r.roletype || "",
     roledescription: r.roledescription || "",
-    isactive: !!r.isactive, // boolean coercion
+    isactive: !!r.isactive, // convert to boolean
     status: r.isactive ? "Active" : "Inactive",
   }));
 

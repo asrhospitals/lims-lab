@@ -107,6 +107,12 @@ import UpdateColor from "./Components/Admin/UpdateColor";
 import ViewLabToLab from "./Components/Admin/ViewLabToLab";
 import AddLabToLab from "./Components/Admin/AddLabToLab";
 import UpdateLabToLab from "./Components/Admin/UpdateLabToLab";
+import AddPatientDetails from "./Components/Admin/AddPatientDetails";
+import ViewPatientDetails from "./Components/Admin/ViewPatientDetails";
+import AddUser from "./Components/Admin/AddUser";
+import ViewUserDetails from "./Components/Admin/ViewUserDetails";
+import AddUserMapping from "./Components/Admin/AddUserMapping";
+import ViewUserMapping from "./Components/Admin/ViewUserMapping";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -120,7 +126,7 @@ function App() {
   useEffect(() => {
     // Check authentication status when component mounts
     const token = localStorage.getItem("authToken");
-    const role = localStorage.getItem("role");
+    const role = localStorage.getItem("roleType");
     setIsAuthenticated(!!token);
     setUserRole(role || "");
     setIsLoading(false);
@@ -129,9 +135,13 @@ function App() {
   // Simple route protection
   const requireRole = (requiredRole, element) => {
     if (isLoading) return <div>Loading...</div>;
+    console.log("im here requiredRole", requiredRole);
+
     if (requiredRole === "admin" && !hasAdminAccess) return <Navigate to="/" />;
     if (requiredRole === "doctor" && !hasDoctorAccess && !hasAdminAccess)
       return <Navigate to="/" />;
+    console.log("im here");
+    
     return element;
   };
 
@@ -340,6 +350,30 @@ function App() {
             element: requireRole("admin", <UpdateRole />),
           },
           // User Management
+
+          {
+            path: "add-user",
+            element: requireRole("admin", <AddUser />),
+          },
+          {
+            path: "view-user-list",
+            element: requireRole("admin", <ViewUserDetails />),
+          },
+          {
+            path: "add-user-mapping",
+            element: requireRole("admin", <AddUserMapping />),
+          },
+
+          {
+            path: "view-user-mapping",
+            element: requireRole("admin", <ViewUserMapping />),
+          },
+          
+          {
+            path: "update-role",
+            element: requireRole("admin", <UpdateRole />),
+          },
+
           {
             path: "add-phlebotomist",
             element: requireRole("admin", <AddPhlebotomist />),
@@ -411,7 +445,7 @@ function App() {
             element: requireRole("admin", <ViewProfileEntryMaster />),
           },
           {
-            path: "update-profile-entry-master",
+            path: "update-profile-entry-master/:id",
             element: requireRole("admin", <UpdateProfileEntryMaster />),
           },
           {
@@ -464,7 +498,7 @@ function App() {
             element: requireRole("admin", <ViewKitMaster />),
           },
           {
-            path: "update-kit-master",
+            path: "update-kit-master/:id",
             element: requireRole("admin", <UpdateKitMaster />),
           },
           {
@@ -472,11 +506,11 @@ function App() {
             element: requireRole("admin", <AddSpecimenType />),
           },
           {
-            path: "view-specimen-types",
+            path: "view-specimen-type",
             element: requireRole("admin", <ViewSpecimenType />),
           },
           {
-            path: "update-specimen-type",
+            path: "update-specimen-type/:id",
             element: requireRole("admin", <UpdateSpecimenType />),
           },
           {
@@ -484,12 +518,20 @@ function App() {
             element: requireRole("admin", <AddColor />),
           },
           {
-            path: "view-colors",
+            path: "view-color",
             element: requireRole("admin", <ViewColor />),
           },
           {
-            path: "update-color",
+            path: "update-color/:id",
             element: requireRole("admin", <UpdateColor />),
+          },
+          {
+            path: "admin-add-patient-details",
+            element: requireRole("admin", <AddPatientDetails />),
+          },
+          {
+            path: "admin-view-patient-details",
+            element: requireRole("admin", <ViewPatientDetails />),
           },
           // Fallback route
           {

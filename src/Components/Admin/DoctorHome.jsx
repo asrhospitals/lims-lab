@@ -105,7 +105,22 @@ const sections = [
       { label: "View Roles", route: "/view-roles" },
     ],
   },
-  
+  {
+    title: "User Creation",
+    icon: <RiGroupLine className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Add User", route: "/add-user" },
+      { label: "View User", route: "/view-user-list" },
+    ],
+  },
+  {
+    title: "User Mapping",
+    icon: <RiGroupLine className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Add User", route: "/add-user-mapping" },
+      { label: "View User", route: "/view-user-mapping" },
+    ],
+  },
   {
     title: "Phlebotomist",
     icon: <RiUserAddLine className="text-3xl text-[#238781]" />,
@@ -154,7 +169,14 @@ const sections = [
       { label: "View Investigations", route: "/view-investigation" },
     ],
   },
-
+  {
+    title: "Patient Registration",
+    icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Add Patient Details", route: "/admin-add-patient-details" },
+      { label: "View Patient Details", route: "/admin-view-patient-details" },
+    ],
+  },
   {
     title: "Report Type",
     icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,

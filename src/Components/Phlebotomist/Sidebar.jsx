@@ -6,6 +6,10 @@ import { FaChevronDown, FaChevronRight, FaHome } from "react-icons/fa";
 import { RiCellphoneLine } from "react-icons/ri";
 import { FaRegCircle } from "react-icons/fa";
 import { FaUserDoctor } from "react-icons/fa6";
+import { FaChartBar } from "react-icons/fa";
+import { FaBan } from "react-icons/fa";
+
+
 
 const Sidebar = ({
   isCollapsed,
@@ -16,10 +20,11 @@ const Sidebar = ({
   const [expandedItem, setExpandedItem] = useState(null);
   
   // Get user role from localStorage
-  const userRole = localStorage.getItem("role") || "";
+  const userRole = localStorage.getItem("roleType") || "";
+  const storedUserName = localStorage.getItem("username");
   
   const user = {
-    name: "DrReddy",
+    name:storedUserName,
     shortName: "DrReddy",
     department: "Phlebotomist ",
     shortDept: "Phlebotomist ",
@@ -29,21 +34,51 @@ const Sidebar = ({
 
   // Define all possible menu items with their required roles
   const allMenuItems = [
-    { type: "label", label: "Phlebotomist  Panel" },
+    { type: "label", label: "Phlebotomist Panel" },
     { name: "Dashboard", icon: <FaHome />, link: "", roles: ["phlebotomist"] },
 
     {
       name: "Patient Registration",
       icon: <FaUserDoctor />,
       roles: ["phlebotomist"],
+      link: "/patient-registration",
+      // children: [
+      //   { name: "Patient Registration", link: "/patient-registration", roles: ["phlebotomist"] },
+      //   // { name: "General Registration", link: "/patient-general-registration", roles: ["phlebotomist"] },
+      //   // { name: "Registration with Billing", link: "/patient-registration-with-billing", roles: ["phlebotomist"] },
+      //   // { name: "PPP Registration", link: "/patient-ppp-registration", roles: ["phlebotomist"] },
+
+
+      // ]
+    },
+    {
+      name: "Report",
+      icon: <FaChartBar />,
+      roles: ["phlebotomist"],
       children: [
-        { name: "Patient Registration", link: "/patient-registration", roles: ["phlebotomist"] },
-        // { name: "General Registration", link: "/patient-general-registration", roles: ["phlebotomist"] },
-        // { name: "Registration with Billing", link: "/patient-registration-with-billing", roles: ["phlebotomist"] },
-        // { name: "PPP Registration", link: "/patient-ppp-registration", roles: ["phlebotomist"] },
-
-
+        { name: "Report Entry", link: "/patient-report-entry", roles: ["phlebotomist"] },
+        { name: "Print Report", link: "/patient-report-print-section", roles: ["phlebotomist"] },
+        { name: "Pending Report Register", link: "/pending-report-registration", roles: ["phlebotomist"] },
+        { name: "Daily Patient Register", link: "/daily-patient-register", roles: ["phlebotomist"] },
+        { name: "Critical Report Register", link: "/daily-critical-report-register", roles: ["phlebotomist"] },
+        { name: "Report Register", link: "/daily-patient-report-register", roles: ["phlebotomist"] },
       ]
+    },
+    {
+      name: "Details",
+      icon: <FaChartBar />,
+      roles: ["phlebotomist"],
+      children: [
+        { name: "Report Details", link: "/patient-registartion-details", roles: ["phlebotomist"] },
+        { name: "Test Details", link: "/test-details", roles: ["phlebotomist"] },
+      ]
+    },
+
+    {
+      name: "Rejected Sample Collections",
+      icon: <FaBan />,
+      roles: ["phlebotomist"],
+      link: "/rejected-sample-collections",
     },
 
   ];

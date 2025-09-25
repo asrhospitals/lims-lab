@@ -23,16 +23,13 @@ const ViewProfileEntryMaster = () => {
         const response = await axios.get(
           "https://asrlabs.asrhospitalindia.in/lims/master/get-profileentry",
           {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
+            headers: { Authorization: `Bearer ${authToken}` },
           }
         );
-
-        const data = (response.data || []).sort(
-          (a, b) => Number(a.profile_id) - Number(b.profile_id)
-        );
-
+  
+        const responseData = response.data.data || [];
+        const data = responseData.sort((a, b) => Number(a.id) - Number(b.id));
+  
         setProfileEntries(data);
         setFilteredProfileEntries(data);
       } catch (err) {
@@ -41,9 +38,10 @@ const ViewProfileEntryMaster = () => {
         setLoading(false);
       }
     };
-
+  
     fetchProfileEntries();
   }, []);
+  
 
   // Filter on search input
   useEffect(() => {
@@ -61,10 +59,9 @@ const ViewProfileEntryMaster = () => {
   }, [search, profileEntries]);
 
   const handleUpdate = (entry) => {
-    setProfileEntryMasterToUpdate(entry);
-    localStorage.setItem("profileEntryMasterToUpdate", JSON.stringify(entry));
-    navigate("/update-profile-entry-master");
+    navigate(`/update-profile-entry-master/${entry.id}`);
   };
+  
 
   // Define table columns
   const columns = [
@@ -80,11 +77,12 @@ const ViewProfileEntryMaster = () => {
   // Prepare data for DataTable
   const mappedItems = filteredProfileEntries.map((entry, index) => ({
     ...entry,
-    id :index+1,
+    id: index + 1,  // Serial id (optional, could use entry.id)
     serial: index + 1,
     alternativebarcode: entry.alternativebarcode ? "Yes" : "No",
     isactive: entry.isactive ? "Active" : "Inactive",
   }));
+  
 
   return (
     <>

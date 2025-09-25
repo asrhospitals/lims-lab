@@ -2,14 +2,17 @@ import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import AdminContext from "../../context/adminContext";
 import { useNavigate, Link, useParams } from "react-router-dom";
-import { updateDepartment, viewDepartment } from "../../services/apiService";
+import AdminContext from "../../context/adminContext";
+import {
+  updateDepartment,
+  viewDepartment,
+  viewDepartments,
+} from "../../services/apiService";
 
 const UpdateDept = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [departments, setDepartments] = useState([]);
   const { departmentToUpdate, setDepartmentToUpdate } =
     useContext(AdminContext);
   const navigate = useNavigate();
@@ -20,17 +23,19 @@ const UpdateDept = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
     trigger,
   } = useForm({
-    mode: "onBlur",
+    mode: "onChange", // real-time validation
     defaultValues: {
       dptname: "",
       isactive: "true",
     },
   });
 
+  // Fetch department data + all departments
   useEffect(() => {
-    const fetchDepartmentData = async () => {
+    const fetchData = async () => {
       if (!id) {
         toast.error("No department ID provided");
         navigate("/view-departments");
@@ -39,9 +44,12 @@ const UpdateDept = () => {
 
       setIsLoading(true);
       try {
-        const authToken = localStorage.getItem("authToken");
         const departmentData = await viewDepartment(id);
+        const allDepartments = await viewDepartments();
+
+        setDepartments(allDepartments || []);
         setDepartmentToUpdate(departmentData);
+
         reset({
           dptname: departmentData.dptname || "",
           isactive: String(departmentData.isactive),
@@ -58,63 +66,48 @@ const UpdateDept = () => {
       }
     };
 
-    fetchDepartmentData();
+    fetchData();
   }, [id, setDepartmentToUpdate, reset, navigate]);
 
-  const onSubmit = async (data) => {
-    if (!id) return;
+  // Submit handler
+const onSubmit = async (data) => {
+  try {
+    // Trim department name to avoid leading/trailing spaces
+    const payload = {
+      dptname: data.dptname.trim(),
+      isactive: data.isactive === "true", // convert string to boolean
+    };
 
-    setIsSubmitting(true);
-    try {
-      const authToken = localStorage.getItem("authToken");
+    // Call your API function
+    const response =  await updateDepartment(id, payload);
+    // Success feedback
+    toast.success("Department updated successfully!", {
+      position: "top-right",
+      autoClose: 2000,
+    });
+    
 
-      await updateDepartment(id, {
-        ...data,
-        isactive: data.isactive === "true",
-      });
-      toast.success("✅ Department updated successfully!");
-      setDepartmentToUpdate(null);
-      navigate("/view-departments");
-    } catch (error) {
-      console.error(error);
-      toast.error(
-        error?.response?.data?.message ||
-          "❌ Failed to update department. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // Clear the form state
+    setDepartmentToUpdate(null);
 
-  const fields = [
-    {
-      name: "dptname",
-      label: "Department Name",
-      placeholder: "Enter Department Name",
-      validation: {
-        required: "Department name is required",
-        minLength: { value: 2, message: "Minimum 2 characters" },
-        maxLength: { value: 50, message: "Maximum 50 characters" },
-        pattern: {
-          value: /^[A-Za-z0-9_\-\s]+$/,
-          message:
-            "Only alphabets, numbers, spaces, underscores (_) and hyphens (-) are allowed",
-        },
-      },
-    },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "True" },
-        { value: "false", label: "False" },
-      ],
-      validation: {
-        required: "This field is required.",
-      },
-    },
-  ];
+    // Navigate back to department list
+    navigate("/view-departments");
+  } catch (error) {
+    console.error("Update Department Error:", error);
+
+    // Show detailed error if available
+    const message =
+      error?.response?.data?.message ||
+      error?.message ||
+      "❌ Failed to update department. Please try again.";
+
+    toast.error(message, {
+      position: "top-right",
+      autoClose: 3000,
+    });
+  }
+};
+
 
   if (isLoading) {
     return (
@@ -134,44 +127,38 @@ const UpdateDept = () => {
 
   return (
     <>
-      {/* Breadcrumb */}
+        <ToastContainer />
+
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
               <Link
                 to="/"
-                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
               >
                 🏠︎ Home
               </Link>
             </li>
-
             <li className="text-gray-400">/</li>
-
             <li>
               <Link
                 to="/view-departments"
-                className="text-gray-700 hover:text-teal-600 transition-colors"
+                className="text-gray-700 hover:text-teal-600"
               >
                 Department
               </Link>
             </li>
-
             <li className="text-gray-400">/</li>
-
-            <li aria-current="page" className="text-gray-500">
-              Update Department
-            </li>
+            <li className="text-gray-500">Update Department</li>
           </ol>
         </nav>
       </div>
 
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
-        <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white shadow-lg rounded-xl border border-gray-200"
@@ -179,60 +166,83 @@ const UpdateDept = () => {
           <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="text-white font-semibold">Update Department</h4>
           </div>
+
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {fields.map(
-                ({
-                  name,
-                  label,
-                  placeholder,
-                  type = "text",
-                  options,
-                  validation,
-                }) => (
-                  <div key={name}>
-                    <label className="block text-sm font-medium text-gray-700">
-                      {label}{" "}
-                      {validation?.required && (
-                        <span className="text-red-500">*</span>
-                      )}
-                    </label>
-                    {type === "radio" ? (
-                      <div className="flex space-x-4 pt-2">
-                        {options.map((option) => (
-                          <label
-                            key={option.value}
-                            className="inline-flex items-center"
-                          >
-                            <input
-                              type="radio"
-                              {...register(name, validation)}
-                              value={option.value}
-                              className="h-4 w-4 text-teal-600"
-                            />
-                            <span className="ml-2">{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
+              {/* Department Name */}
+              <div>
+  <label className="block text-sm font-medium text-gray-700">
+    Department Name <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    {...register("dptname", {
+      required: "Department name is required",
+      minLength: { value: 2, message: "Minimum 2 characters" },
+      maxLength: { value: 50, message: "Maximum 50 characters" },
+      validate: (value) => {
+        const cleaned = value.trim();
+        if (!cleaned) return "Department name cannot be empty";
+
+        // Only letters and single spaces allowed
+        if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(cleaned))
+          return "Only letters and single spaces are allowed";
+
+        // Check duplicates safely
+        if (Array.isArray(departments)) {
+          const duplicate = departments.find(
+            (dept) =>
+              dept.dptname.trim().toLowerCase() === cleaned.toLowerCase() &&
+              String(dept._id) !== String(id)
+          );
+          if (duplicate) return "This department name already exists";
+        }
+
+        return true;
+      },
+    })}
+    placeholder="Enter Department Name"
+    onChange={(e) => {
+      // Remove any numbers or special characters in real-time
+      e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+      trigger("dptname"); // real-time validation
+    }}
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.dptname ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.dptname && (
+    <p className="text-red-500 text-xs mt-1">{errors.dptname.message}</p>
+  )}
+</div>
+
+
+              {/* Is Active */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Is Active? <span className="text-red-500">*</span>
+                </label>
+                <div className="flex space-x-4 pt-2">
+                  {["true", "false"].map((val) => (
+                    <label key={val} className="inline-flex items-center">
                       <input
-                        type={type}
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        placeholder={placeholder}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name] ? "border-red-500" : "border-gray-300"
-                        } focus:ring-2 focus:ring-teal-500`}
+                        type="radio"
+                        {...register("isactive", {
+                          required: "This field is required",
+                        })}
+                        value={val}
+                        className="h-4 w-4 text-teal-600"
                       />
-                    )}
-                    {errors[name] && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors[name].message}
-                      </p>
-                    )}
-                  </div>
-                )
-              )}
+                      <span className="ml-2 capitalize">{val}</span>
+                    </label>
+                  ))}
+                </div>
+                {errors.isactive && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.isactive.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end space-x-4">
@@ -248,10 +258,9 @@ const UpdateDept = () => {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 disabled:opacity-50"
+                className="px-6 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
               >
-                {isSubmitting ? "Updating..." : "Update Department"}
+                Update Department
               </button>
             </div>
           </div>

@@ -34,9 +34,13 @@ const AddLabToLab = () => {
 
       await addLabToLab(payload);
 
-      toast.success("✅ Lab added successfully!");
+
+      toast.success("New Lab added successfully!");
       reset();
-      navigate("/view-labtolab");
+      setTimeout(() => navigate("/view-labtolab"), 1500);
+
+
+
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
@@ -47,11 +51,25 @@ const AddLabToLab = () => {
     }
   };
 
+  const handleLettersOnly = (name, value) => {
+    // Only letters and spaces allowed
+    const isValid = /^[a-zA-Z\s]*$/.test(value);
+
+    if (!isValid) {
+      setError(name, {
+        type: "manual",
+        message: "Only letters are allowed",
+      });
+    } else {
+      clearErrors(name);
+    }
+  };
+
+  // Validation regex
   const alphanumericRegex = /^[a-zA-Z0-9\s\-_]+$/;
-  const numberRegex = /^\d+$/;
   const pinCodeRegex = /^\d{6}$/;
   const phoneRegex = /^[6-9]\d{9}$/;
-
+  const lettersOnlyRegex = /^[a-zA-Z\s]+$/; // Only letters, space, _ and -
   const fields = [
     {
       name: "labname",
@@ -60,9 +78,11 @@ const AddLabToLab = () => {
       validation: {
         required: "Lab name is required",
         pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
+          value: lettersOnlyRegex,
+          message: "Only letters, spaces, underscore (_) and hyphen (-) are allowed",
         },
+      lettersOnly: true,
+
       },
     },
     {
@@ -78,29 +98,29 @@ const AddLabToLab = () => {
       },
     },
     {
-      name: "city",
-      label: "City",
-      placeholder: "Enter City",
-      validation: {
-        required: "City is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
+    name: "city",
+    label: "City",
+    placeholder: "Enter City",
+    validation: {
+      required: "City is required",
+      pattern: {
+        value: lettersOnlyRegex,
+        message: "Only letters and spaces are allowed",
       },
     },
-    {
-      name: "state",
-      label: "State",
-      placeholder: "Enter State",
-      validation: {
-        required: "State is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
+  },
+  {
+    name: "state",
+    label: "State",
+    placeholder: "Enter State",
+    validation: {
+      required: "State is required",
+      pattern: {
+        value: lettersOnlyRegex,
+        message: "Only letters and spaces are allowed",
       },
     },
+  },
     {
       name: "pincode",
       label: "PIN Code",
@@ -115,17 +135,17 @@ const AddLabToLab = () => {
       },
     },
     {
-      name: "contactperson",
-      label: "Contact Person",
-      placeholder: "Enter Contact Person",
-      validation: {
-        required: "Contact person is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
+    name: "contactperson",
+    label: "Contact Person",
+    placeholder: "Enter Contact Person",
+    validation: {
+      required: "Contact person is required",
+      pattern: {
+        value: lettersOnlyRegex,
+        message: "Only letters and spaces are allowed",
       },
     },
+  },
     {
       name: "contactno",
       label: "Contact Number",
@@ -235,6 +255,8 @@ const AddLabToLab = () => {
                               type="radio"
                               {...register(name, validation)}
                               value={opt.value}
+                              onInput={() => trigger(name)}
+                              onKeyUp={() => trigger(name)}
                               className="h-4 w-4 text-blue-600"
                             />
                             <span className="ml-2">{opt.label}</span>
@@ -246,6 +268,8 @@ const AddLabToLab = () => {
                         type={type}
                         {...register(name, validation)}
                         onBlur={() => trigger(name)}
+                        onInput={() => trigger(name)}
+                        onKeyUp={() => trigger(name)}
                         placeholder={placeholder}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]

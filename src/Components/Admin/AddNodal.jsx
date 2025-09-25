@@ -7,18 +7,20 @@ import { addNodal } from "../../services/apiService";
 
 const AddNodal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
+    watch,
     reset,
-    trigger,
   } = useForm({
-    mode: "onBlur",
+    mode: "onChange",
   });
+  const watchedFields = watch(); // watch all fields
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -32,14 +34,8 @@ const AddNodal = () => {
       await addNodal(payload);
 
       toast.success("New nodal created successfully!");
-      
-      // Optionally reset form before redirecting
       reset();
-
-      // Redirect to view page after short delay so toast can be seen
-      setTimeout(() => {
-        navigate("/view-nodal");
-      }, 1500);
+      setTimeout(() => navigate("/view-nodal"), 1500);
     } catch (error) {
       console.error(error.response || error.message);
       toast.error(
@@ -51,70 +47,29 @@ const AddNodal = () => {
     }
   };
 
-  const fields = [
-    {
-      name: "nodalname",
-      label: "Nodal Name",
-      placeholder: "Enter Nodal Lab Name",
-      validation: {
-        required: "Nodal name is required",
-        minLength: { value: 2, message: "Minimum 2 characters" },
-        maxLength: { value: 50, message: "Maximum 50 characters" },
-        pattern: {
-          value: /^[A-Za-z0-9_,\s-]+$/i,
-          message:
-            "Only letters, numbers, commas, dashes, underscores and spaces allowed",
-        },
-      },
-    },
-    {
-      name: "motherlab",
-      label: "Mother Lab?",
-      type: "radio",
-      options: [
-        { value: "true", label: "True" },
-        { value: "false", label: "False" },
-      ],
-      validation: {
-        required: "This field is required.",
-      },
-    },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "True" },
-        { value: "false", label: "False" },
-      ],
-      validation: {
-        required: "This field is required.",
-      },
-    },
-  ];
-
   return (
     <>
+      <ToastContainer />
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
               <Link
                 to="/"
-                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
               >
-                🏠︎ Home
+                🏠 Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li>
               <Link
                 to="/view-nodal"
-                className="text-gray-700 hover:text-teal-600 transition-colors"
+                className="text-gray-700 hover:text-teal-600"
               >
                 Nodal
               </Link>
@@ -128,7 +83,6 @@ const AddNodal = () => {
       </div>
 
       <div className="w-full mt-10 px-0 sm:px-2 space-y-4 text-sm">
-        <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
@@ -139,70 +93,132 @@ const AddNodal = () => {
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {fields.map(
-                (
-                  { name, label, placeholder, type = "text", options, validation },
-                  index
-                ) => (
-                  <div key={index} className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      {label}
-                      {validation?.required && (
-                        <span className="text-red-500">*</span>
-                      )}
-                    </label>
-                    {type === "radio" ? (
-                      <div className="flex space-x-4 pt-2">
-                        {options.map((option) => (
-                          <label
-                            key={option.value}
-                            className="inline-flex items-center"
-                          >
-                            <input
-                              type="radio"
-                              {...register(name, validation)}
-                              value={option.value}
-                              className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
-                            />
-                            <span className="ml-2 text-gray-700">
-                              {option.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <input
-                        type={type}
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        placeholder={placeholder}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name]
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:ring-teal-500"
-                        } focus:ring-2 focus:border-transparent transition`}
-                      />
-                    )}
-                    {errors[name] && (
-                      <p className="text-red-500 text-xs mt-1 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        {errors[name].message}
-                      </p>
-                    )}
-                  </div>
-                )
-              )}
+              {/* Nodal Name Dropdown */}
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Nodal Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  {...register("nodalname", {
+                    required: "Nodal Name is required",
+                    pattern: {
+                      value: /^[a-zA-Z_,\s]+$/,
+                      message:
+                        "Only letters, underscore (_), comma (,) and spaces allowed",
+                    },
+                    maxLength: {
+                      value: 20,
+                      message: "Max length is 20 characters",
+                    },
+                    validate: (value) =>
+                      !/^[0-9]+$/.test(value) || "Cannot be numbers only",
+                  })}
+                  onBlur={() => trigger("nodalname")}
+                  placeholder="Enter code (e.g., DH)"
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.nodalname
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-teal-500"
+                  } focus:ring-2 focus:border-transparent transition`}
+                  onKeyUp={(e) => {
+                    const value = e.target.value;
+                    if (["dptname", "city", "state"].includes(name)) {
+                      const isValid = /^[a-zA-Z\s]*$/.test(value);
+                      if (!isValid) {
+                        setError(name, {
+                          type: "manual",
+                          message: "Only letters are allowed",
+                        });
+                      } else {
+                        clearErrors(name);
+                      }
+                    }
+                  }}
+                  onInput={(e) => {
+                    const value = e.target.value;
+                    if (["dptname", "city", "state"].includes(name)) {
+                      const isValid = /^[a-zA-Z\s]*$/.test(value);
+                      if (!isValid) {
+                        setError(name, {
+                          type: "manual",
+                          message: "Only letters are allowed",
+                        });
+                      } else {
+                        clearErrors(name);
+                      }
+                    }
+                  }}
+                />
+
+                {errors.nodalname && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.nodalname.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Mother Lab */}
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Mother Lab? <span className="text-red-500">*</span>
+                </label>
+                <div className="flex space-x-4 pt-2">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register("motherlab", {
+                        required: "This field is required.",
+                      })}
+                      value="true"
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-gray-700">Yes</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register("motherlab", {
+                        required: "This field is required.",
+                      })}
+                      value="false"
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-gray-700">No</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Is Active */}
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Is Active? <span className="text-red-500">*</span>
+                </label>
+                <div className="flex space-x-4 pt-2">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register("isactive", {
+                        required: "This field is required.",
+                      })}
+                      value="true"
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-gray-700">Yes</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register("isactive", {
+                        required: "This field is required.",
+                      })}
+                      value="false"
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-gray-700">No</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div className="mt-8 flex justify-end">
@@ -216,49 +232,9 @@ const AddNodal = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? (
-                  <span className="flex items-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Processing...
-                  </span>
-                ) : (
-                  <span className="flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 mr-2"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Add Nodal Lab
-                  </span>
-                )}
+                {isSubmitting ? "Processing..." : "Add Nodal Lab"}
               </button>
             </div>
           </div>

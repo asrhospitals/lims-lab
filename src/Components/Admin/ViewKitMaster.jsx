@@ -18,17 +18,15 @@ const ViewKitMaster = () => {
 
   useEffect(() => {
     const fetchKits = async () => {
+      setLoading(true);
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-kit",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
+          "https://asrlabs.asrhospitalindia.in/api/lims/master/kits",
+          { headers: { Authorization: `Bearer ${authToken}` } }
         );
-        const data = (response.data || []).sort((a, b) => a.kit_id - b.kit_id);
+  
+        const data = ((response.data?.data) || []).sort((a, b) => a.kit_id - b.kit_id);
         setKits(data);
         setFilteredKits(data);
       } catch (err) {
@@ -37,9 +35,10 @@ const ViewKitMaster = () => {
         setLoading(false);
       }
     };
-
+  
     fetchKits();
   }, []);
+  
 
   useEffect(() => {
     if (!search.trim()) {
@@ -56,9 +55,7 @@ const ViewKitMaster = () => {
   }, [search, kits]);
 
   const handleUpdate = (kit) => {
-    setKitMasterToUpdate(kit);
-    localStorage.setItem("kitToUpdate", JSON.stringify(kit));
-    navigate("/update-kit-master");
+    navigate(`/update-kit-master/${kit.kit_id}`);
   };
 
   const columns = [
@@ -89,6 +86,7 @@ const ViewKitMaster = () => {
     boderlineindex: kit.boderlineindex,
     positiveindex: kit.positiveindex,
   }));
+  
 
   return (
     <>

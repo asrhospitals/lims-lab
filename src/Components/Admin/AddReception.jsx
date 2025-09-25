@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, Link } from "react-router-dom";
-import { addReception, viewNodals } from "../../services/apiService";
+import { addReception } from "../../services/apiService";
 
 const AddReceptionist = () => {
-  const [nodalCenters, setNodalCenters] = useState([]);
-  const [fetchError, setFetchError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -19,34 +17,21 @@ const AddReceptionist = () => {
     trigger,
   } = useForm({ mode: "onBlur" });
 
-  // Fetch nodal centers
-  useEffect(() => {
-    const fetchNodalCenters = async () => {
-      try {
-        const response = await viewNodals();
-        setNodalCenters(response?.data || []);
-      } catch (error) {
-        setFetchError(
-          error.response?.data?.message || "Failed to fetch nodal centers."
-        );
-      }
-    };
-    fetchNodalCenters();
-  }, []);
+  // Today’s date in YYYY-MM-DD format
+  const today = new Date().toISOString().split("T")[0];
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     const payload = {
-      receptionistname: data.receptionistname, // Fixed field name to match API
-      addressline: data.addressline,
-      city: data.city,
-      state: data.state,
+      receptionistname: data.receptionistname.trim(),
+      addressline: data.addressline.trim(),
+      city: data.city.trim(),
+      state: data.state.trim(),
       pincode: Number(data.pincode),
-      dob: data.dob,
-      contactno: Number(data.contactno), // Convert to number to match your payload
+      dob: today, // force present date only
+      contactno: data.contactno.trim(),
       gender: data.gender,
-      nodal: data.nodal,
       isactive: data.isactive === "true",
     };
 
@@ -67,10 +52,7 @@ const AddReceptionist = () => {
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to add receptionist. Please try again.",
-        {
-          position: "top-right",
-          autoClose: 3000,
-        }
+        { position: "top-right", autoClose: 3000 }
       );
     } finally {
       setIsSubmitting(false);
@@ -79,10 +61,16 @@ const AddReceptionist = () => {
 
   const fields = [
     {
-      name: "receptionistname", // Fixed field name to match API
+      name: "receptionistname",
       label: "Receptionist Name",
       placeholder: "Enter Receptionist Name",
-      validation: { required: "Receptionist name is required" },
+      validation: {
+        required: "Receptionist name is required",
+        pattern: {
+          value: /^[a-zA-Z\s]+$/,
+          message: "Name should only contain letters and spaces",
+        },
+      },
     },
     {
       name: "addressline",
@@ -94,24 +82,36 @@ const AddReceptionist = () => {
       name: "city",
       label: "City",
       placeholder: "Enter City",
-      validation: { required: "City is required" },
+      validation: {
+        required: "City is required",
+        pattern: {
+          value: /^[a-zA-Z\s]+$/,
+          message: "City should only contain letters and spaces",
+        },
+      },
     },
     {
       name: "state",
       label: "State",
       placeholder: "Enter State",
-      validation: { required: "State is required" },
+      validation: {
+        required: "State is required",
+        pattern: {
+          value: /^[a-zA-Z\s]+$/,
+          message: "State should only contain letters and spaces",
+        },
+      },
     },
     {
       name: "pincode",
       label: "PIN Code",
-      type: "number",
-      placeholder: "Enter 6-digit PIN Code",
+      type: "text",
+      placeholder: "Enter PIN Code",
       validation: {
-        required: "PIN code is required",
+        required: "PIN Code is required",
         pattern: {
           value: /^\d{6}$/,
-          message: "PIN code must be exactly 6 digits",
+          message: "PIN must be exactly 6 digits",
         },
       },
     },
@@ -119,8 +119,8 @@ const AddReceptionist = () => {
       name: "dob",
       label: "Date of Birth",
       type: "date",
-      placeholder: "Select DOB",
       validation: { required: "Date of birth is required" },
+      max: today, // restrict to today or past
     },
     {
       name: "contactno",
@@ -147,16 +147,6 @@ const AddReceptionist = () => {
       validation: { required: "Gender is required" },
     },
     {
-      name: "nodal",
-      label: "Nodal Center",
-      type: "select",
-      options: nodalCenters.map((n) => ({
-        value: n.nodalname,
-        label: n.nodalname,
-      })),
-      validation: { required: "Nodal center is required" },
-    },
-    {
       name: "isactive",
       label: "Is Active?",
       type: "radio",
@@ -170,14 +160,13 @@ const AddReceptionist = () => {
 
   return (
     <>
-      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
+        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
               <Link
                 to="/"
-                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
               >
                 🏠︎ Home
               </Link>
@@ -186,7 +175,7 @@ const AddReceptionist = () => {
             <li>
               <Link
                 to="/view-reception"
-                className="text-gray-700 hover:text-teal-600 transition-colors"
+                className="text-gray-700 hover:text-teal-600"
               >
                 Receptionist
               </Link>
@@ -201,29 +190,19 @@ const AddReceptionist = () => {
 
       <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
-        {fetchError && (
-          <p className="text-red-500 text-sm mb-4">{fetchError}</p>
-        )}
 
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
         >
-          <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
+          <div className="border-b px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add Receptionist</h4>
           </div>
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
-                ({
-                  name,
-                  label,
-                  placeholder,
-                  type = "text",
-                  options,
-                  validation,
-                }) => (
+                ({ name, label, placeholder, type = "text", options, validation }) => (
                   <div key={name} className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">
                       {label}
@@ -231,45 +210,40 @@ const AddReceptionist = () => {
                         <span className="text-red-500"> *</span>
                       )}
                     </label>
-                    {type === "select" ? (
-                      <select
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name]
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:ring-teal-500"
-                        } focus:ring-2 transition`}
-                      >
-                        <option value="">Select {label}</option>
-                        {options.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : type === "radio" ? (
+
+                    {type === "radio" ? (
                       <div className="flex space-x-4 pt-2">
                         {options.map((opt) => (
-                          <label
-                            key={opt.value}
-                            className="inline-flex items-center"
-                          >
+                          <label key={opt.value} className="inline-flex items-center">
                             <input
                               type="radio"
                               {...register(name, validation)}
                               value={opt.value}
+                              onInput={() => trigger(name)}
                               className="h-4 w-4 text-teal-600"
                             />
                             <span className="ml-2">{opt.label}</span>
                           </label>
                         ))}
                       </div>
+                    ) : type === "date" ? (
+                      <input
+                        type="date"
+                        {...register(name, validation)}
+                        onInput={() => trigger(name)}
+                        min={today}
+                        max={today}
+                        className={`w-full px-4 py-2 rounded-lg border ${
+                          errors[name]
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:ring-teal-500"
+                        } focus:ring-2 transition`}
+                      />
                     ) : (
                       <input
                         type={type}
                         {...register(name, validation)}
-                        onBlur={() => trigger(name)}
+                        onInput={() => trigger(name)}
                         placeholder={placeholder}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
@@ -278,6 +252,7 @@ const AddReceptionist = () => {
                         } focus:ring-2 transition`}
                       />
                     )}
+
                     {errors[name] && (
                       <p className="text-red-500 text-xs mt-1">
                         {errors[name].message}

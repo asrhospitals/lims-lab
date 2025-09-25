@@ -85,35 +85,41 @@ const UpdateHospitalType = () => {
     }
   };
 
-  const fields = [
-    {
-      name: "hsptltype",
-      label: "Hospital Type Code",
-      placeholder: "Enter Hospital Type Code (e.g., DH)",
-      validation: {
-        required: "Hospital type code is required",
-        pattern: {
-          value: /^[a-zA-Z0-9_, ]+$/,
-          message:
-            "Only letters, numbers, underscore, comma and spaces allowed",
+ const fields = [
+  {
+    name: "hsptltype",
+    label: "Hospital Type Code",
+    placeholder: "Enter Hospital Type Code (e.g., DH)",
+    validation: {
+      required: "Hospital type code is required",
+      pattern: {
+        value: /^[A-Za-z\s]+$/, // ✅ only letters and spaces
+        message: "Only letters and spaces are allowed (no numbers or special characters)",
+      },
+      validate: {
+        noDuplicate: (value) => {
+          const existing = ["DH", "CH", "RH"]; // replace with real list from API or state
+          return !existing.includes(value) || "Duplicate hospital type code is not allowed";
         },
       },
     },
+  },
+
+
     {
-      name: "hsptldsc",
-      label: "Hospital Type Description",
-      placeholder: "Enter Hospital Type Description",
-      validation: {
-        required: "Description is required",
-        minLength: { value: 2, message: "Minimum 2 characters" },
-        maxLength: { value: 100, message: "Maximum 100 characters" },
-        pattern: {
-          value: /^[a-zA-Z0-9_, ]+$/,
-          message:
-            "Only letters, numbers, underscore, comma and spaces allowed",
-        },
-      },
+  name: "hsptldsc",
+  label: "Hospital Type Description",
+  placeholder: "Enter Hospital Type Description",
+  validation: {
+    required: "Description is required",
+    minLength: { value: 2, message: "Minimum 2 characters" },
+    maxLength: { value: 100, message: "Maximum 100 characters" },
+    pattern: {
+      value: /^[A-Za-z\s]+$/, 
+      message: "Only letters and spaces are allowed (no numbers or special characters)",
     },
+  },
+},
     {
       name: "isactive",
       label: "Is Active?",

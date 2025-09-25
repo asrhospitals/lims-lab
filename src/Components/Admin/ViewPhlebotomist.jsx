@@ -27,9 +27,11 @@ const ViewPhlebotomist = () => {
         };
 
         const res = await viewPhlebotomists(params);
+
         const phlebotomistsData = res.data.sort(
           (a, b) => Number(a.id) - Number(b.id)
         );
+
         setPhlebotomists(phlebotomistsData);
         setFilteredPhlebotomists(phlebotomistsData);
         setTotalPages(res?.meta?.totalPages || 1);
@@ -58,8 +60,7 @@ const ViewPhlebotomist = () => {
           (h.addressline || "").toLowerCase().includes(lower) ||
           (h.city || "").toLowerCase().includes(lower) ||
           (h.state || "").toLowerCase().includes(lower) ||
-          (h.contactno || "").toLowerCase().includes(lower) ||
-          (h.nodal || "").toLowerCase().includes(lower)
+          (h.contactno || "").toLowerCase().includes(lower)
       );
       setFilteredPhlebotomists(filtered);
     }
@@ -82,8 +83,6 @@ const ViewPhlebotomist = () => {
     { key: "id", label: "ID" },
     { key: "phleboname", label: "Phlebotomist Name" },
     { key: "contactno", label: "Phone" },
-    { key: "nodal", label: "Nodal" },
-    { key: "hospital", label: "Hospital" },
     { key: "dob", label: "DOB" },
     { key: "gender", label: "Gender" },
     { key: "pincode", label: "Pin Code" },
@@ -96,7 +95,7 @@ const ViewPhlebotomist = () => {
     ...h,
     id: h.id ?? Math.random().toString(36).substr(2, 9),
     dob: h.dob ? new Date(h.dob).toLocaleDateString("en-IN") : "-",
-    isactive: !!h.isactive, // boolean coercion
+    isactive: !!h.isactive,
     status: h.isactive ? "Active" : "Inactive",
   }));
 
@@ -105,7 +104,7 @@ const ViewPhlebotomist = () => {
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">

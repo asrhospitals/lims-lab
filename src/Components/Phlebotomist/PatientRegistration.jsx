@@ -45,11 +45,19 @@ const PatientRegistration = () => {
             console.log("Successfully fetched patients:", data); // Log the successful response
 
             const formattedData = data.map(item => ({
-            id: item.id, // Assuming 'id' is a unique identifier
-            name: item.pname,
-            mobile: item.pmobile,
-            registrationDate: item.pregdate,
+              patient_id: item.patient_id,
+              p_name: item.p_name,
+              p_age: item.p_age,
+              p_gender: item.p_gender,
+              p_mobile: item.p_mobile,
+              hospital_name: item.hospital_name,
+              p_regdate: item.p_regdate,
+              registration_status: item.registration_status
             }));
+            
+            setPatients(formattedData);
+            setFilteredPatients(formattedData);
+            
 
             setPatients(formattedData);
             setFilteredPatients(formattedData);
@@ -126,19 +134,39 @@ const PatientRegistration = () => {
   };
 
   const columns = [
-    { key: "id", label: "ID" },
-    { key: "name", label: "Name" },
-    { key: "mobile", label: "Mobile" },
-    { key: "registrationDate", label: "Registration Date" }
+    { key: "patient_id", label: "ID" },
+    { key: "p_name", label: "Name" },
+    { key: "p_age", label: "Age" },
+    { key: "p_gender", label: "Gender" },
+    { key: "p_mobile", label: "Mobile" },
+    { key: "hospital_name", label: "Hospital" },
+    { key: "p_regdate", label: "Registration Date" },
+    { key: "registration_status", label: "Status" }
   ];
-
+  
   const mappedItems = filteredPatients.map(item => ({
-    ...item,
-    id: item.id,
-    name: item.name,
-    mobile: item.mobile,
-    registrationDate: new Date(item.registrationDate).toLocaleDateString()
+    patient_id: item.patient_id,
+    p_name: item.p_name,
+    p_age: item.p_age,
+    p_gender: item.p_gender,
+    p_mobile: item.p_mobile,
+    hospital_name: item.hospital_name,
+    p_regdate: item.p_regdate
+      ? new Date(item.p_regdate).toLocaleDateString()
+      : "-",
+    registration_status: item.registration_status
   }));
+  
+  console.log("Mapped Items:", mappedItems);
+  
+  
+  console.log("Mapped Items:", mappedItems);
+  
+  
+  
+  console.log("Filtered Patients:", filteredPatients);
+  console.log("Mapped Items:", mappedItems);
+
 
   const handleUpdate = (investigation) => {
     // setInvestigationToUpdate(investigation);
@@ -242,13 +270,15 @@ const PatientRegistration = () => {
             <div className="text-center py-6 text-gray-500">No patients found.</div>
           ) : (
             <DataTable
-              items={mappedItems}
-              columns={columns}
-              itemsPerPage={10}
-              showDetailsButtons={false}            
-              onUpdate={handleUpdate}
-              onView={handleViewDetails} // Pass the view handler
-            />
+            items={mappedItems}
+            columns={columns}
+            itemsPerPage={10}
+            showDetailsButtons={false}
+            onUpdate={handleUpdate}
+            onView={handleViewDetails}
+          />
+          
+          
           )}
         </div>
       </div>

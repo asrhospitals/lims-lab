@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function ProfileTestBilling() {
+export default function ProfileTestBilling({ patient, onBillingChange }) {
+  const [billingItems, setBillingItems] = useState([]);
+
   const [tests, setTests] = useState([]);
   const [addedTests, setAddedTests] = useState([]);
   const [testCodeInput, setTestCodeInput] = useState("");
@@ -11,7 +13,7 @@ export default function ProfileTestBilling() {
   const [error, setError] = useState(null);
 
   // Billing states
-  const [discount, setDiscount] = useState({ type: "%", value: 0 });
+  const [pdisc, setDiscount] = useState({ type: "%", value: 0 });
   const [amountReceived, setAmountReceived] = useState(0);
   const [note, setNote] = useState("");
   const [payments, setPayments] = useState([{ method: "Cash", amount: 0 }]);
@@ -21,6 +23,12 @@ export default function ProfileTestBilling() {
   // Tab state
   const [activeTab, setActiveTab] = useState("investigation");
 
+  // State for obbill if needed
+const [obbill, setObbill] = useState(0);
+
+// Example: calculate obbill whenever receivable or totalPaid changes
+
+
   // Handle payment mode changes
   useEffect(() => {
     if (paymentModeType === "single" && payments.length > 1) {
@@ -28,6 +36,14 @@ export default function ProfileTestBilling() {
       setPayments([payments[0]]);
     }
   }, [paymentModeType]);
+
+
+  const handleAddBill = (bill) => {
+    const updated = [...billingItems, bill];
+    setBillingItems(updated);
+    if (onBillingChange) onBillingChange(updated);
+  };
+
 
   // Fetch test profiles from the API
   useEffect(() => {
@@ -101,12 +117,12 @@ export default function ProfileTestBilling() {
     setAddedTests((prev) => prev.filter((t) => t.uid !== uid));
   };
 
-  const totalAmount = addedTests.reduce((sum, t) => sum + t.walkinprice, 0);
+  const ptotal = addedTests.reduce((sum, t) => sum + t.walkinprice, 0);
   const discountValue =
-    discount.type === "%"
-      ? (totalAmount * discount.value) / 100
-      : discount.value;
-  const receivable = totalAmount - discountValue;
+  pdisc.type === "%"
+      ? (ptotal * pdisc.value) / 100
+      : pdisc.value;
+  const receivable = ptotal - discountValue;
   
   const totalPaid = paymentModeType === "single" 
     ? payments[0]?.amount || 0 
@@ -128,6 +144,54 @@ export default function ProfileTestBilling() {
     e.preventDefault();
     setPayments([...payments, { method: "Cash", amount: 0 }]);
   };
+
+
+  // const handleBillingSubmit = () => {
+  //   const payload = {
+  //     ptotal: ptotal,
+  //     pdisc: pdisc,
+  //     pamt : receivable,
+  //     pamtrcv : totalPaid,
+  //     pamtdue : dueAmount,
+  //     pamtmode : payments,
+  //     pamtmthd :  obbill, 
+  //     pnote:  note,
+  //     billstatus : prescriptionFile,
+  //   };
+
+  //   console.log("op bill payload===", payload);
+  //   pamtmode 
+  //   onBillingChange(payload); // send to parent
+  // };
+
+  const handleBillingSubmit = () => {
+    const discountValue =
+      pdisc.type === "%" ? (ptotal * pdisc.value) / 100 : pdisc.value;
+    const receivable = ptotal - discountValue;
+  
+    const totalPaid =
+      paymentModeType === "single"
+        ? payments[0]?.amount || 0
+        : payments.reduce((sum, p) => sum + p.amount, 0);
+  
+    const dueAmount = receivable - totalPaid;
+  
+    const billingData = {
+      ptotal,
+      pdisc: discountValue,
+      pamt: receivable,
+      pamtrcv: totalPaid,
+      pamtdue: dueAmount,
+      pamtmode: paymentModeType === "single" ? "Single" : "Multiple",
+      pamtmthd: paymentModeType === "single" ? payments[0]?.method || "Cash" : "",
+      pnote: note || "",
+      billstatus: dueAmount > 0 ? "Pending" : "Paid",
+    };
+  
+    // Send calculated billing to parent
+    if (onBillingChange) onBillingChange(billingData);
+  };
+  
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-6xl mx-auto my-8">
@@ -335,7 +399,7 @@ export default function ProfileTestBilling() {
                         Total
                       </td>
                       <td className="px-6 py-3 text-sm font-medium text-gray-700">
-                        ₹{totalAmount}
+                        ₹{ptotal}
                       </td>
                       <td className="px-6 py-3"></td>
                     </tr>
@@ -361,14 +425,14 @@ export default function ProfileTestBilling() {
               <h3 className="text-sm font-medium text-gray-500">
                 Total Amount
               </h3>
-              <p className="text-xl font-bold">₹{totalAmount}</p>
+              <p className="text-xl font-bold">₹{ptotal}</p>
             </div>
             <div className="border-r border-gray-200 pr-4">
               <h3 className="text-sm font-medium text-gray-500">
-                Discount ({discount.type})
+                Discount ({pdisc.type})
               </h3>
               <p className="text-xl font-bold">
-                {discount.value} {discount.type === "%" ? "" : "₹"}
+                {pdisc.value} {pdisc.type === "%" ? "" : "₹"}
               </p>
             </div>
             <div className="border-r border-gray-200 pr-4">
@@ -400,9 +464,9 @@ export default function ProfileTestBilling() {
                   Discount Type
                 </label>
                 <select
-                  value={discount.type}
+                  value={pdisc.type}
                   onChange={(e) =>
-                    setDiscount({ ...discount, type: e.target.value })
+                    setDiscount({ ...pdisc, type: e.target.value })
                   }
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
@@ -417,11 +481,11 @@ export default function ProfileTestBilling() {
                 <input
                   type="number"
                   min="0"
-                  value={discount.value}
+                  value={pdisc.value}
                   onChange={(e) => {
                     const value = e.target.value;
                     setDiscount({
-                      ...discount,
+                      ...pdisc,
                       value: value === "" ? "" : Number(value),
                     });
                   }}
@@ -632,15 +696,17 @@ export default function ProfileTestBilling() {
 
           {/* Submit Button */}
           <div className="flex justify-end">
-            <button
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium"
-              onClick={(e) => {
-                e.preventDefault();
-              }}
-            >
-              Complete Billing
-            </button>
-          </div>
+  <button
+    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium"
+    onClick={(e) => {
+      e.preventDefault();       
+      handleBillingSubmit();   
+    }}
+  >
+    Complete Billing
+  </button>
+</div>
+
         </div>
       )}
     </div>

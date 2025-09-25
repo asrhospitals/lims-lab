@@ -68,12 +68,14 @@ const ViewNodalInstrument = () => {
     // status handled by DataTable
   ];
 
-  const mappedItems = (filtered || []).map((i) => ({
+  const mappedItems = (filtered?.data || []).map((i) => ({
     id: i.id ?? Math.random().toString(36).substring(2, 9),
-    instrumentname: i.instrumentname || "-",
-    nodalname: i.nodalname || "-",
+    instrumentname: i.instrumentName || "-",
+    nodalname: i.nodalName || "-",
     status: i.isactive ? "Active" : "Inactive",
   }));
+  
+  
 
   return (
     <>

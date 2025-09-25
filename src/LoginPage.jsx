@@ -27,12 +27,15 @@ const LoginPage = () => {
 
     try {
       const response = await axios.post(OTP_SENDER, loginData);
-      console.log(response.data)
+      console.log("login response ",response.data)
       localStorage.setItem("role", response.data.role);
       localStorage.setItem("userid", response.data.id);
       localStorage.setItem("username", response.data.username);
+      localStorage.setItem("roleType", response.data.roleType);
       localStorage.setItem("hospital_name", response.data.hospitalname);
       localStorage.setItem("nodalname", response.data.nodalname);
+      // localStorage.setItem("module", response.data.module.join(", "));
+
       
 
 
@@ -44,10 +47,10 @@ const LoginPage = () => {
         // Direct login without OTP for non-admin
         toast.success("Login successful!");
         localStorage.setItem("authToken", response.data.token);
-        // window.location.reload();
+        window.location.reload();
       }
     } catch (err) {
-      toast.error("Login failed. Please check your credentials.");
+      toast.error("Login failed. Please check your credentials1.");
       setLoginClicked(false);
     }
   };

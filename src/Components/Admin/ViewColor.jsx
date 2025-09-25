@@ -21,18 +21,16 @@ const ViewColor = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-color",
+          "https://asrlabs.asrhospitalindia.in/api/lims/master/colors",
           {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
+            headers: { Authorization: `Bearer ${authToken}` },
           }
         );
 
-        // const data = (response.data || []).sort((a, b) =>
-        //   (a.color_code || "").localeCompare(b.color_code || "")
-        // );
-        const data = (response.data || []).sort((a, b) => Number(a.color_id) - Number(b.color_id));
+        // ✅ Use response.data.data
+        const data = (response.data.data || []).sort(
+          (a, b) => Number(a.id) - Number(b.id)
+        );
 
         setColors(data);
         setFilteredColors(data);
@@ -61,72 +59,114 @@ const ViewColor = () => {
   }, [search, colors]);
 
   const handleUpdate = (color) => {
-    setColorToUpdate(color);
-    localStorage.setItem("colorToUpdate", JSON.stringify(color));
-    navigate("/update-color");
+    setColorToUpdate(color);   // Set context value
+    navigate(`/update-color/${color.id}`);
+  };
+  
+  
+
+  const isValidColor = (color) => {
+    const s = new Option().style;
+    s.color = color;
+    return s.color !== "";
   };
 
+  const mappedItems = (filteredColors || []).map((color, index) => {
+    let parsedColorCode = {};
+    try {
+      parsedColorCode = color.colorcode ? JSON.parse(color.colorcode) : {};
+    } catch (err) {
+      parsedColorCode = {};
+    }
+  
+    // Prefer hex from parsedColorCode, fallback to colorstatus
+    let colorHex =
+      parsedColorCode.hex?.trim() ||
+      parsedColorCode.name?.trim() || // In your case, name holds the hex
+      color.colorstatus?.trim() ||
+      "#ffffff";
+  
+    if (!isValidColor(colorHex)) {
+      colorHex = "#ffffff";
+    }
+  
+    // Prefer color.colorname field, fallback to parsed name or "Unknown"
+    let colorName =
+      color.colorname?.trim() ||
+      parsedColorCode.name?.trim() ||
+      "Unknown";
+  
+    return {
+      id: index + 1,
+      color_name: colorName,
+      color_hex: colorHex,
+    };
+  });
+  
+
   const columns = [
-    { key: "color_id", label: "Color ID" },
-    { key: "color_code", label: "Color Code" },
-    { key: "color_status", label: "Color Status" },
-    // status & action handled by DataTable
+    { key: "id", label: "S. No" },
+    { key: "color_name", label: "Color Name" },
+    {
+      key: "color_hex",
+      label: "Color Code",
+      render: (item) => (
+        <div className="flex items-center gap-2">
+          <span>{item.color_hex}</span>
+          <div
+            style={{
+              width: "16px",
+              height: "16px",
+              backgroundColor: item.color_hex,
+              borderRadius: "50%",
+              border: "1px solid #ccc",
+            }}
+          />
+        </div>
+      ),
+    },
   ];
 
-  const mappedItems = (filteredColors || []).map((color, index) => ({
-    ...color,
-    id: index + 1,
-    status: color.color_status,
-    color_code: color.color_code,
-  }));
-
-
   return (
-    <>    
+    <>
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
 
-    {/* Breadcrumb */}
-    <div className="fixed top-[61px] w-full z-10">
-    <nav
-        className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
-        aria-label="Breadcrumb"
-    >
-        <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li className="text-gray-400">/</li>
 
-        <li>
-            <Link
-            to="/"
-            className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
-            >
-            🏠︎ Home
-            </Link>
-        </li>
+            <li>
+              <Link
+                to="/view-color"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Colors
+              </Link>
+            </li>
 
-        <li className="text-gray-400">/</li>
+            <li className="text-gray-400">/</li>
 
-        <li>
-            <Link
-            to="/view-color"
-            className="text-gray-700 hover:text-teal-600 transition-colors"
-            >
-            Colors
-            </Link>
-        </li>
-
-        <li className="text-gray-400">/</li>
-
-        <li aria-current="page" className="text-gray-500">
-            View Colors
-        </li>
-        </ol>
-    </nav>
-    </div>
-
-
+            <li aria-current="page" className="text-gray-500">
+              View Colors
+            </li>
+          </ol>
+        </nav>
+      </div>
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-
-
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
@@ -146,7 +186,6 @@ const ViewColor = () => {
             </div>
           </div>
 
-
           {/* Add New */}
           <div className="flex  flex-wrap gap-2 mb-4">
             <button
@@ -156,9 +195,6 @@ const ViewColor = () => {
               Add New
             </button>
           </div>
-          
-
-
 
           {/* Table */}
           {loading ? (

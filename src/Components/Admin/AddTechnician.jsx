@@ -1,20 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { addTechnician, viewNodals, viewRoles, viewInstruments } from "../../services/apiService";
+import { addTechnician } from "../../services/apiService";
 import { useNavigate, Link } from "react-router-dom";
 
 const AddTechnician = () => {
-  const [nodalCenters, setNodalCenters] = useState([]);
-  const [roleTypes, setRoleTypes] = useState([]);
-  const [instruments, setInstruments] = useState([]);
-
-  const [fetchError, setFetchError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-
-  
 
   const {
     register,
@@ -24,40 +17,11 @@ const AddTechnician = () => {
     trigger,
   } = useForm({ mode: "onBlur" });
 
-  useEffect(() => {
-    const fetchDropdownData = async () => {
-      try {
-        // Fetch nodal centers
-        const nodalResponse = await viewNodals();
-        setNodalCenters(nodalResponse.data || []);
-
-        // Fetch role types
-        const roleResponse = await viewRoles();
-        const activeRoles = (roleResponse || []).filter((r) => r.isactive);
-        setRoleTypes(activeRoles);
-
-        // Fetch instruments
-        const instrumentResponse = await viewInstruments();
-        const activeInstruments = (instrumentResponse || []).filter((r) => r.isactive);
-        setInstruments(activeInstruments);
-
-      } catch (error) {
-        setFetchError(error.response?.data?.message || "Failed to fetch dropdown data.");
-        toast.error("❌ Failed to load dropdown data.");
-      }
-    };
-
-    fetchDropdownData();
-  }, []);
-
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     const payload = {
       technicianname: data.technicianname,
-      nodal: data.nodal,
-      roletype: data.roletype,
-      instrument: data.instrument,
       addressline: data.addressline,
       city: data.city,
       state: data.state,
@@ -70,25 +34,17 @@ const AddTechnician = () => {
 
     try {
       await addTechnician(payload);
-
       toast.success("Technician added successfully!", {
         position: "top-right",
         autoClose: 2000,
       });
-
       reset();
-
-      setTimeout(() => {
-        navigate("/view-technician");
-      }, 2000);
+      setTimeout(() => navigate("/view-technician"), 2000);
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
           "❌ Failed to add technician. Please try again.",
-        {
-          position: "top-right",
-          autoClose: 3000,
-        }
+        { position: "top-right", autoClose: 3000 }
       );
     } finally {
       setIsSubmitting(false);
@@ -96,116 +52,106 @@ const AddTechnician = () => {
   };
 
   const fields = [
-  {
-    name: "technicianname",
-    label: "Technician Name",
-    placeholder: "Enter Technician Name",
-    validation: { required: "Technician name is required" },
-  },
-  {
-    name: "nodal",
-    label: "Nodal Center",
-    type: "select",
-    options: nodalCenters.map((n) => ({
-      value: n.nodalname,
-      label: n.nodalname,
-    })),
-    validation: { required: "Nodal center is required" },
-  },
-  {
-    name: "roletype",
-    label: "Role Type",
-    type: "select",
-    options: roleTypes.map((n) => ({
-      value: n.roletype,
-      label: n.roledescription,
-    })),
-    validation: { required: "Role Type is required" },
-  },
-  {
-    name: "instrument",
-    label: "Instrument",
-    type: "select",
-    options: instruments.map((n) => ({
-      value: n.instrumentname,
-      label: n.instrumentname,
-    })),
-    // validation: { required: "Instrument is required" },
-  },
-  {
-    name: "addressline",
-    label: "Address",
-    placeholder: "Enter Address",
-    validation: { required: "Address is required" },
-  },
-  {
-    name: "city",
-    label: "City",
-    placeholder: "Enter City",
-    validation: { required: "City is required" },
-  },
-  {
-    name: "state",
-    label: "State",
-    placeholder: "Enter State",
-    validation: { required: "State is required" },
-  },
-  {
-    name: "pincode",
-    label: "PIN Code",
-    type: "number",
-    placeholder: "Enter PIN Code",
-    validation: {
-      required: "PIN code is required",
-      pattern: {
-        value: /^\d{6}$/,
-        message: "PIN code must be exactly 6 digits",
+    {
+      name: "technicianname",
+      label: "Technician Name",
+      placeholder: "Enter Technician Name",
+      validation: { 
+        required: "Technician name is required",
+        pattern: {
+          value: /^[A-Za-z\s]+$/,
+          message: "Only letters and spaces are allowed"
+        }
       },
+    }
+    ,
+    {
+      name: "addressline",
+      label: "Address",
+      placeholder: "Enter Address",
+      validation: { required: "Address is required" },
+    },
+    {
+  name: "city",
+  label: "City",
+  placeholder: "Enter City",
+  validation: {
+    required: "City is required",
+    pattern: {
+      value: /^[A-Za-z\s]+$/,
+      message: "Only letters and spaces are allowed",
     },
   },
-  {
-    name: "dob",
-    label: "Date of Birth",
-    type: "date",
-    placeholder: "Select DOB",
-    validation: { required: "Date of birth is required" },
-  },
-  {
-    name: "contactno",
-    label: "Contact Number",
-    type: "number",
-    placeholder: "Enter Contact Number",
-    validation: {
-      required: "Contact number is required",
-      pattern: {
-        value: /^\d{10}$/,
-        message: "Contact number must be 10 digits",
-      },
+},
+{
+  name: "state",
+  label: "State",
+  placeholder: "Enter State",
+  validation: {
+    required: "State is required",
+    pattern: {
+      value: /^[A-Za-z\s]+$/,
+      message: "Only letters and spaces are allowed",
     },
   },
-  {
-    name: "gender",
-    label: "Gender",
-    type: "radio",
-    options: [
-      { value: "Male", label: "Male" },
-      { value: "Female", label: "Female" },
-      { value: "Other", label: "Other" },
-    ],
-    validation: { required: "Gender is required" },
-  },
-  {
-    name: "isactive",
-    label: "Is Active?",
-    type: "radio",
-    options: [
-      { value: "true", label: "Yes" },
-      { value: "false", label: "No" },
-    ],
-    validation: { required: "Status is required" },
-  },
-];
+},
 
+    {
+      name: "pincode",
+      label: "PIN Code",
+      type: "number",
+      placeholder: "Enter PIN Code",
+      validation: {
+        required: "PIN code is required",
+        pattern: { value: /^\d{6}$/, message: "PIN code must be 6 digits" },
+      },
+    },
+    {
+  name: "dob",
+  label: "Date of Birth",
+  type: "date",
+  validation: { required: "Date of birth is required" },
+  extraProps: {
+    min: new Date().toISOString().split("T")[0],
+    max: new Date().toISOString().split("T")[0],
+  },
+},
+
+    {
+      name: "contactno",
+      label: "Contact Number",
+      type: "number",
+      placeholder: "Enter Contact Number",
+      validation: {
+        required: "Contact number is required",
+        pattern: {
+          value: /^\d{10}$/,
+          message: "Contact number must be 10 digits",
+        },
+      },
+    },
+    {
+      name: "gender",
+      label: "Gender",
+      type: "radio",
+      options: [
+        { value: "Male", label: "Male" },
+        { value: "Female", label: "Female" },
+        { value: "Other", label: "Other" },
+      ],
+      validation: { required: "Gender is required" },
+    },
+    {
+      name: "isactive",
+      label: "Is Active?",
+      type: "radio",
+      options: [
+        { value: "true", label: "Yes" },
+        { value: "false", label: "No" },
+      ],
+      validation: { required: "Status is required" },
+    },
+  ];
 
   return (
     <>
@@ -239,9 +185,6 @@ const AddTechnician = () => {
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
-        {fetchError && (
-          <p className="text-red-500 text-sm mb-4">{fetchError}</p>
-        )}
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -255,14 +198,7 @@ const AddTechnician = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
                 (
-                  {
-                    name,
-                    label,
-                    placeholder,
-                    type = "text",
-                    options,
-                    validation,
-                  },
+                  { name, label, placeholder, type = "text", options, validation },
                   index
                 ) => (
                   <div key={index} className="space-y-1">
@@ -272,31 +208,20 @@ const AddTechnician = () => {
                         <span className="text-red-500"> *</span>
                       )}
                     </label>
-                    {type === "select" ? (
-                      <select
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name]
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:ring-teal-500"
-                        } focus:ring-2 transition`}
-                      >
-                        <option value="">Select {label}</option>
-                        {options.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : type === "radio" ? (
+
+                    {type === "radio" ? (
                       <div className="flex space-x-4 pt-2">
                         {options.map((opt) => (
-                          <label key={opt.value} className="inline-flex items-center">
+                          <label
+                            key={opt.value}
+                            className="inline-flex items-center"
+                          >
                             <input
                               type="radio"
                               {...register(name, validation)}
                               value={opt.value}
+                              onInput={() => trigger(name)}
+                              onKeyUp={() => trigger(name)}
                               className="h-4 w-4 text-teal-600"
                             />
                             <span className="ml-2">{opt.label}</span>
@@ -306,8 +231,22 @@ const AddTechnician = () => {
                     ) : (
                       <input
                         type={type}
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
+                        {...register(name, {
+                          ...validation,
+                          onChange: (e) => {
+                            if (
+                              ["technicianname", "city", "state"].includes(name)
+                            ) {
+                              e.target.value = e.target.value.replace(
+                                /[0-9]/g,
+                                ""
+                              );
+                            }
+                            validation?.onChange && validation.onChange(e);
+                          },
+                        })}
+                        onInput={() => trigger(name)}
+                        onKeyUp={() => trigger(name)}
                         placeholder={placeholder}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
@@ -316,6 +255,7 @@ const AddTechnician = () => {
                         } focus:ring-2 transition`}
                       />
                     )}
+
                     {errors[name] && (
                       <p className="text-red-500 text-xs mt-1">
                         {errors[name].message}

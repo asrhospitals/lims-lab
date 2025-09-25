@@ -17,6 +17,7 @@ const ViewProfileMaster = () => {
 
   useEffect(() => {
     const fetchProfiles = async () => {
+      setLoading(true);
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
@@ -27,20 +28,23 @@ const ViewProfileMaster = () => {
             },
           }
         );
-
-        const data = Array.isArray(response.data) ? response.data : [response.data];
-
-        setProfiles(data);
-        setFilteredProfiles(data);
+  
+        // Access the nested `data` array
+        const profilesData = response.data?.data || [];
+        console.log("profilesData====", profilesData);
+  
+        setProfiles(profilesData);
+        setFilteredProfiles(profilesData);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch Profile Entries.");
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchProfiles();
   }, []);
+  
 
   useEffect(() => {
     if (!search.trim()) {
@@ -75,10 +79,14 @@ const ViewProfileMaster = () => {
     id: index + 1,
     profile_id: entry.id,
     profilename: entry.profilename,
-    investigations: (Array.isArray(entry.investigations) ? entry.investigations.join(", ") : ""),
+    investigations: Array.isArray(entry.investigations)
+      ? entry.investigations.map(inv => inv.testname).join(", ")
+      : "",
     status: entry.isactive ? "Active" : "Inactive",
     raw: entry,
   }));
+  
+  
 
   return (
     <>
@@ -156,12 +164,12 @@ const ViewProfileMaster = () => {
             </div>
           ) : (
             <DataTable
-              items={mappedItems}
-              columns={columns}
-              itemsPerPage={10}
-              showDetailsButtons={false}
-              onUpdate={(item) => handleUpdate(item.raw)} // Pass original  on update
-            />
+            items={mappedItems}
+            columns={columns}
+            itemsPerPage={10}
+            showDetailsButtons={false}
+            onUpdate={(item) => handleUpdate(item.raw)}
+          />
           )}
         </div>
       </div>

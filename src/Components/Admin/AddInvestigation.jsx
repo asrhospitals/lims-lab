@@ -4,16 +4,19 @@ import { toast, ToastContainer } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import axios from "axios";
+
+
 
 import AddInvestigationResult from "./AddInvestigationResult";
 import AccrediationDetails from "./AccrediationDetails";
-import { 
-  addInvestigation, 
-  viewDepartments, 
-  viewSubDepartments, 
-  viewRoles, 
-  viewSpecimenTypes, 
-  viewInstruments 
+import {
+  addInvestigation,
+  viewDepartments,
+  viewSubDepartments,
+  viewRoles,
+  viewSpecimenTypes,
+  viewInstruments,
 } from "../../services/apiService";
 
 const AddInvestigation = () => {
@@ -23,6 +26,9 @@ const AddInvestigation = () => {
   const [specimens, setSpecimens] = useState([]);
   const [instruments, setInstruments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [roles, setRoles] = useState([]);
+
   const {
     register,
     handleSubmit,
@@ -32,38 +38,118 @@ const AddInvestigation = () => {
   } = useForm();
 
   const navigate = useNavigate();
-  
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const [dept, subDept, role, spec, instruments] = await Promise.all([
+  //         viewDepartments(),
+  //         viewSubDepartments(),
+  //         viewRoles(),
+  //         viewSpecimenTypes(),
+  //         viewInstruments(),
+  //       ]);
+
+  //       console.log(dept, subDept, role, spec, instruments);
+
+  //       setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
+  //       setSubDepartments(
+  //         (subDept?.data || subDept || []).filter((d) => d.isactive)
+  //       );
+  //       setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
+  //       setSpecimens((spec || []).filter((s) => s.isactive));
+  //       setInstruments(
+  //         (instruments?.data || instruments || []).filter((i) => i.isactive)
+  //       );
+  //     } catch (err) {
+  //       toast.error("❌ Failed to load master data");
+  //       console.error(err);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, []);
+
+  // Fetch Departments
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDepartments = async () => {
       try {
-        const [dept, subDept, role, spec, instruments] = await Promise.all([
-          viewDepartments(),
-          viewSubDepartments(),
-          viewRoles(),
-          viewSpecimenTypes(),
-          viewInstruments(),
-        ]);
-        
-        console.log(
-          dept,
-          subDept,
-          role,
-          spec,
-          instruments
-        );
-        
-        setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
-        setSubDepartments((subDept?.data || subDept || []).filter((d) => d.isactive));
-        setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
-        setSpecimens((spec || []).filter((s) => s.isactive));
-        setInstruments((instruments?.data || instruments || []).filter((i) => i.isactive));
+        const deptResponse = await viewDepartments();
+        console.log("Departments:", deptResponse?.data || []);
+        setDepartments(deptResponse?.data || []);
       } catch (err) {
-        toast.error("❌ Failed to load master data");
-        console.error(err);
+        console.error("Departments API failed:", err);
+        toast.error("❌ Failed to load Departments");
       }
     };
+    fetchDepartments();
+  }, []);
 
-    fetchData();
+  useEffect(() => {
+    const fetchSpecimens = async () => {
+      try {
+        const res = await axios.get(
+          "https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types"
+        );
+  
+        console.log("Specimens API Response:", res.data);
+  
+        setSpecimens(res.data.data || []);  // <-- Important!
+      } catch (err) {
+        console.error("Failed to fetch specimens:", err);
+      }
+    };
+  
+    fetchSpecimens();
+  }, []);
+  
+  // Fetch SubDepartments
+  useEffect(() => {
+    const fetchSubDepartments = async () => {
+      try {
+        const subDeptResponse = await viewSubDepartments();
+        console.log("SubDepartments:", subDeptResponse?.data || []);
+        setSubDepartments(subDeptResponse?.data || []);
+      } catch (err) {
+        console.error("SubDepartments API failed:", err);
+        toast.error("❌ Failed to load SubDepartments");
+      }
+    };
+    fetchSubDepartments();
+  }, []);
+
+  // Fetch Roles
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const roleResponse = await viewRoles();
+        console.log("🔍 Raw API response:", roleResponse);
+
+        // if API directly returns an array
+        setRoles(
+          Array.isArray(roleResponse) ? roleResponse : roleResponse?.data || []
+        );
+      } catch (err) {
+        console.error("Roles API failed:", err);
+        toast.error("❌ Failed to load Roles");
+      }
+    };
+    fetchRoles();
+  }, []);
+
+  // Fetch Instruments
+  useEffect(() => {
+    const fetchInstruments = async () => {
+      try {
+        const instrumentResponse = await viewInstruments();
+        console.log("Instruments:", instrumentResponse?.data || []);
+        setInstruments(instrumentResponse?.data || []);
+      } catch (err) {
+        console.error("Instruments API failed:", err);
+        toast.error("❌ Failed to load Instruments");
+      }
+    };
+    fetchInstruments();
   }, []);
 
   const onSubmit = async (data) => {
@@ -90,7 +176,7 @@ const AddInvestigation = () => {
       setIsSubmitting(false);
       return;
     }
-    
+
     // Validate that at least one result is added
     if (results.length === 0) {
       toast.error("❌ Please add at least one result");
@@ -105,7 +191,7 @@ const AddInvestigation = () => {
       testcategory: data.testCategory,
       shortname: data.shortName || null,
       shortcode: data.shortCode ? parseInt(data.shortCode) : null,
-      department: data.department || null,
+      departmentId: data.department || null,
       subdepartment: data.subDepartment || null,
       roletype: data.roleType || null,
       reporttype: data.reportType || null,
@@ -158,7 +244,9 @@ const AddInvestigation = () => {
         order: result.order ? parseInt(result.order) : null,
         roundOff: result.roundOff ? parseInt(result.roundOff) : null,
         showTrends: result.showTrends || false,
-        defaultValue: result.defaultValue ? parseInt(result.defaultValue) : null, // Ensure integer type
+        defaultValue: result.defaultValue
+          ? parseInt(result.defaultValue)
+          : null, // Ensure integer type
         normalValues: result.normalValues.map((nv) => ({
           gender: nv.type || null,
           ageMin: nv.ageMinYear ? parseInt(nv.ageMinYear) : null,
@@ -339,12 +427,12 @@ const AddInvestigation = () => {
                 Test Name <span className="text-red-500">*</span>
               </label>
               <input
-                {...register("testName", { 
+                {...register("testName", {
                   required: "Test Name is required",
                   validate: async (value) => {
                     // Add uniqueness validation if needed
                     return true;
-                  }
+                  },
                 })}
                 placeholder="Test Name"
                 className="w-full border px-3 py-2 rounded"
@@ -361,8 +449,8 @@ const AddInvestigation = () => {
                 Test Category<span className="text-red-500">*</span>
               </label>
               <input
-                {...register("testCategory", { 
-                  required: "Test Category is required" 
+                {...register("testCategory", {
+                  required: "Test Category is required",
                 })}
                 placeholder="Test Category"
                 className="w-full border px-3 py-2 rounded"
@@ -396,7 +484,7 @@ const AddInvestigation = () => {
                       return "Short Code must be a valid number";
                     }
                     return true;
-                  }
+                  },
                 })}
                 type="number"
                 placeholder="Enter unique short code"
@@ -419,7 +507,7 @@ const AddInvestigation = () => {
               >
                 <option value="">Select Department</option>
                 {departments.map((d, i) => (
-                  <option key={i} value={d.dptname}>
+                  <option key={i} value={d.id}>
                     {d.dptname}
                   </option>
                 ))}
@@ -452,37 +540,25 @@ const AddInvestigation = () => {
                 className="w-full border px-3 py-2 rounded"
               >
                 <option value="">Select Role Type</option>
-                {roleTypes.map((d, i) => (
-                  <option key={i} value={d.roletype}>
+                {roles.map((d) => (
+                  <option key={d.id} value={d.roletype}>
                     {d.roletype}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Report Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Report Type
-              </label>
-              <select
-                {...register("reportType")}
-                className="w-full border px-3 py-2 rounded"
-              >
-                <option value="">Select Report Type</option>
-                <option value="Range">Report Type 1</option>
-              </select>
-            </div>
+    
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Sample Type
+              Specimen Type
               </label>
               <select
                 {...register("specimenType")}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Sample Type</option>
+                <option value="">Select Specimen Type</option>
                 {specimens.map((d) => (
                   <option key={d.specimenname} value={d.specimenname}>
                     {d.specimenname}
@@ -504,7 +580,7 @@ const AddInvestigation = () => {
                         return "Sample quantity must be a valid number";
                       }
                       return true;
-                    }
+                    },
                   })}
                   type="number"
                   step="0.01"
@@ -532,7 +608,7 @@ const AddInvestigation = () => {
                         return "Sample temperature must be a valid number";
                       }
                       return true;
-                    }
+                    },
                   })}
                   type="number"
                   step="0.1"
@@ -557,7 +633,6 @@ const AddInvestigation = () => {
                 className="w-full border px-3 py-2 rounded"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Instrument Type
@@ -568,7 +643,7 @@ const AddInvestigation = () => {
               >
                 <option value="">Select Instrument Type</option>
                 {instruments.map((d) => (
-                  <option key={d.instrumentname} value={d.instrumentname}>
+                  <option key={d.id} value={d.id}>
                     {d.instrumentname}
                   </option>
                 ))}
@@ -670,8 +745,8 @@ const AddInvestigation = () => {
                     <input
                       type="radio"
                       value={`Tube_${color.name}`}
-                      {...register("container_selection", { 
-                        required: "Please select a container type or color" 
+                      {...register("container_selection", {
+                        required: "Please select a container type or color",
                       })}
                       className="form-radio text-indigo-600"
                     />
@@ -697,8 +772,8 @@ const AddInvestigation = () => {
                   <input
                     type="radio"
                     value="Block"
-                    {...register("container_selection", { 
-                      required: "Please select a container type or color" 
+                    {...register("container_selection", {
+                      required: "Please select a container type or color",
                     })}
                     className="form-radio text-indigo-600"
                   />
@@ -717,8 +792,8 @@ const AddInvestigation = () => {
                   <input
                     type="radio"
                     value="Slide"
-                    {...register("container_selection", { 
-                      required: "Please select a container type or color" 
+                    {...register("container_selection", {
+                      required: "Please select a container type or color",
                     })}
                     className="form-radio text-indigo-600"
                   />
@@ -812,11 +887,14 @@ const AddInvestigation = () => {
                 <input
                   {...register(price.name, {
                     validate: (value) => {
-                      if (value && (isNaN(parseFloat(value)) || parseFloat(value) < 0)) {
+                      if (
+                        value &&
+                        (isNaN(parseFloat(value)) || parseFloat(value) < 0)
+                      ) {
                         return `${price.label} must be a valid positive number`;
                       }
                       return true;
-                    }
+                    },
                   })}
                   type="number"
                   step="0.01"
@@ -904,14 +982,18 @@ const AddInvestigation = () => {
                   Barcode Length<span className="text-red-500">*</span>
                 </label>
                 <input
-                  {...register("barcodeLength", { 
+                  {...register("barcodeLength", {
                     required: "Barcode Length is required",
                     validate: (value) => {
-                      if (!value || isNaN(parseInt(value)) || parseInt(value) <= 0) {
+                      if (
+                        !value ||
+                        isNaN(parseInt(value)) ||
+                        parseInt(value) <= 0
+                      ) {
                         return "Barcode Length must be a valid positive number";
                       }
                       return true;
-                    }
+                    },
                   })}
                   type="number"
                   placeholder="Enter length"
@@ -930,14 +1012,14 @@ const AddInvestigation = () => {
                   Barcode <span className="text-red-500">*</span>
                 </label>
                 <input
-                  {...register("barcode", { 
+                  {...register("barcode", {
                     required: "Barcode is required",
                     validate: (value) => {
                       if (!value || isNaN(parseInt(value))) {
                         return "Barcode must be a valid number";
                       }
                       return true;
-                    }
+                    },
                   })}
                   type="number"
                   placeholder="Enter Barcode"
@@ -962,7 +1044,7 @@ const AddInvestigation = () => {
                         return "Separate Barcode must be a valid number";
                       }
                       return true;
-                    }
+                    },
                   })}
                   type="number"
                   placeholder="Enter Separate Barcode"
@@ -994,22 +1076,22 @@ const AddInvestigation = () => {
                 </label>
                 <div className="flex gap-0">
                   <input
-                    {...register("tatValue", { 
+                    {...register("tatValue", {
                       required: "TAT value is required",
                       validate: (value) => {
                         if (!value || isNaN(parseInt(value))) {
                           return "TAT value must be a valid number";
                         }
                         return true;
-                      }
+                      },
                     })}
                     type="number"
                     placeholder="Enter value"
                     className="w-1/2 border px-3 py-2 rounded"
                   />
                   <select
-                    {...register("tatUnit", { 
-                      required: "TAT unit is required" 
+                    {...register("tatUnit", {
+                      required: "TAT unit is required",
                     })}
                     className="w-1/2 border px-3 py-2 rounded"
                   >
@@ -1039,7 +1121,7 @@ const AddInvestigation = () => {
                           return "STAT value must be a valid number";
                         }
                         return true;
-                      }
+                      },
                     })}
                     type="number"
                     placeholder="Enter value"
