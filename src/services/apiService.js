@@ -636,7 +636,7 @@ export const updateLabToLab = async (id, labToLabData) => {
 export const viewSpecimenTypes = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-specimen${
+    const url = `${API_ROOT_URL}/master/get-all-specimen${
       queryString ? `?${queryString}` : ""
     }`;
 

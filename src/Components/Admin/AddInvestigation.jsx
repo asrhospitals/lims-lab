@@ -6,8 +6,6 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
 
-
-
 import AddInvestigationResult from "./AddInvestigationResult";
 import AccrediationDetails from "./AccrediationDetails";
 import {
@@ -26,8 +24,18 @@ const AddInvestigation = () => {
   const [specimens, setSpecimens] = useState([]);
   const [instruments, setInstruments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [roles, setRoles] = useState([]);
+
+  // Rich text editor states - moved to top
+  const [instruction, setInstruction] = useState("");
+  const [interpretation, setInterpretation] = useState("");
+  const [remarks, setRemarks] = useState("");
+
+  // Child component states
+  const [results, setResults] = useState([]);
+  const [accreditationItems, setAccreditationItems] = useState([]);
+  const [consumableItems, setConsumableItems] = useState([]);
+  const [labConsumableItems, setLabConsumableItems] = useState([]);
 
   const {
     register,
@@ -39,36 +47,43 @@ const AddInvestigation = () => {
 
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const [dept, subDept, role, spec, instruments] = await Promise.all([
-  //         viewDepartments(),
-  //         viewSubDepartments(),
-  //         viewRoles(),
-  //         viewSpecimenTypes(),
-  //         viewInstruments(),
-  //       ]);
+  // Rich text editor configuration
+  const modules = {
+    toolbar: [
+      [{ font: [] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ script: "super" }, { script: "sub" }],
+      [{ size: [] }],
+      [{ color: [] }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }],
+      [{ background: [] }],
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      ["link"],
+      ["blockquote", "code-block"],
+      ["clean"],
+    ],
+  };
 
-  //       console.log(dept, subDept, role, spec, instruments);
-
-  //       setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
-  //       setSubDepartments(
-  //         (subDept?.data || subDept || []).filter((d) => d.isactive)
-  //       );
-  //       setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
-  //       setSpecimens((spec || []).filter((s) => s.isactive));
-  //       setInstruments(
-  //         (instruments?.data || instruments || []).filter((i) => i.isactive)
-  //       );
-  //     } catch (err) {
-  //       toast.error("❌ Failed to load master data");
-  //       console.error(err);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, []);
+  const formats = [
+    "font",
+    "size",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "script",
+    "color",
+    "background",
+    "list",
+    "bullet",
+    "align",
+    "header",
+    "link",
+    "blockquote",
+    "code-block",
+    "clean",
+  ];
 
   // Fetch Departments
   useEffect(() => {
@@ -85,21 +100,20 @@ const AddInvestigation = () => {
     fetchDepartments();
   }, []);
 
+  // Fetch Specimens
   useEffect(() => {
     const fetchSpecimens = async () => {
       try {
         const res = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types"
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-all-specimen"
         );
-  
         console.log("Specimens API Response:", res.data);
-  
-        setSpecimens(res.data.data || []);  // <-- Important!
+        setSpecimens(res.data || []);
       } catch (err) {
         console.error("Failed to fetch specimens:", err);
+        toast.error("❌ Failed to load Specimens");
       }
     };
-  
     fetchSpecimens();
   }, []);
   
@@ -124,8 +138,6 @@ const AddInvestigation = () => {
       try {
         const roleResponse = await viewRoles();
         console.log("🔍 Raw API response:", roleResponse);
-
-        // if API directly returns an array
         setRoles(
           Array.isArray(roleResponse) ? roleResponse : roleResponse?.data || []
         );
@@ -176,6 +188,11 @@ const AddInvestigation = () => {
       setIsSubmitting(false);
       return;
     }
+    if (!data.container_selection) {
+      toast.error("❌ Container selection is required");
+      setIsSubmitting(false);
+      return;
+    }
 
     // Validate that at least one result is added
     if (results.length === 0) {
@@ -191,7 +208,7 @@ const AddInvestigation = () => {
       testcategory: data.testCategory,
       shortname: data.shortName || null,
       shortcode: data.shortCode ? parseInt(data.shortCode) : null,
-      departmentId: data.department || null,
+      departmentId: data.department ? parseInt(data.department) : null,
       subdepartment: data.subDepartment || null,
       roletype: data.roleType || null,
       reporttype: data.reportType || null,
@@ -224,11 +241,11 @@ const AddInvestigation = () => {
       checkimage: data.showImagesSide || false,
       template: data.template || null,
       checkoutsrc: data.isOutsourced || false,
-      barcodelngt: parseInt(data.barcodeLength), // Required field, ensure it's an integer
+      barcodelngt: parseInt(data.barcodeLength),
       barcode: data.barcode ? parseInt(data.barcode) : null,
       spbarcode: data.separateBarcode || null,
       suffbarcode: data.suffixedBarcodes || null,
-      tat: data.tatValue, // Required field
+      tat: data.tatValue,
       tatunit: data.tatUnit || null,
       stat: data.statValue || null,
       statunit: data.statUnit || null,
@@ -244,9 +261,7 @@ const AddInvestigation = () => {
         order: result.order ? parseInt(result.order) : null,
         roundOff: result.roundOff ? parseInt(result.roundOff) : null,
         showTrends: result.showTrends || false,
-        defaultValue: result.defaultValue
-          ? parseInt(result.defaultValue)
-          : null, // Ensure integer type
+        defaultValue: result.defaultValue ? parseInt(result.defaultValue) : null,
         normalValues: result.normalValues.map((nv) => ({
           gender: nv.type || null,
           ageMin: nv.ageMinYear ? parseInt(nv.ageMinYear) : null,
@@ -255,12 +270,8 @@ const AddInvestigation = () => {
           rangeMax: nv.rangeMax ? parseFloat(nv.rangeMax) : null,
           validRangeMin: nv.validRangeMin ? parseFloat(nv.validRangeMin) : null,
           validRangeMax: nv.validRangeMax ? parseFloat(nv.validRangeMax) : null,
-          criticalLow: nv.criticalRangeLow
-            ? parseFloat(nv.criticalRangeLow)
-            : null,
-          criticalHigh: nv.criticalRangeHigh
-            ? parseFloat(nv.criticalRangeHigh)
-            : null,
+          criticalLow: nv.criticalRangeLow ? parseFloat(nv.criticalRangeLow) : null,
+          criticalHigh: nv.criticalRangeHigh ? parseFloat(nv.criticalRangeHigh) : null,
           isRangeAbnormal: nv.rangeAbnormal || false,
           avoidInReport: nv.avoidRangeInReport || false,
         })),
@@ -270,6 +281,7 @@ const AddInvestigation = () => {
       accreditationItems: accreditationItems,
       consumableItems: consumableItems,
       labConsumableItems: labConsumableItems,
+      test_collection: "Yes", // Adding required field based on model
     };
 
     console.log("Complete payload being sent to API:", payload);
@@ -309,59 +321,11 @@ const AddInvestigation = () => {
     }
   };
 
-  const modules = {
-    toolbar: [
-      [{ font: [] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ script: "super" }, { script: "sub" }],
-      [{ size: [] }],
-      [{ color: [] }],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ align: [] }],
-      [{ background: [] }],
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      ["link"],
-      ["blockquote", "code-block"],
-      ["clean"],
-    ],
-  };
-
-  const formats = [
-    "font",
-    "size",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "script",
-    "color",
-    "background",
-    "list",
-    "bullet",
-    "align",
-    "header",
-    "link",
-    "blockquote",
-    "code-block",
-    "clean",
-  ];
-  const [instruction, setInstruction] = useState("");
-  const [interpretation, setInterpretation] = useState("");
-  const [remarks, setRemarks] = useState("");
-
-  const [results, setResults] = useState([]);
-  const [accreditationItems, setAccreditationItems] = useState([]);
-  const [consumableItems, setConsumableItems] = useState([]);
-  const [labConsumableItems, setLabConsumableItems] = useState([]);
-
   const derivedTests = [
-    {
-      name: "Derived Test 1",
-    },
-    {
-      name: "Derived Test 2",
-    },
+    { name: "Derived Test 1" },
+    { name: "Derived Test 2" },
   ];
+
   return (
     <>
       <div className="fixed top-[61px] w-full z-10">
@@ -429,10 +393,6 @@ const AddInvestigation = () => {
               <input
                 {...register("testName", {
                   required: "Test Name is required",
-                  validate: async (value) => {
-                    // Add uniqueness validation if needed
-                    return true;
-                  },
                 })}
                 placeholder="Test Name"
                 className="w-full border px-3 py-2 rounded"
@@ -548,46 +508,58 @@ const AddInvestigation = () => {
               </select>
             </div>
 
-    
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Report Type
+              </label>
+              <select
+                {...register("reportType")}
+                className="w-full border px-3 py-2 rounded"
+              >
+                <option value="">Select Report Type</option>
+                <option value="Range">Range</option>
+                <option value="Format">Format</option>
+                <option value="Positive/Negative">Positive/Negative</option>
+                <option value="Reactive/Non-reactive">Reactive/Non-reactive</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-              Specimen Type
+                Specimen Type
               </label>
               <select
                 {...register("specimenType")}
                 className="w-full border px-3 py-2 rounded"
               >
                 <option value="">Select Specimen Type</option>
-                {specimens.map((d) => (
-                  <option key={d.specimenname} value={d.specimenname}>
+                {specimens.map((d, i) => (
+                  <option key={i} value={d.specimenname}>
                     {d.specimenname}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Sample Quantity */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Sample Quantity
               </label>
-              <div className="flex gap-0">
-                <input
-                  {...register("sampleQuantity", {
-                    validate: (value) => {
-                      if (value && isNaN(parseFloat(value))) {
-                        return "Sample quantity must be a valid number";
-                      }
-                      return true;
-                    },
-                  })}
-                  type="number"
-                  step="0.01"
-                  placeholder="Enter quantity"
-                  className="w-full border px-3 py-2 rounded"
-                />
-              </div>
+              <input
+                {...register("sampleQuantity", {
+                  validate: (value) => {
+                    if (value && isNaN(parseFloat(value))) {
+                      return "Sample quantity must be a valid number";
+                    }
+                    return true;
+                  },
+                })}
+                type="number"
+                step="0.01"
+                placeholder="Enter quantity"
+                className="w-full border px-3 py-2 rounded"
+              />
               {errors.sampleQuantity && (
                 <p className="text-red-600 text-xs mt-1">
                   {errors.sampleQuantity.message}
@@ -595,27 +567,24 @@ const AddInvestigation = () => {
               )}
             </div>
 
-            {/* Sample Temperature */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Sample Temperature
               </label>
-              <div className="flex gap-0">
-                <input
-                  {...register("sampleTemperature", {
-                    validate: (value) => {
-                      if (value && isNaN(parseFloat(value))) {
-                        return "Sample temperature must be a valid number";
-                      }
-                      return true;
-                    },
-                  })}
-                  type="number"
-                  step="0.1"
-                  placeholder="Enter temperature"
-                  className="w-full border px-3 py-2 rounded"
-                />
-              </div>
+              <input
+                {...register("sampleTemperature", {
+                  validate: (value) => {
+                    if (value && isNaN(parseFloat(value))) {
+                      return "Sample temperature must be a valid number";
+                    }
+                    return true;
+                  },
+                })}
+                type="number"
+                step="0.1"
+                placeholder="Enter temperature"
+                className="w-full border px-3 py-2 rounded"
+              />
               {errors.sampleTemperature && (
                 <p className="text-red-600 text-xs mt-1">
                   {errors.sampleTemperature.message}
@@ -633,6 +602,7 @@ const AddInvestigation = () => {
                 className="w-full border px-3 py-2 rounded"
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Instrument Type
@@ -643,7 +613,7 @@ const AddInvestigation = () => {
               >
                 <option value="">Select Instrument Type</option>
                 {instruments.map((d) => (
-                  <option key={d.id} value={d.id}>
+                  <option key={d.id} value={d.instrumentname}>
                     {d.instrumentname}
                   </option>
                 ))}
@@ -698,7 +668,6 @@ const AddInvestigation = () => {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500">Derived Test</p>
             </div>
 
             <div>
@@ -710,7 +679,6 @@ const AddInvestigation = () => {
                 placeholder="External Test ID"
                 className="w-full border px-3 py-2 rounded"
               />
-              <p className="text-xs text-gray-500">External ID for Test</p>
             </div>
           </div>
 
@@ -854,11 +822,6 @@ const AddInvestigation = () => {
                 >
                   {option.label}
                 </label>
-                {errors[option.id] && (
-                  <p className="text-red-600 text-xs mt-1">
-                    {option.label} is required
-                  </p>
-                )}
               </div>
             ))}
           </div>
@@ -872,6 +835,7 @@ const AddInvestigation = () => {
               <div className="col-span-full border-b border-gray-300"></div>
             </div>
           </div>
+          
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[
               { label: "Walk-in Price", name: "walkInPrice" },
@@ -911,6 +875,7 @@ const AddInvestigation = () => {
             ))}
           </div>
 
+          {/* Investigation Results Component */}
           <AddInvestigationResult results={results} setResults={setResults} />
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -1157,8 +1122,11 @@ const AddInvestigation = () => {
                   <option value="Inactive">Inactive</option>
                 </select>
               </div>
+
             </div>
           </div>
+
+          {/* Accreditation Details Component */}
           <AccrediationDetails
             accreditationItems={accreditationItems}
             setAccreditationItems={setAccreditationItems}
@@ -1167,6 +1135,7 @@ const AddInvestigation = () => {
             labConsumableItems={labConsumableItems}
             setLabConsumableItems={setLabConsumableItems}
           />
+          
           {/* Instruction */}
           <div className="col-span-full grid grid-cols-6 items-start gap-4 mx-20">
             <div className="col-span-1 font-bold mt-4">
@@ -1206,7 +1175,7 @@ const AddInvestigation = () => {
           </div>
 
           {/* Remarks */}
-          <div className="col-span-full grid grid-cols-6 items-start gap-4 mx-20">
+          <div className="col-span-full grid grid-cols-6 items-start gap-4 mx-20 mb-4">
             <div className="col-span-1 font-bold mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
                 Remarks :
@@ -1225,12 +1194,13 @@ const AddInvestigation = () => {
           </div>
 
           {/* Editor styling */}
-          <style jsx>{`
-            .ql-editor {
-              min-height: 100px;
-            }
-          `}</style>
-          {/* Embed the InvestigationDetails component */}
+          <style>
+            {`
+              .ql-container {
+                min-height: 100px;
+              }
+            `}
+          </style>
 
           <div className="px-6 py-4 border-t bg-gray-50 flex justify-between">
             <button

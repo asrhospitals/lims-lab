@@ -114,8 +114,8 @@ const DoctorSidebar = ({
 
   return (
     <nav
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      // onMouseEnter={() => setIsHovered(true)}
+      // onMouseLeave={() => setIsHovered(false)}
       className={`fixed top-0 left-0 h-screen bg-white border-r border-gray-200 shadow-sm z-40 flex flex-col ${transitionClass} ${
         sidebarExpanded ? "w-64" : "w-20"
       }`}

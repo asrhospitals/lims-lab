@@ -5,6 +5,7 @@ import { RiSearchLine } from "react-icons/ri";
 import { useForm } from "react-hook-form";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 const ViewPatientDetails = () => {
+  const token = localStorage.getItem("authToken");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,6 +20,8 @@ const ViewPatientDetails = () => {
     abha: [],
   });
 
+  const [selectedHospital, setSelectedHospital] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -30,8 +33,6 @@ const ViewPatientDetails = () => {
   useEffect(() => {
     const fetchHospitals = async () => {
       try {
-        const token = localStorage.getItem("authToken");
-
         const response = await axios.get(
           "https://asrlabs.asrhospitalindia.in/lims/master/get-hospital?page=1&limit=1000",
           {
@@ -54,9 +55,32 @@ const ViewPatientDetails = () => {
         console.error("Error fetching hospitals:", error);
       }
     };
-
     fetchHospitals();
   }, []);
+
+  useEffect(() => {
+    if (selectedHospital) {
+      const fetchPatientData = async () => {
+        try {
+          const response = await axios.get(
+            `https://asrphleb.asrhospitalindia.in/api/v2/phleb/get-patient-test/${selectedHospital}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setPatientData(response.data.data || []);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching patient data:", error);
+        setError("Failed to fetch patient data");
+        setLoading(false);
+      }
+    };
+    fetchPatientData();
+  }
+}, [selectedHospital]);
+
+  console.log("patientData", patientData);
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -64,10 +88,16 @@ const ViewPatientDetails = () => {
       const patientId = data.hospitalselected;
       const token = localStorage.getItem("authToken");
 
-      const response = await axios.get(
-        `https://asrphleb.asrhospitalindia.in/api/v2/phleb/get-patient-test/${patientId}`,
+      const response = await fetch(
+        `https://asrphleb.asrhospitalindia.in/phelb/get-patient-test/${encodeURIComponent(
+          patientId
+        )}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Use the token in the Authorization header
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -228,6 +258,8 @@ const ViewPatientDetails = () => {
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-teal-500"
                   } focus:ring-2 transition`}
+                  value={selectedHospital || ""}
+                  onChange={(e) => setSelectedHospital(e.target.value)}
                 >
                   <option value="">Select Hospital</option>
                   {hospitalsList.map((hospital) => (
