@@ -63,6 +63,7 @@ const ViewInvestigation = () => {
   }, [search, investigations]);
 
   const handleUpdate = (investigation) => {
+    //  id is the investigation_id only
     navigate(`/update-investigation/${investigation.investigation_id}`);
   };
 
