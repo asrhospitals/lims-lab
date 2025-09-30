@@ -63,11 +63,11 @@ const ViewInvestigation = () => {
   }, [search, investigations]);
 
   const handleUpdate = (investigation) => {
-    navigate(`/update-investigation/${investigation.id}`);
+    navigate(`/update-investigation/${investigation.investigation_id}`);
   };
 
   const handleViewDetails = (investigation) => {
-    navigate(`/view-investigation-details/${investigation.id}`);
+    navigate(`/view-investigation-details/${investigation.investigation_id}`);
   };
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -87,7 +87,7 @@ const ViewInvestigation = () => {
   const mappedItems = (filteredInvestigations || []).map((item, index) => ({
     ...item,
     id: index + 1,
-    investigation_id: item.investigation_id,
+    investigation_id: item.id,
     shortcode: item.shortcode,
     testname: item.testname,
     department:
