@@ -4,6 +4,24 @@ import AddInvestigationResultMandatoryConditions from "./AddMandatoryCondition";
 import AddInvestigationResultReflexTests from "./AddReflexTests";
 
 const AddInvestigationResult = ({ results = [], setResults }) => {
+  console.log("Initial Results:", results);
+  
+  const normalizedResults = results.map((result) => ({
+    name: result.resultname || result.name || "",
+    otherLanguageName: result.otherLanguageName || "",
+    extResultId: result.extResultId || "",
+    order: result.order || "",
+    unit: result.unit || "",
+    formula: result.formula || "",
+    valueType: result.valueType || "",
+    defaultValue: result.defaultValue || "",
+    roundOff: result.roundOff || "",
+    normalValues: result.normalValues || [],
+    mandatoryConditions: result.mandatories || result.mandatoryConditions || [],
+    reflexTests: result.reflexTests || [],
+    showTrends: result.showTrends || false,
+  }));
+
   const [showNormalValueModal, setShowNormalValueModal] = useState(false);
   const [showMandatoryConditionsModal, setShowMandatoryConditionsModal] =
     useState(false);
@@ -35,41 +53,41 @@ const AddInvestigationResult = ({ results = [], setResults }) => {
 
   // Handle modal data updates
   const handleNormalValuesUpdate = (normalValues) => {
-    setNewResult(prev => ({
+    setNewResult((prev) => ({
       ...prev,
-      normalValues: normalValues
+      normalValues: normalValues,
     }));
   };
 
   const handleMandatoryConditionsUpdate = (conditions) => {
-    setNewResult(prev => ({
+    setNewResult((prev) => ({
       ...prev,
-      mandatoryConditions: conditions
+      mandatoryConditions: conditions,
     }));
   };
 
   const handleReflexTestsUpdate = (reflexData) => {
-    setNewResult(prev => ({
+    setNewResult((prev) => ({
       ...prev,
-      reflexTests: reflexData
+      reflexTests: reflexData,
     }));
   };
 
   const handleAddResult = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Validate required fields
     if (!newResult.name.trim()) {
       alert("Result Name is required");
       return;
     }
-    
+
     if (!newResult.valueType) {
       alert("Value Type is required");
       return;
     }
-    
+
     setResults([...results, newResult]);
 
     setNewResult({
@@ -127,7 +145,7 @@ const AddInvestigationResult = ({ results = [], setResults }) => {
             </tr>
           </thead>
           <tbody>
-            {results.map((result, index) => (
+            {normalizedResults.map((result, index) => (
               <tr key={index} className="bg-white hover:bg-gray-50">
                 <td className="border px-2 py-1">{result.name}</td>
                 <td className="border px-2 py-1">{result.otherLanguageName}</td>
@@ -139,28 +157,25 @@ const AddInvestigationResult = ({ results = [], setResults }) => {
                 <td className="border px-2 py-1">{result.defaultValue}</td>
                 <td className="border px-2 py-1">{result.roundOff}</td>
                 <td className="border px-2 py-1">
-                  {Array.isArray(result.normalValues) ? 
-                    result.normalValues.length > 0 ? 
-                      `${result.normalValues.length} normal value(s)` : 
-                      "None" : 
-                    "None"
-                  }
+                  {Array.isArray(result.normalValues)
+                    ? result.normalValues.length > 0
+                      ? `${result.normalValues.length} normal value(s)`
+                      : "None"
+                    : "None"}
                 </td>
                 <td className="border px-2 py-1">
-                  {Array.isArray(result.mandatoryConditions) ? 
-                    result.mandatoryConditions.length > 0 ? 
-                      `${result.mandatoryConditions.length} condition(s)` : 
-                      "None" : 
-                    "None"
-                  }
+                  {Array.isArray(result.mandatoryConditions)
+                    ? result.mandatoryConditions.length > 0
+                      ? `${result.mandatoryConditions.length} condition(s)`
+                      : "None"
+                    : "None"}
                 </td>
                 <td className="border px-2 py-1">
-                  {Array.isArray(result.reflexTests) ? 
-                    result.reflexTests.length > 0 ? 
-                      `${result.reflexTests.length} test(s)` : 
-                      "None" : 
-                    "None"
-                  }
+                  {Array.isArray(result.reflexTests)
+                    ? result.reflexTests.length > 0
+                      ? `${result.reflexTests.length} test(s)`
+                      : "None"
+                    : "None"}
                 </td>
                 <td className="border px-2 py-1">
                   {result.showTrends ? "Yes" : "No"}
@@ -172,7 +187,9 @@ const AddInvestigationResult = ({ results = [], setResults }) => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      const updatedResults = results.filter((_, i) => i !== index);
+                      const updatedResults = results.filter(
+                        (_, i) => i !== index
+                      );
                       setResults(updatedResults);
                     }}
                   >

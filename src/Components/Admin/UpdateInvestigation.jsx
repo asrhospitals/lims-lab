@@ -16,6 +16,7 @@ import {
   viewSpecimenTypes,
   viewInstruments,
 } from "../../services/apiService";
+import AddInvestigationResult from "./AddInvestigationResult";
 
 const UpdateInvestigation = () => {
   const [departments, setDepartments] = useState([]);
@@ -27,6 +28,9 @@ const UpdateInvestigation = () => {
   const [investigation, setInvestigation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState([]);
+
+  console.log("Results state:", results);
+  
 
   // Rich text editor states
   const [instruction, setInstruction] = useState("");
@@ -118,93 +122,93 @@ const UpdateInvestigation = () => {
 
     fetchData();
   }, []);
+  const fetchInvestigationData = async () => {
+    if (!id) {
+      toast.error("❌ No investigation ID provided");
+      navigate("/view-investigation");
+      return;
+    }
 
+    try {
+      setLoading(true);
+      const data = await viewInvestigation(id);
+      console.log("Investigation data:", data);
+
+      setInvestigation(data);
+      setResults(data.results || []);
+
+      // Set rich text editor values
+      setInstruction(data.instruction || "");
+      setInterpretation(data.interpretation || "");
+      setRemarks(data.remark || "");
+
+      // Populate the form with the investigation data
+      reset({
+        loniccode: data.loniccode || "",
+        cptcode: data.cptcode || "",
+        testname: data.testname || "",
+        testcategory: data.testcategory || "",
+        shortname: data.shortname || "",
+        shortcode: data.shortcode || "",
+        department: data.departmentId || "",
+        subdepartment: data.subdepartment || "",
+        roletype: data.roletype || "",
+        reporttype: data.reporttype || "",
+        sampletype: data.sampletype || "",
+        sampleqty: data.sampleqty || "",
+        sampletemp: data.sampletemp || "",
+        testmethod: data.testmethod || "",
+        instrumenttype: data.instrumenttype || "",
+        description: data.description || "",
+        sac: data.sac || "",
+        order: data.order || "",
+        derivedtest: data.derivedtest || "",
+        extranaltest: data.extranaltest || "",
+        containertype: data.containertype || "",
+        seperateprint: data.seperateprint || false,
+        qrcode: data.qrcode || false,
+        labreg: data.labreg || false,
+        noheader: data.noheader || false,
+        enableautoemail: data.enableautoemail || false,
+        enaautosms: data.enaautosms || false,
+        enableautowhatsap: data.enableautowhatsap || false,
+        enableintermidiate: data.enableintermidiate || false,
+        enablestags: data.enablestags || false,
+        showtext: data.showtext || false,
+        walkinprice: data.walkinprice || "",
+        b2bprice: data.b2bprice || "",
+        ppprice: data.ppprice || "",
+        govtprice: data.govtprice || "",
+        normalprice: data.normalprice || "",
+        checkimage: data.checkimage || false,
+        template: data.template || "",
+        checkoutsrc: data.checkoutsrc || false,
+        barcodelngt: data.barcodelngt || "",
+        barcode: data.barcode || "",
+        spbarcode: data.spbarcode || "",
+        suffbarcode: data.suffbarcode || "",
+        tat: data.tat || "",
+        tatunit: data.tatunit || "",
+        stat: data.stat || "",
+        statunit: data.statunit || "",
+        status: data.status || "Active",
+      });
+    } catch (err) {
+      toast.error("❌ Failed to load investigation data");
+      console.error(err);
+      navigate("/view-investigation");
+    } finally {
+      setLoading(false);
+    }
+  };
   // Fetch investigation data
   useEffect(() => {
-    const fetchInvestigationData = async () => {
-      if (!id) {
-        toast.error("❌ No investigation ID provided");
-        navigate("/view-investigation");
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const data = await viewInvestigation(id);
-        console.log("Investigation data:", data);
-
-        setInvestigation(data);
-        setResults(data.results || []);
-
-        // Set rich text editor values
-        setInstruction(data.instruction || "");
-        setInterpretation(data.interpretation || "");
-        setRemarks(data.remark || "");
-
-        // Populate the form with the investigation data
-        reset({
-          loniccode: data.loniccode || "",
-          cptcode: data.cptcode || "",
-          testname: data.testname || "",
-          testcategory: data.testcategory || "",
-          shortname: data.shortname || "",
-          shortcode: data.shortcode || "",
-          department: data.department || "",
-          subdepartment: data.subdepartment || "",
-          roletype: data.roletype || "",
-          reporttype: data.reporttype || "",
-          sampletype: data.sampletype || "",
-          sampleqty: data.sampleqty || "",
-          sampletemp: data.sampletemp || "",
-          testmethod: data.testmethod || "",
-          instrumenttype: data.instrumenttype || "",
-          description: data.description || "",
-          sac: data.sac || "",
-          order: data.order || "",
-          derivedtest: data.derivedtest || "",
-          extranaltest: data.extranaltest || "",
-          containertype: data.containertype || "",
-          seperateprint: data.seperateprint || false,
-          qrcode: data.qrcode || false,
-          labreg: data.labreg || false,
-          noheader: data.noheader || false,
-          enableautoemail: data.enableautoemail || false,
-          enaautosms: data.enaautosms || false,
-          enableautowhatsap: data.enableautowhatsap || false,
-          enableintermidiate: data.enableintermidiate || false,
-          enablestags: data.enablestags || false,
-          showtext: data.showtext || false,
-          walkinprice: data.walkinprice || "",
-          b2bprice: data.b2bprice || "",
-          ppprice: data.ppprice || "",
-          govtprice: data.govtprice || "",
-          normalprice: data.normalprice || "",
-          checkimage: data.checkimage || false,
-          template: data.template || "",
-          checkoutsrc: data.checkoutsrc || false,
-          barcodelngt: data.barcodelngt || "",
-          barcode: data.barcode || "",
-          spbarcode: data.spbarcode || "",
-          suffbarcode: data.suffbarcode || "",
-          tat: data.tat || "",
-          tatunit: data.tatunit || "",
-          stat: data.stat || "",
-          statunit: data.statunit || "",
-          status: data.status || "Active",
-        });
-      } catch (err) {
-        toast.error("❌ Failed to load investigation data");
-        console.error(err);
-        navigate("/view-investigation");
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    if (!id) return;
     fetchInvestigationData();
-  }, [id, reset, navigate]);
+    console.log("Fetching investigation data for ID:", id);
+  }, [id]);
 
-  const onSubmit = async (data) => {
+    const onSubmit = async (data) => {
     setIsSubmitting(true);
 
     const payload = {
@@ -214,7 +218,7 @@ const UpdateInvestigation = () => {
       testcategory: data.testcategory,
       shortname: data.shortname || null,
       shortcode: data.shortcode || null,
-      department: data.department || null,
+      departmentId: parseInt(data.department) || null,
       subdepartment: data.subdepartment || null,
       roletype: data.roletype || null,
       reporttype: data.reporttype || null,
@@ -259,15 +263,19 @@ const UpdateInvestigation = () => {
       instruction: instruction || null,
       interpretation: interpretation || null,
       remark: remark || null,
+      results: results || [],
     };
+
+    console.log("Submitting payload:", payload);
 
     try {
       await updateInvestigation(investigation.id, payload);
       toast.success("✅ Investigation updated successfully");
+      fetchInvestigationData();
+      // reset();
 
       setTimeout(() => {
-        reset();
-        navigate("/view-investigation");
+        // navigate("/view-investigation");
       }, 2500);
     } catch (err) {
       toast.error("❌ Failed to update investigation");
@@ -423,7 +431,7 @@ const UpdateInvestigation = () => {
                 >
                   <option value={""}>Select Department</option>
                   {departments.map((d, i) => (
-                    <option key={i} value={d.dptname}>
+                    <option key={i} value={d.id}>
                       {d.dptname}
                     </option>
                   ))}
@@ -545,7 +553,7 @@ const UpdateInvestigation = () => {
                 >
                   <option value="">Select Instrument Type</option>
                   {instruments.map((inst, i) => (
-                    <option key={i} value={inst.instrumentname}>
+                    <option key={i} value={inst.id}>
                       {inst.instrumentname}
                     </option>
                   ))}
@@ -739,16 +747,7 @@ const UpdateInvestigation = () => {
                 </div>
               ))}
             </div>
-
-            {/* Investigation Results Component */}
-            {investigation && (
-              <UpdateInvestigationResult
-                investigationId={investigation.id}
-                results={results}
-                setResults={setResults}
-              />
-            )}
-
+            {/* Test Price for Different Categories */}
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
               <div className="col-span-full">
                 <h2 className="text-lg font-semibold text-gray-800 mb-2">
@@ -757,28 +756,74 @@ const UpdateInvestigation = () => {
                 <div className="col-span-full border-b border-gray-300"></div>
               </div>
             </div>
-
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[
-                { label: "Walk-in Price", name: "walkinprice" },
-                { label: "B2B Price", name: "b2bprice" },
-                { label: "PPP Price", name: "ppprice" },
-                { label: "Govt. Price", name: "govtprice" },
-                { label: "Normal Price", name: "normalprice" },
+                // { label: "Walk-in Price", name: "walkInPrice" },
+                // { label: "B2B Price", name: "b2bPrice" },
+                // { label: "PPP Price", name: "pppPrice" },
+                // { label: "Govt. Price", name: "govtPrice" },
+                { label: "Normal Price", name: "normalPrice" },
               ].map((price) => (
                 <div key={price.name}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     {price.label}
                   </label>
                   <input
-                    {...register(price.name)}
+                    {...register(price.name, {
+                      validate: (value) => {
+                        if (
+                          value &&
+                          (isNaN(parseFloat(value)) || parseFloat(value) < 0)
+                        ) {
+                          return `${price.label} must be a valid positive number`;
+                        }
+                        return true;
+                      },
+                    })}
                     type="number"
+                    step="0.01"
+                    min="0"
                     placeholder={`Enter ${price.label}`}
                     className="w-full border px-3 py-2 rounded"
                   />
+                  {errors[price.name] && (
+                    <p className="text-red-600 text-xs mt-1">
+                      {errors[price.name].message}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
+
+            <AddInvestigationResult results={results} setResults={setResults} />
+            {/* <AddInvestigationResult results={results} setResults={setResults} /> */}
+
+            {/* <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            <div className="col-span-full">
+                                <h2 className="text-lg font-semibold text-gray-800 mb-2">Test Price</h2>
+                                <div className="col-span-full border-b border-gray-300"></div>
+                            </div>
+                        </div>
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {[
+                                { label: "Walk-in Price", name: "walkinprice", defaultValue: investigation?.walkinprice || "" },
+                                { label: "B2B Price", name: "b2bprice", defaultValue: investigation?.b2bprice || "" },
+                                { label: "PPP Price", name: "ppprice", defaultValue: investigation?.ppprice || "" },
+                                { label: "Govt. Price", name: "govtprice", defaultValue: investigation?.govtprice || "" },
+                                { label: "Normal Price", name: "normalprice", defaultValue: investigation?.normalprice || "" },
+                            ].map((price) => (
+                                <div key={price.name}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">{price.label}</label>
+                                    <input
+                                        {...register(price.name)}
+                                        type="number"
+                                        placeholder={`Enter ${price.label}`}
+                                        defaultValue={price.defaultValue}
+                                        className="w-full border px-3 py-2 rounded"
+                                    />
+                                </div>
+                            ))}
+                        </div> */}
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
               <div className="col-span-full">
@@ -793,6 +838,7 @@ const UpdateInvestigation = () => {
                     type="checkbox"
                     id="showImagesSide"
                     className="mr-2"
+                    defaultChecked={investigation?.checkimage || false}
                   />
                   <label
                     htmlFor="showImagesSide"
@@ -810,6 +856,7 @@ const UpdateInvestigation = () => {
                   <select
                     {...register("template")}
                     className="flex-1 border px-3 py-2 rounded"
+                    defaultValue={investigation?.template || ""}
                   >
                     <option value="">Select Template</option>
                     <option value="template1">Template 1</option>
@@ -830,6 +877,7 @@ const UpdateInvestigation = () => {
                     type="checkbox"
                     id="checkoutsrc"
                     className="mr-2"
+                    defaultChecked={investigation?.checkoutsrc || false}
                   />
                   <label
                     htmlFor="checkoutsrc"
@@ -866,6 +914,7 @@ const UpdateInvestigation = () => {
                   </label>
                   <input
                     {...register("barcode")}
+                    // value={investigation?.barcode || ""}
                     type="number"
                     placeholder="Enter Barcode"
                     className="w-full border px-3 py-2 rounded"
@@ -973,7 +1022,7 @@ const UpdateInvestigation = () => {
               </div>
               <div className="col-span-5">
                 <ReactQuill
-                  value={instruction}
+                  value={instruction || investigation?.instruction || ""}
                   onChange={setInstruction}
                   theme="snow"
                   className="mt-2 bg-white"
@@ -992,7 +1041,7 @@ const UpdateInvestigation = () => {
               </div>
               <div className="col-span-5">
                 <ReactQuill
-                  value={interpretation}
+                  value={interpretation || investigation?.interpretation || ""}
                   onChange={setInterpretation}
                   theme="snow"
                   className="mt-2 bg-white"
@@ -1011,7 +1060,7 @@ const UpdateInvestigation = () => {
               </div>
               <div className="col-span-5">
                 <ReactQuill
-                  value={remark}
+                  value={remark || investigation?.remark || ""}
                   onChange={setRemarks}
                   theme="snow"
                   className="mt-2 bg-white"
@@ -1023,10 +1072,10 @@ const UpdateInvestigation = () => {
 
             <style>
               {`
-                            .ql-container {
-                                min-height: 100px; /* Change this value as needed */
-                            }
-                        `}
+                                .ql-container {
+                                    min-height: 100px; /* Change this value as needed */
+                                }
+                            `}
             </style>
 
             <div className="px-6 py-4 border-t bg-gray-50 text-right">

@@ -838,10 +838,10 @@ const AddInvestigation = () => {
           
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[
-              { label: "Walk-in Price", name: "walkInPrice" },
-              { label: "B2B Price", name: "b2bPrice" },
-              { label: "PPP Price", name: "pppPrice" },
-              { label: "Govt. Price", name: "govtPrice" },
+              // { label: "Walk-in Price", name: "walkInPrice" },
+              // { label: "B2B Price", name: "b2bPrice" },
+              // { label: "PPP Price", name: "pppPrice" },
+              // { label: "Govt. Price", name: "govtPrice" },
               { label: "Normal Price", name: "normalPrice" },
             ].map((price) => (
               <div key={price.name}>
