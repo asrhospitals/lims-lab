@@ -39,7 +39,6 @@ const UpdateProfileEntryMaster = () => {
         );
 
         const data = response.data;
-
         setProfileEntry(data);
 
         reset({
@@ -135,16 +134,28 @@ const UpdateProfileEntryMaster = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
               {/* Profile Entry Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Profile Entry Name</label>
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  {...register("profileName", { required: "Profile Entry Name is required." })}
-                  className={`w-full px-4 py-2 rounded-lg border ${errors.profileName ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-                />
-                {errors.profileName && <p className="text-red-500 text-xs mt-1">{errors.profileName.message}</p>}
-              </div>
+            <div>
+  <label className="block text-sm font-medium text-gray-700">Profile Entry Name</label>
+  <input
+    type="text"
+    placeholder="Full Name"
+    {...register("profileName", {
+      required: "Profile Entry Name is required.",
+      pattern: {
+        value: /^[A-Za-z\s]+$/,
+        message: "Only letters and spaces are allowed.",
+      },
+    })}
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.profileName ? "border-red-500" : "border-gray-300"
+    } focus:ring-2 focus:ring-teal-500`}
+  />
+  {errors.profileName && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.profileName.message}
+    </p>
+  )}
+</div>
 
               {/* Profile Code */}
               <div>
@@ -152,8 +163,16 @@ const UpdateProfileEntryMaster = () => {
                 <input
                   type="text"
                   placeholder="Profile Code"
-                  {...register("profilecode", { required: "Profile Code is required." })}
-                  className={`w-full px-4 py-2 rounded-lg border ${errors.profilecode ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+                  {...register("profilecode", {
+                    required: "Profile Code is required.",
+                    pattern: {
+                      value: /^[A-Za-z0-9]+$/i,
+                      message: "Only letters and numbers are allowed.",
+                    },
+                  })}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.profilecode ? "border-red-500" : "border-gray-300"
+                  } focus:ring-2 focus:ring-teal-500`}
                 />
                 {errors.profilecode && <p className="text-red-500 text-xs mt-1">{errors.profilecode.message}</p>}
               </div>

@@ -109,12 +109,12 @@ const ViewDepartment = () => {
                 to="/view-profile-Master"
                 className="text-gray-700 hover:text-teal-600 transition-colors"
               >
-                Profile Masters
+                Departments
               </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
-              View Profile Masters
+              View Department
             </li>
           </ol>
         </nav>
@@ -169,7 +169,7 @@ const ViewDepartment = () => {
             </div>
           ) : (
             <DataTable
-              items={mappedItems}
+              items={mappedItems} 
               columns={columns}
               serverSidePagination={true}
               currentPage={currentPage}

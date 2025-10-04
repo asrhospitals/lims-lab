@@ -32,66 +32,78 @@ const AddHospital = () => {
     fetchData();
   }, []);
 
-  const handleValidation = (name, value) => {
-    switch (name) {
-      case "hospitalname":
-        if (!/^[A-Za-z\s]{3,50}$/.test(value.trim())) {
-          setError(name, { type: "manual", message: "Hospital name must be 3-50 letters only (no numbers or special characters)." });
-        } else if (hospitals.some(h => h.hospitalname.toLowerCase() === value.trim().toLowerCase())) {
-          setError(name, { type: "manual", message: "Hospital name already exists." });
-        } else {
-          clearErrors(name);
-        }
-        break;
+ const handleValidation = (name, value) => {
+  switch (name) {
+    case "hospitalname":
+      if (!/^[A-Za-z\s]{3,50}$/.test(value.trim())) {
+        setError(name, { type: "manual", message: "Hospital name must be 3-50 letters only (no numbers or special characters)." });
+      } else if (hospitals.some(h => h.hospitalname.toLowerCase() === value.trim().toLowerCase())) {
+        setError(name, { type: "manual", message: "Hospital name already exists." });
+      } else {
+        clearErrors(name);
+      }
+      break;
 
-      case "city":
-      case "district":
-      case "states":
-      case "cntprsn":
-        if (!/^[A-Za-z\s]{2,50}$/.test(value.trim())) {
-          setError(name, { type: "manual", message: "Only letters and spaces allowed (2-50 characters)." });
-        } else {
-          clearErrors(name);
-        }
-        break;
+    case "city":
+    case "district":
+    case "states":
+    case "cntprsn":
+      if (!/^[A-Za-z\s]{2,50}$/.test(value.trim())) {
+        setError(name, { type: "manual", message: "Only letters and spaces allowed (2-50 characters)." });
+      } else {
+        clearErrors(name);
+      }
+      break;
 
-      case "pin":
-        if (!/^\d{6}$/.test(value.trim())) {
-          setError(name, { type: "manual", message: "PIN must be exactly 6 digits." });
-        } else {
-          clearErrors(name);
-        }
-        break;
+    case "pin":
+      if (!/^\d{6}$/.test(value.trim())) {
+        setError(name, { type: "manual", message: "PIN must be exactly 6 digits." });
+      } else {
+        clearErrors(name);
+      }
+      break;
 
-      case "phoneno":
-      case "cntprsnmob":
-        if (!/^\d{10}$/.test(value.trim())) {
-          setError(name, { type: "manual", message: "Must be a valid 10-digit number." });
-        } else {
-          clearErrors(name);
-        }
-        break;
+    case "phoneno":
+    case "cntprsnmob":
+      if (!/^\d{10}$/.test(value.trim())) {
+        setError(name, { type: "manual", message: "Must be a valid 10-digit number." });
+      } else {
+        clearErrors(name);
+      }
+      break;
 
-      case "email":
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
-          setError(name, { type: "manual", message: "Invalid email format." });
-        } else {
-          clearErrors(name);
-        }
-        break;
+    case "email":
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+        setError(name, { type: "manual", message: "Invalid email format." });
+      } else {
+        clearErrors(name);
+      }
+      break;
 
-      case "address":
-        if (!/^[A-Za-z0-9\s,.-]{5,100}$/.test(value.trim())) {
-          setError(name, { type: "manual", message: "Address must be 5-100 chars and can include letters, numbers, spaces, commas, dots, hyphens." });
-        } else {
-          clearErrors(name);
-        }
-        break;
+    case "address":
+      if (!/^[A-Za-z0-9\s,.-]{5,100}$/.test(value.trim())) {
+        setError(name, { type: "manual", message: "Address must be 5-100 chars and can include letters, numbers, spaces, commas, dots, hyphens." });
+      } else {
+        clearErrors(name);
+      }
+      break;
 
-      default:
-        break;
+    default:
+      break;
+  }
+
+  // -------------------------
+  // CURSOR-PRESERVING LOGIC
+  // -------------------------
+  const inputElement = document.querySelector(`[name="${name}"]`);
+  if (inputElement) {
+    const hasError = !!errors?.[name]; // check if the field currently has an error
+    if (hasError) {
+      inputElement.focus(); // keep cursor in the field
     }
-  };
+  }
+};
+
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -192,7 +204,7 @@ const AddHospital = () => {
                 ) : name === "isactive" ? (
                   <div className="flex space-x-4 pt-2">
                     <label className="inline-flex items-center">
-                      <input type="radio" value="true" {...register(name, { required: "Status is required" })} />
+                      <input type="radio" value="true" defaultChecked {...register(name, { required: "Status is required" })} />
                       <span className="ml-1">Yes</span>
                     </label>
                     <label className="inline-flex items-center">
@@ -217,7 +229,7 @@ const AddHospital = () => {
 
           <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
             <button type="button" onClick={() => navigate("/view-hospital")} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-md transition">
-              Cancel
+              Reset
             </button>
             <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-md text-white transition">
               {isSubmitting ? "Saving..." : "Add Hospital"}

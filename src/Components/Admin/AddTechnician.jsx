@@ -63,39 +63,61 @@ const AddTechnician = () => {
           message: "Only letters and spaces are allowed"
         }
       },
-    }
-    ,
+      onBlur: (e, errors) => {
+        if (errors?.technicianname) {
+          const input = document.querySelector(`[name="technicianname"]`);
+          if (input) input.focus();
+        }
+      },
+    },
     {
       name: "addressline",
       label: "Address",
       placeholder: "Enter Address",
       validation: { required: "Address is required" },
+      onBlur: (e, errors) => {
+        if (errors?.addressline) {
+          const input = document.querySelector(`[name="addressline"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
-  name: "city",
-  label: "City",
-  placeholder: "Enter City",
-  validation: {
-    required: "City is required",
-    pattern: {
-      value: /^[A-Za-z\s]+$/,
-      message: "Only letters and spaces are allowed",
+      name: "city",
+      label: "City",
+      placeholder: "Enter City",
+      validation: {
+        required: "City is required",
+        pattern: {
+          value: /^[A-Za-z\s]+$/,
+          message: "Only letters and spaces are allowed",
+        },
+      },
+      onBlur: (e, errors) => {
+        if (errors?.city) {
+          const input = document.querySelector(`[name="city"]`);
+          if (input) input.focus();
+        }
+      },
     },
-  },
-},
-{
-  name: "state",
-  label: "State",
-  placeholder: "Enter State",
-  validation: {
-    required: "State is required",
-    pattern: {
-      value: /^[A-Za-z\s]+$/,
-      message: "Only letters and spaces are allowed",
+    {
+      name: "state",
+      label: "State",
+      placeholder: "Enter State",
+      validation: {
+        required: "State is required",
+        pattern: {
+          value: /^[A-Za-z\s]+$/,
+          message: "Only letters and spaces are allowed",
+        },
+      },
+      onBlur: (e, errors) => {
+        if (errors?.state) {
+          const input = document.querySelector(`[name="state"]`);
+          if (input) input.focus();
+        }
+      },
     },
-  },
-},
-
     {
       name: "pincode",
       label: "PIN Code",
@@ -105,18 +127,30 @@ const AddTechnician = () => {
         required: "PIN code is required",
         pattern: { value: /^\d{6}$/, message: "PIN code must be 6 digits" },
       },
+      onBlur: (e, errors) => {
+        if (errors?.pincode) {
+          const input = document.querySelector(`[name="pincode"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
-  name: "dob",
-  label: "Date of Birth",
-  type: "date",
-  validation: { required: "Date of birth is required" },
-  extraProps: {
-    min: new Date().toISOString().split("T")[0],
-    max: new Date().toISOString().split("T")[0],
-  },
-},
-
+      name: "dob",
+      label: "Date of Birth",
+      type: "date",
+      validation: { required: "Date of birth is required" },
+      onBlur: (e, errors) => {
+        if (errors?.dob) {
+          const input = document.querySelector(`[name="dob"]`);
+          if (input) input.focus();
+        }
+      },
+      // Correctly restrict future dates
+      renderInputProps: {
+        min: "1900-01-01",
+        max: new Date().toISOString().split("T")[0],
+      },
+    },
     {
       name: "contactno",
       label: "Contact Number",
@@ -128,6 +162,12 @@ const AddTechnician = () => {
           value: /^\d{10}$/,
           message: "Contact number must be 10 digits",
         },
+      },
+      onBlur: (e, errors) => {
+        if (errors?.contactno) {
+          const input = document.querySelector(`[name="contactno"]`);
+          if (input) input.focus();
+        }
       },
     },
     {
@@ -198,7 +238,7 @@ const AddTechnician = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
                 (
-                  { name, label, placeholder, type = "text", options, validation },
+                  { name, label, placeholder, type = "text", options, validation, renderInputProps },
                   index
                 ) => (
                   <div key={index} className="space-y-1">
@@ -234,13 +274,8 @@ const AddTechnician = () => {
                         {...register(name, {
                           ...validation,
                           onChange: (e) => {
-                            if (
-                              ["technicianname", "city", "state"].includes(name)
-                            ) {
-                              e.target.value = e.target.value.replace(
-                                /[0-9]/g,
-                                ""
-                              );
+                            if (["technicianname", "city", "state"].includes(name)) {
+                              e.target.value = e.target.value.replace(/[0-9]/g, "");
                             }
                             validation?.onChange && validation.onChange(e);
                           },
@@ -248,6 +283,7 @@ const AddTechnician = () => {
                         onInput={() => trigger(name)}
                         onKeyUp={() => trigger(name)}
                         placeholder={placeholder}
+                        {...(type === "date" && renderInputProps ? renderInputProps : {})}
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
                             ? "border-red-500 focus:ring-red-500"

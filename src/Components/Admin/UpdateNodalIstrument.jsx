@@ -35,7 +35,6 @@ const UpdateNodalInstrument = () => {
           const parsed = JSON.parse(stored);
           setNodalInstrumentToUpdate(parsed);
 
-          // Map the status field to isactive
           const isActiveValue = parsed.status === "Active" ? "true" : "false";
 
           reset({
@@ -51,7 +50,6 @@ const UpdateNodalInstrument = () => {
         }
       }
     } else {
-      // Map the status field to isactive for existing data
       const isActiveValue =
         nodalInstrumentToUpdate.status === "Active" ? "true" : "false";
 
@@ -110,11 +108,11 @@ const UpdateNodalInstrument = () => {
     },
     {
       name: "isactive",
-      label: "Status",
+      label: "Is Active?",
       type: "radio",
       options: [
-        { value: "true", label: "Active" },
-        { value: "false", label: "Inactive" },
+        { value: "true", label: "Yes" },
+        { value: "false", label: "No" },
       ],
       validation: {
         required: "Status is required.",
@@ -168,6 +166,7 @@ const UpdateNodalInstrument = () => {
           </ol>
         </nav>
       </div>
+
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
@@ -180,100 +179,104 @@ const UpdateNodalInstrument = () => {
             </h4>
           </div>
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {fields.map(
-                ({ name, label, type = "text", options, validation }) => (
-                  <div key={name} className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      {label}
-                      {validation?.required && (
-                        <span className="text-red-500"> *</span>
-                      )}
-                    </label>
-                    {type === "radio" ? (
-                      <div className="flex space-x-4 pt-2">
-                        {options.map((option) => (
-                          <label
-                            key={option.value}
-                            className="inline-flex items-center"
-                          >
-                            <input
-                              type="radio"
-                              {...register(name, validation)}
-                              value={option.value}
-                              className="h-4 w-4 text-teal-600 focus:ring-teal-500"
-                            />
-                            <span className="ml-2 text-sm text-gray-700">
-                              {option.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <input
-                        type={type}
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        placeholder={`Enter ${label.toLowerCase()}`}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors ${
-                          errors[name] ? "border-red-500" : "border-gray-300"
-                        }`}
-                      />
+            {/* First Row: Nodal & Instrument Name */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {fields.slice(0, 2).map(({ name, label, validation }) => (
+                <div key={name} className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {label}
+                    {validation?.required && (
+                      <span className="text-red-500"> *</span>
                     )}
-                    {errors[name] && (
-                      <p className="text-red-500 text-sm">
-                        {errors[name].message}
-                      </p>
-                    )}
-                  </div>
-                )
+                  </label>
+                  <input
+                    type="text"
+                    {...register(name, validation)}
+                    onBlur={() => trigger(name)}
+                    placeholder={`Enter ${label.toLowerCase()}`}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors ${
+                      errors[name] ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors[name] && (
+                    <p className="text-red-500 text-sm">{errors[name].message}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Second Row: Active/Inactive */}
+            <div className="pt-4">
+              <label className="block text-sm font-medium text-gray-700">
+                {fields[2].label}
+                <span className="text-red-500"> *</span>
+              </label>
+              <div className="flex space-x-6 pt-2">
+                {fields[2].options.map((option) => (
+                  <label key={option.value} className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register(fields[2].name, fields[2].validation)}
+                      value={option.value}
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              {errors[fields[2].name] && (
+                <p className="text-red-500 text-sm">{errors[fields[2].name].message}</p>
               )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 mt-6">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-none px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Updating...
-                  </span>
-                ) : (
-                  "Update Nodal Instrument"
-                )}
-              </button>
+            {/* Action Buttons aligned right */}
+           {/* Action Buttons aligned right */}
+<div className="flex justify-end gap-4 pt-6 border-t border-gray-200 mt-6">
+  {/* Cancel first */}
+  <button
+    type="button"
+    onClick={handleCancel}
+    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+  >
+    Cancel
+  </button>
 
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="flex-1 sm:flex-none px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+  {/* Update next */}
+  <button
+    type="submit"
+    disabled={isSubmitting}
+    className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+  >
+    {isSubmitting ? (
+      <span className="flex items-center justify-center">
+        <svg
+          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        Updating...
+      </span>
+    ) : (
+      "Update Nodal Instrument"
+    )}
+  </button>
+</div>
+
           </div>
         </form>
       </div>

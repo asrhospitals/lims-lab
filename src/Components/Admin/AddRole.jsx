@@ -13,8 +13,11 @@ const AddRole = () => {
   const { setRoleToUpdate } = useContext(AdminContext);
 
   const { register, handleSubmit, formState: { errors }, reset, setError, trigger } = useForm({
-    mode: "onBlur",
-  });
+  mode: "onBlur",
+  defaultValues: {
+    isactive: "true", // ✅ Default Active = Yes
+  },
+});
 
   // Fetch existing roles on mount
   useEffect(() => {
@@ -69,40 +72,53 @@ const AddRole = () => {
   };
 
   // Fields config
-  const fields = [
-    {
-      name: "roletype",
-      label: "Role Type",
-      placeholder: "Enter Role Type",
-      validation: {
-        required: "Role type is required",
-        minLength: { value: 2, message: "Minimum 2 characters" },
-        maxLength: { value: 30, message: "Maximum 30 characters" },
-        pattern: { value: /^[A-Za-z ]+$/, message: "Only letters and spaces are allowed" },
-      },
+ const fields = [
+  {
+    name: "roletype",
+    label: "Role Type",
+    placeholder: "Enter Role Type",
+    validation: {
+      required: "Role type is required",
+      minLength: { value: 2, message: "Minimum 2 characters" },
+      maxLength: { value: 30, message: "Maximum 30 characters" },
+      pattern: { value: /^[A-Za-z ]+$/, message: "Only letters and spaces are allowed" },
     },
-    {
-      name: "roledescription",
-      label: "Role Description",
-      placeholder: "Enter Role Description",
-      validation: {
-        required: "Role description is required",
-        minLength: { value: 5, message: "Minimum 5 characters" },
-        maxLength: { value: 100, message: "Maximum 100 characters" },
-        pattern: { value: /^[A-Za-z ]+$/, message: "Only letters and spaces are allowed" },
-      },
+    onBlur: (e, errors) => {
+      if (errors?.roletype) {
+        const inputElement = document.querySelector(`[name="roletype"]`);
+        if (inputElement) inputElement.focus();
+      }
     },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "True" },
-        { value: "false", label: "False" },
-      ],
-      validation: { required: "Mandatory field." },
+  },
+  {
+    name: "roledescription",
+    label: "Role Description",
+    placeholder: "Enter Role Description",
+    validation: {
+      required: "Role description is required",
+      minLength: { value: 5, message: "Minimum 5 characters" },
+      maxLength: { value: 100, message: "Maximum 100 characters" },
+      pattern: { value: /^[A-Za-z ]+$/, message: "Only letters and spaces are allowed" },
     },
-  ];
+    onBlur: (e, errors) => {
+      if (errors?.roledescription) {
+        const inputElement = document.querySelector(`[name="roledescription"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: "true", label: "True" },
+      { value: "false", label: "False" },
+    ],
+    validation: { required: "Mandatory field." },
+    // No cursor-preserving needed for radio
+  },
+];
 
   return (
     <>

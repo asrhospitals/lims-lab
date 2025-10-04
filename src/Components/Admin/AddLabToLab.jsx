@@ -15,8 +15,12 @@ const AddLabToLab = () => {
     formState: { errors },
     reset,
     trigger,
-  } = useForm({ mode: "onBlur" });
-
+ } = useForm({
+  mode: "onBlur",
+  defaultValues: {
+    isactive: "true", // ✅ Default Active = Yes
+  },
+});
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
@@ -71,33 +75,44 @@ const AddLabToLab = () => {
   const phoneRegex = /^[6-9]\d{9}$/;
   const lettersOnlyRegex = /^[a-zA-Z\s]+$/; // Only letters, space, _ and -
   const fields = [
-    {
-      name: "labname",
-      label: "Lab Name",
-      placeholder: "Enter Lab Name",
-      validation: {
-        required: "Lab name is required",
-        pattern: {
-          value: lettersOnlyRegex,
-          message: "Only letters, spaces, underscore (_) and hyphen (-) are allowed",
-        },
+  {
+    name: "labname",
+    label: "Lab Name",
+    placeholder: "Enter Lab Name",
+    validation: {
+      required: "Lab name is required",
+      pattern: {
+        value: lettersOnlyRegex,
+        message: "Only letters, spaces, underscore (_) and hyphen (-) are allowed",
+      },
       lettersOnly: true,
-
+    },
+    onBlur: (e, errors) => {
+      if (errors?.labname) {
+        const inputElement = document.querySelector(`[name="labname"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "addressline",
+    label: "Address",
+    placeholder: "Enter Address",
+    validation: {
+      required: "Address is required",
+      pattern: {
+        value: alphanumericRegex,
+        message: "Only letters, numbers, space, - and _ are allowed",
       },
     },
-    {
-      name: "addressline",
-      label: "Address",
-      placeholder: "Enter Address",
-      validation: {
-        required: "Address is required",
-        pattern: {
-          value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
-        },
-      },
+    onBlur: (e, errors) => {
+      if (errors?.addressline) {
+        const inputElement = document.querySelector(`[name="addressline"]`);
+        if (inputElement) inputElement.focus();
+      }
     },
-    {
+  },
+  {
     name: "city",
     label: "City",
     placeholder: "Enter City",
@@ -107,6 +122,12 @@ const AddLabToLab = () => {
         value: lettersOnlyRegex,
         message: "Only letters and spaces are allowed",
       },
+    },
+    onBlur: (e, errors) => {
+      if (errors?.city) {
+        const inputElement = document.querySelector(`[name="city"]`);
+        if (inputElement) inputElement.focus();
+      }
     },
   },
   {
@@ -120,21 +141,33 @@ const AddLabToLab = () => {
         message: "Only letters and spaces are allowed",
       },
     },
+    onBlur: (e, errors) => {
+      if (errors?.state) {
+        const inputElement = document.querySelector(`[name="state"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
   },
-    {
-      name: "pincode",
-      label: "PIN Code",
-      placeholder: "Enter PIN Code",
-      type: "text",
-      validation: {
-        required: "PIN code is required",
-        pattern: {
-          value: pinCodeRegex,
-          message: "PIN must be exactly 6 digits",
-        },
+  {
+    name: "pincode",
+    label: "PIN Code",
+    placeholder: "Enter PIN Code",
+    type: "text",
+    validation: {
+      required: "PIN code is required",
+      pattern: {
+        value: pinCodeRegex,
+        message: "PIN must be exactly 6 digits",
       },
     },
-    {
+    onBlur: (e, errors) => {
+      if (errors?.pincode) {
+        const inputElement = document.querySelector(`[name="pincode"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
     name: "contactperson",
     label: "Contact Person",
     placeholder: "Enter Contact Person",
@@ -145,45 +178,65 @@ const AddLabToLab = () => {
         message: "Only letters and spaces are allowed",
       },
     },
+    onBlur: (e, errors) => {
+      if (errors?.contactperson) {
+        const inputElement = document.querySelector(`[name="contactperson"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
   },
-    {
-      name: "contactno",
-      label: "Contact Number",
-      type: "text",
-      placeholder: "Enter Contact Number",
-      validation: {
-        required: "Contact number is required",
-        pattern: {
-          value: phoneRegex,
-          message: "Enter valid 10-digit mobile number",
-        },
+  {
+    name: "contactno",
+    label: "Contact Number",
+    type: "text",
+    placeholder: "Enter Contact Number",
+    validation: {
+      required: "Contact number is required",
+      pattern: {
+        value: phoneRegex,
+        message: "Enter valid 10-digit mobile number",
       },
     },
-    {
-      name: "email",
-      label: "Email",
-      placeholder: "Enter Email",
-      validation: {
-        required: "Email is required",
-        pattern: {
-          value: /^\S+@\S+\.\S+$/,
-          message: "Invalid email format",
-        },
+    onBlur: (e, errors) => {
+      if (errors?.contactno) {
+        const inputElement = document.querySelector(`[name="contactno"]`);
+        if (inputElement) inputElement.focus();
+      }
+    },
+  },
+  {
+    name: "email",
+    label: "Email",
+    placeholder: "Enter Email",
+    validation: {
+      required: "Email is required",
+      pattern: {
+        value: /^\S+@\S+\.\S+$/,
+        message: "Invalid email format",
       },
     },
-    {
-      name: "isactive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: {
-        required: "Status is required",
-      },
+    onBlur: (e, errors) => {
+      if (errors?.email) {
+        const inputElement = document.querySelector(`[name="email"]`);
+        if (inputElement) inputElement.focus();
+      }
     },
-  ];
+  },
+  {
+    name: "isactive",
+    label: "Is Active?",
+    type: "radio",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+    validation: {
+      required: "Status is required",
+    },
+    // No cursor-preserving needed for radio
+  },
+];
+
 
   return (
     <>

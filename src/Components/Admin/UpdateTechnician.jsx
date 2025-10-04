@@ -148,7 +148,8 @@ const UpdateTechnician = () => {
       await updateTechnician(id, payload);
 
       toast.success("✅ Technician updated successfully!");
-      navigate("/view-technician");
+      navigate("/view-technician", { state: { refresh: true } });
+
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||

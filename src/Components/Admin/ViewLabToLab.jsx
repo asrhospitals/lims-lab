@@ -122,6 +122,10 @@ const ViewLabToLab = () => {
             <li aria-current="page" className="text-gray-500">
               Lab To Lab
             </li>
+             <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+               View Lab To Lab
+            </li>
           </ol>
         </nav>
       </div>

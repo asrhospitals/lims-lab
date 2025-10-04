@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
 import axios from "axios";
-import { viewSpecimenTypes } from "../../services/apiService";
 
 const ViewSpecimenType = () => {
   const [specimenTypes, setSpecimenTypes] = useState([]);
@@ -21,18 +20,18 @@ const ViewSpecimenType = () => {
 
       try {
         const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         const data = response.data.data || [];
-
         setSpecimenTypes(data);
         setFilteredSpecimenTypes(data);
-      } catch (error) {
-        console.error("Error fetching specimen types:", error);
+      } catch (err) {
+        console.error("Error fetching specimen types:", err);
+        setError("Failed to fetch specimen types.");
       } finally {
         setLoading(false);
       }
@@ -57,7 +56,6 @@ const ViewSpecimenType = () => {
   }, [search, specimenTypes]);
 
   const handleUpdate = (specimenType) => {
-    // Navigate and pass the ID in URL
     navigate(`/update-specimen-type/${specimenType.id}`);
   };
 
@@ -65,7 +63,6 @@ const ViewSpecimenType = () => {
     { key: "id", label: "ID" },
     { key: "specimenname", label: "Specimen Name" },
     { key: "specimendes", label: "Description" },
-    // { key: "status", label: "Status" },
     { key: "status", label: "Status" },
   ];
 

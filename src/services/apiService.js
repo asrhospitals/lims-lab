@@ -19,25 +19,13 @@ export const addDepartment = async (departmentData) => {
 
 
 
+
+
+
 export const viewDepartments = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
     const url = `${API_ROOT_URL}/master/get-department${
-      queryString ? `?${queryString}` : ""
-    }`;
-
-    const res = await axios.get(url);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-// Investigation API functions
-export const viewInvestigations = async (params = {}) => {
-  try {
-    const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-test${
       queryString ? `?${queryString}` : ""
     }`;
 
@@ -104,6 +92,20 @@ export const addSubDepartments = async (subDepartmentData) => {
     throw error;
   }
 };
+
+
+export const addAccessionMaster = async (payload) => {
+  try {
+    return await axios.post(
+      `${API_ROOT_URL}/master/add-accession`,
+      payload
+    );
+  } catch (error) {
+    console.error("Error adding add-accession:", error);
+    throw error;
+  }
+};
+
 
 
 
@@ -300,10 +302,26 @@ export const updateNodalHospital = async (id, nodalHospitalData) => {
 };
 
 // Instrument API functions
-export const viewInstruments = async () => {
+// export const viewInstruments = async () => {
+//   try {
+//     const res = await axios.get(`${API_ROOT_URL}/master/get-instrument`);
+//     return res.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+// Fetch all instruments (list)
+export const viewInstruments = async (params = {}) => {
   try {
-    const res = await axios.get(`${API_ROOT_URL}/master/get-instrument`);
-    return res.data;
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_ROOT_URL}/master/get-instrument${queryString ? `?${queryString}` : ""}`;
+    const res = await axios.get(url);
+
+    // Make sure backend returns { data: [...], meta: {...} }
+    return {
+      data: res.data.data || [],
+      meta: res.data.meta || { totalItems: res.data.data.length, totalPages: 1 }
+    };
   } catch (error) {
     throw error;
   }
@@ -323,6 +341,15 @@ export const getHospitalList = async (id) => {
 };
 
 
+// export const viewInstrument = async (id) => {
+//   try {
+//     const res = await axios.get(`${API_ROOT_URL}/master/get-instrument/${id}`);
+//     return res.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+// Fetch a single instrument by ID
 export const viewInstrument = async (id) => {
   try {
     const res = await axios.get(`${API_ROOT_URL}/master/get-instrument/${id}`);
@@ -334,13 +361,17 @@ export const viewInstrument = async (id) => {
 
 export const addInstrument = async (instrumentData) => {
   try {
-    await axios.post(`${API_ROOT_URL}/master/add-instrument`, instrumentData);
-    return response;
+    const response = await axios.post(   // ✅ save the result
+      `${API_ROOT_URL}/master/add-instrument`,
+      instrumentData
+    );
+    return response;   // ✅ now defined correctly
   } catch (error) {
     console.error("Error adding instrument:", error);
     throw error;
   }
 };
+
 
 export const updateInstrument = async (id, instrumentData) => {
   try {
@@ -355,14 +386,17 @@ export const updateInstrument = async (id, instrumentData) => {
 };
 
 // Nodal Instrument API functions
-export const viewNodalInstruments = async () => {
+export const viewNodalInstruments = async (params = {}) => {
   try {
-    const res = await axios.get(`${API_ROOT_URL}/master/get-nodalinstrument`);
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_ROOT_URL}/master/get-nodalinstrument${queryString ? `?${queryString}` : ""}`;
+    const res = await axios.get(url);
     return res.data;
   } catch (error) {
     throw error;
   }
 };
+
 
 export const viewNodalInstrument = async (id) => {
   try {
@@ -467,12 +501,20 @@ export const viewPhlebotomist = async (id) => {
 
 export const addPhlebotomist = async (phlebotomistData) => {
   try {
-    await axios.post(`${API_ROOT_URL}/master/add-phlebo`, phlebotomistData);
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) throw new Error("Auth token missing");
+
+    const res = await axios.post(`${API_ROOT_URL}/master/add-phlebo`, phlebotomistData, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    return res.data;
   } catch (error) {
-    console.error("Error adding phlebotomist:", error);
+    console.error("Error adding phlebotomist:", error.response || error);
     throw error;
   }
 };
+
 
 export const updatePhlebotomist = async (id, phlebotomistData) => {
   try {
@@ -630,6 +672,11 @@ export const viewSpecimenTypes = async (params = {}) => {
   }
 };
 
+
+
+
+
+
 export const viewSpecimenType = async (id) => {
   try {
     const res = await axios.get(`${API_ROOT_URL}/master/get-specimen/${id}`);
@@ -660,7 +707,20 @@ export const updateSpecimenType = async (id, specimenTypeData) => {
   }
 };
 
+// Investigation API functions
+export const viewInvestigations = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_ROOT_URL}/master/get-test${
+      queryString ? `?${queryString}` : ""
+    }`;
 
+    const res = await axios.get(url);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const viewInvestigation = async (id) => {
   try {
@@ -688,6 +748,106 @@ export const updateInvestigation = async (id, investigationData) => {
     );
   } catch (error) {
     console.error("Error updating investigation:", error);
+    throw error;
+  }
+};
+// Profile API functions
+// Add Profile
+export const addProfile = async (profileData) => {
+  try {
+    const authToken = localStorage.getItem("authToken");
+    const res = await axios.post(
+      `${API_ROOT_URL}/master/add-profile`,
+      profileData,
+      {
+        headers: { Authorization: `Bearer ${authToken}` },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Error adding profile:", error.response || error);
+    throw error;
+  }
+};
+
+// View Profiles
+export const viewProfiles = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_ROOT_URL}/master/get-profile${
+      queryString ? `?${queryString}` : ""
+    }`;
+    const res = await axios.get(url);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Update Profile
+export const updateProfile = async (id, profileData) => {
+  try {
+    const authToken = localStorage.getItem("authToken");
+    const res = await axios.put(
+      `${API_ROOT_URL}/master/update-profile/${id}`,
+      profileData,
+      {
+        headers: { Authorization: `Bearer ${authToken}` },
+      }
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Error updating profile:", error.response || error);
+    throw error;
+  }
+};
+
+
+
+
+export const viewAllSpecimenType = async () => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-all-specimen`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+export const viewAllDepartmentDetails = async () => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-all-departments`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+export const viewAllSubDepartmentDetails = async () => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-all-subdpt`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const viewAllROles = async () => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-all-roles`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const viewAllInstrument = async () => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-all-instrument`);
+    return res.data;
+  } catch (error) {
     throw error;
   }
 };

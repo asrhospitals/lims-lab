@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const PatientRegistration = () => {
   const [patients, setPatients] = useState([]);
@@ -9,277 +11,314 @@ const PatientRegistration = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [dateFilter, setDateFilter] = useState("All");
-  const [showDateRange, setShowDateRange] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [pBarcode, setPBarcode] = useState("");
   const navigate = useNavigate();
 
+  // 🔹 Initial Fetch Patients
   useEffect(() => {
-
     const fetchPatients = async () => {
-        try {
-            const hospitalName = localStorage.getItem("hospital_name");
-            const authToken = localStorage.getItem("authToken"); // Retrieve the token from local storage
+      try {
+        setError("");
+        const hospitalIdLocalStorage = localStorage.getItem("hospital_id");
+        const authToken = localStorage.getItem("authToken");
 
-            const response = await fetch(`https://asrphleb.asrhospitalindia.in/phelb/get-patient-test/${encodeURIComponent(hospitalName)}`, {
-            method: 'GET',
+        const response = await fetch(
+          `https://asrphleb.asrhospitalindia.in/api/v1/phleb/get-patient-data/${hospitalIdLocalStorage}`,
+          {
+            method: "GET",
             headers: {
-                'Authorization': `Bearer ${authToken}`, // Use the token in the Authorization header
-                'Content-Type': 'application/json'
-            }
-            });
-            
-            // Log the response status and URL for debugging
-            console.log(`Fetching patients from: ${response.url}`);
-            console.log(`Response status: ${response.status}`);
+              Authorization: `Bearer ${authToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-            if (!response.ok) {
-            const errorMessage = await response.text(); // Get the error message from the response
-            console.error("Error fetching patients:", errorMessage);
-            throw new Error("Network response was not ok");
-            }
+        if (!response.ok) throw new Error("Network response was not ok");
 
-            const data = await response.json();
-            console.log("Successfully fetched patients:", data); // Log the successful response
+        const result = await response.json();
 
-            const formattedData = data.map(item => ({
-              patient_id: item.patient_id,
-              p_name: item.p_name,
-              p_age: item.p_age,
-              p_gender: item.p_gender,
-              p_mobile: item.p_mobile,
-              hospital_name: item.hospital_name,
-              p_regdate: item.p_regdate,
-              registration_status: item.registration_status
-            }));
-            
-            setPatients(formattedData);
-            setFilteredPatients(formattedData);
-            
+        const formattedData = (result.data || []).map((item) => ({
+          id: item.id,
+          p_name: item.p_name,
+          pbarcode: item.patientPPModes?.[0]?.pbarcode ?? "-",
+          p_age: item.p_age,
+          p_gender: item.p_gender,
+          p_mobile: item.p_mobile,
+          hospital_name: item.hospital?.hospitalname ?? "-",
+          p_regdate: item.p_regdate,
+          registration_status: item.registration_status ?? "-",
+        }));
 
-            setPatients(formattedData);
-            setFilteredPatients(formattedData);
-        } catch (err) {
-            console.error("Failed to fetch patients:", err); // Log the error
-            setError("Failed to fetch patients.");
-        } finally {
-            setLoading(false);
-        }
-        };
-
+        setPatients(formattedData);
+        setFilteredPatients(formattedData);
+      } catch (err) {
+        console.error("Error fetching patients:", err);
+        setError("Failed to fetch patients.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchPatients();
   }, []);
 
+  // 🔹 Search Filter
   useEffect(() => {
-    let filtered = patients;
-
-    // Filter by search
+    let filtered = [...patients];
     if (search.trim()) {
       const lower = search.toLowerCase();
-      filtered = filtered.filter(item =>
-        (item.name || "").toLowerCase().includes(lower) ||
-        (item.mobile || "").includes(lower)
+      filtered = filtered.filter(
+        (item) =>
+          (item.p_name || "").toLowerCase().includes(lower) ||
+          (item.p_mobile || "").includes(lower)
       );
     }
-
-    // Filter by date
-    if (dateFilter !== "All" && dateFilter !== "Custom") {
-      const today = new Date();
-      let filterDate = new Date();
-
-      switch (dateFilter) {
-        case "Today":
-          break;
-        case "3 days":
-          filterDate.setDate(today.getDate() - 3);
-          break;
-        case "Week":
-          filterDate.setDate(today.getDate() - 7);
-          break;
-        case "Month":
-          filterDate.setMonth(today.getMonth() - 1);
-          break;
-        default:
-          break;
-      }
-
-      filtered = filtered.filter(item => {
-        const regDate = new Date(item.registrationDate);
-        return dateFilter === "Today" 
-          ? regDate.toDateString() === today.toDateString()
-          : regDate >= filterDate;
-      });
-    }
-
-    // Filter by custom date range
-    if (dateFilter === "Custom" && startDate && endDate) {
-      filtered = filtered.filter(item => {
-        const regDate = new Date(item.registrationDate);
-        return regDate >= new Date(startDate) && regDate <= new Date(endDate);
-      });
-    }
-
     setFilteredPatients(filtered);
-  }, [search, dateFilter, patients, startDate, endDate]);
+  }, [search, patients]);
 
-  const handleDateFilterChange = (e) => {
-    const value = e.target.value;
-    setDateFilter(value);
-    setShowDateRange(value === "Custom");
-    setStartDate("");
-    setEndDate("");
+  // 🔹 Fetch by Date / Barcode
+  const fetchPatientsByDate = async () => {
+    if ((!fromDate || !toDate) && !pBarcode) {
+      alert("Please enter a date range or a patient barcode to search.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const authToken = localStorage.getItem("authToken");
+
+      let query = [];
+      if (fromDate && toDate)
+        query.push(`startDate=${fromDate}&endDate=${toDate}`);
+      if (pBarcode) query.push(`pbarcode=${pBarcode}`);
+
+      const response = await fetch(
+        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?${query.join(
+          "&"
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch by date");
+
+      const result = await response.json();
+      const patientsArray = Array.isArray(result) ? result : result.data || [];
+
+      const formattedData = patientsArray.map((item, idx) => ({
+        id: item.id || idx + 1,
+        p_name: item.p_name,
+        pbarcode: item.patientPPModes?.[0]?.pbarcode ?? "-",
+        p_age: item.p_age,
+        p_gender: item.p_gender,
+        p_mobile: item.p_mobile ?? "-",
+        hospital_name: item.hospital?.hospitalname ?? "-",
+        p_regdate: item.p_regdate,
+        registration_status: item.registration_status ?? "-",
+      }));
+
+      setPatients(formattedData);
+      setFilteredPatients(formattedData);
+
+      if (formattedData.length === 0) {
+        setError("No patients found for this date range.");
+      } else {
+        setError("");
+      }
+    } catch (err) {
+      console.error("Error fetching patients by date:", err);
+      setError("Failed to fetch patients by date.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // 🔹 Export to Excel
+  const handleExportExcel = () => {
+    if (!filteredPatients || filteredPatients.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const exportData = filteredPatients.map((item) => ({
+      ID: item.id,
+      "Patient Code": item.pbarcode,
+      Name: item.p_name,
+      Age: item.p_age,
+      Gender: item.p_gender,
+      Mobile: item.p_mobile,
+      Hospital: item.hospital_name,
+      "Registration Date": item.p_regdate
+        ? new Date(item.p_regdate).toLocaleDateString()
+        : "-",
+      Status: item.registration_status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Patients");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, "PatientRegistration.xlsx");
+  };
+
+  // 🔹 Table Columns
   const columns = [
-    { key: "patient_id", label: "ID" },
+    { key: "id", label: "ID" },
+    { key: "pbarcode", label: "Bar Code" },
     { key: "p_name", label: "Name" },
     { key: "p_age", label: "Age" },
     { key: "p_gender", label: "Gender" },
     { key: "p_mobile", label: "Mobile" },
     { key: "hospital_name", label: "Hospital" },
     { key: "p_regdate", label: "Registration Date" },
-    { key: "registration_status", label: "Status" }
+    { key: "registration_status", label: "Status" },
   ];
-  
-  const mappedItems = filteredPatients.map(item => ({
-    patient_id: item.patient_id,
-    p_name: item.p_name,
-    p_age: item.p_age,
-    p_gender: item.p_gender,
-    p_mobile: item.p_mobile,
-    hospital_name: item.hospital_name,
+
+  const mappedItems = filteredPatients.map((item) => ({
+    ...item,
     p_regdate: item.p_regdate
       ? new Date(item.p_regdate).toLocaleDateString()
       : "-",
-    registration_status: item.registration_status
   }));
-  
-  console.log("Mapped Items:", mappedItems);
-  
-  
-  console.log("Mapped Items:", mappedItems);
-  
-  
-  
-  console.log("Filtered Patients:", filteredPatients);
-  console.log("Mapped Items:", mappedItems);
-
-
-  const handleUpdate = (investigation) => {
-    // setInvestigationToUpdate(investigation);
-    // localStorage.setItem("investigationToUpdate", JSON.stringify(investigation));
-    // navigate("/update-investigation");
-  };
-
-  const handleViewDetails = (investigation) => {
-    // localStorage.setItem("investigationToView", JSON.stringify(investigation));
-    // navigate("/view-investigation-details");
-  };
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors">
+        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
-              <Link to="/" className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors">
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
+              >
                 🏠︎ Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <Link to="/patient-registration" className="text-gray-700 hover:text-teal-600 transition-colors">
+              <Link
+                to="/patient-registration"
+                className="text-gray-700 hover:text-teal-600"
+              >
                 Patients
               </Link>
             </li>
             <li className="text-gray-400">/</li>
-            <li aria-current="page" className="text-gray-500">
-              View Patients
-            </li>
+            <li className="text-gray-500">View Patients</li>
           </ol>
         </nav>
       </div>
 
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      {/* Content */}
+      <div className="w-full mt-12 px-2 sm:px-4 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
+          {/* Header & Export */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Patient Registration List</h2>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-64">
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
-                  placeholder="Search Patient..."
-                />
-                <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
-              </div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={dateFilter}
-                  onChange={handleDateFilterChange}
-                  className="border border-gray-300 rounded-lg p-2"
-                >
-                  <option value="All">All</option>
-                  <option value="Today">Today</option>
-                  <option value="3 days">Last 3 Days</option>
-                  <option value="Week">Last Week</option>
-                  <option value="Month">Last Month</option>
-                  <option value="Custom">Custom</option>
-                </select>
-                {showDateRange && (
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="border border-gray-300 rounded-lg p-2"
-                      placeholder="Start Date"
-                    />
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="border border-gray-300 rounded-lg p-2"
-                      placeholder="End Date"
-                    />
-                  </div>
-                )}
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+              Patient Registration List
+            </h2>
+
+            <div className="flex flex-row gap-3">
+              <div
+                onClick={handleExportExcel}
+                className="bg-green-100 rounded-lg p-2 cursor-pointer hover:bg-green-200 transition flex items-center justify-center"
+              >
+                <img src="./excel.png" alt="Export to Excel" className="w-7 h-7" />
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-4">
+          {/* Add Patient Button */}
+          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-3 mb-4">
             <button
               onClick={() => navigate("/patient-registration-add")}
-              className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
+              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 w-full sm:w-auto"
             >
               Add Patient
             </button>
           </div>
 
-          {loading ? (
-            <div className="text-center py-6 text-gray-500">Loading...</div>
-          ) : error ? (
-            <div className="text-center py-6 text-red-500">{error}</div>
-          ) : filteredPatients.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">No patients found.</div>
-          ) : (
-            <DataTable
-            items={mappedItems}
-            columns={columns}
-            itemsPerPage={10}
-            showDetailsButtons={false}
-            onUpdate={handleUpdate}
-            onView={handleViewDetails}
-          />
-          
-          
-          )}
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row flex-wrap gap-4 mb-8">
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="block text-sm font-medium text-gray-700">
+                From Date
+              </label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="border px-3 py-2 rounded w-full md:w-48"
+              />
+            </div>
+
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="block text-sm font-medium text-gray-700">
+                To Date
+              </label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="border px-3 py-2 rounded w-full md:w-48"
+              />
+            </div>
+
+            <div className="flex flex-col w-full md:w-48">
+              <label className="block text-sm font-medium text-gray-700">
+                Patient Barcode
+              </label>
+              <input
+                type="text"
+                value={pBarcode}
+                onChange={(e) => setPBarcode(e.target.value)}
+                placeholder="Enter barcode"
+                className="border px-3 py-2 rounded w-full"
+              />
+            </div>
+
+            <div className="flex w-full md:w-auto items-end">
+              <button
+                type="button"
+                onClick={fetchPatientsByDate}
+                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 w-full md:w-auto"
+              >
+                Search
+              </button>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="text-center py-6 text-gray-500">Loading...</div>
+            ) : error ? (
+              <div className="text-center py-6 text-red-500">{error}</div>
+            ) : filteredPatients.length === 0 ? (
+              <div className="text-center py-6 text-gray-500">
+                No patients found.
+              </div>
+            ) : (
+              <DataTable
+                items={mappedItems}
+                columns={columns}
+                itemsPerPage={10}
+                showDetailsButtons={false}
+                onUpdate={(patient) =>
+                  navigate(`/update-patient/${patient.id}`)
+                }
+              />
+            )}
+          </div>
         </div>
       </div>
     </>

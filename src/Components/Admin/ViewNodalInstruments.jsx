@@ -1,4 +1,4 @@
-import  { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../context/adminContext";
@@ -11,18 +11,40 @@ const ViewNodalInstrument = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
   const { setNodalInstrumentToUpdate } = useContext(AdminContext);
+
+  // Handlers for pagination
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1); // Reset to first page
+  };
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const data = await viewNodalInstruments();
-        const instruments = data || [];
-        setInstruments(instruments);
-        setFiltered(instruments);
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+        const response = await viewNodalInstruments(params);
+        const data = (response.data || []).sort(
+          (a, b) => Number(a.instruments_id) - Number(b.instruments_id)
+        );
+        setInstruments(data);
+        setFiltered(data); // fixed state name
+        setTotalPages(response?.meta?.totalPages || 1);
+        setTotalItems(response?.meta?.totalItems || 0);
       } catch (err) {
         console.error("Failed to fetch nodal instruments:", err);
         setError(
@@ -33,8 +55,8 @@ const ViewNodalInstrument = () => {
       }
     };
 
-    fetchAll();
-  }, []);
+    fetchAll(); // ✅ call the correct function
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     const term = search.toLowerCase();
@@ -57,25 +79,19 @@ const ViewNodalInstrument = () => {
     navigate("/update-nodal-instrument");
   };
 
-  // const activeCount = instruments.filter((i) => i.isactive).length;
-  // const inactiveCount = instruments.length - activeCount;
-
   const columns = [
     { key: "id", label: "ID" },
     { key: "instrumentname", label: "Instrument" },
     { key: "nodalname", label: "Nodal" },
     { key: "status", label: "Status" },
-    // status handled by DataTable
   ];
 
-  const mappedItems = (filtered?.data || []).map((i) => ({
+  const mappedItems = (filtered || []).map((i) => ({
     id: i.id ?? Math.random().toString(36).substring(2, 9),
     instrumentname: i.instrumentName || "-",
     nodalname: i.nodalName || "-",
     status: i.isactive ? "Active" : "Inactive",
   }));
-  
-  
 
   return (
     <>
@@ -124,7 +140,6 @@ const ViewNodalInstrument = () => {
                   type="text"
                   value={search}
                   onChange={(e) => {
-                    // Optional: Restrict input to alphabets, numbers, underscore, comma
                     const val = e.target.value;
                     if (/^[a-zA-Z0-9_,\s]*$/.test(val)) {
                       setSearch(val);
@@ -161,7 +176,13 @@ const ViewNodalInstrument = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

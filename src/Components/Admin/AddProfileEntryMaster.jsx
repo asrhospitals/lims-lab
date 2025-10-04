@@ -82,6 +82,12 @@ const AddProfileEntryMaster = () => {
           message: "Only letters and spaces are allowed",
         },
       },
+      onBlur: (e, errors) => {
+        if (errors?.profileName) {
+          const input = document.querySelector(`[name="profileName"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
       name: "profilecode",
@@ -94,6 +100,12 @@ const AddProfileEntryMaster = () => {
           message: "Only letters and numbers are allowed (no spaces)",
         },
       },
+      onBlur: (e, errors) => {
+        if (errors?.profilecode) {
+          const input = document.querySelector(`[name="profilecode"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
       name: "alternativebarcode",
@@ -104,6 +116,7 @@ const AddProfileEntryMaster = () => {
         { value: "false", label: "No" },
       ],
       validation: { required: "Please choose an option" },
+      defaultValue: "false", // 👈 Default No
     },
     {
       name: "isactive",
@@ -114,6 +127,7 @@ const AddProfileEntryMaster = () => {
         { value: "false", label: "No" },
       ],
       validation: { required: "Please choose an option" },
+      defaultValue: "true", // 👈 Default Yes
     },
   ];
 
@@ -169,6 +183,7 @@ const AddProfileEntryMaster = () => {
                     type = "text",
                     options,
                     validation,
+                    defaultValue,
                   },
                   index
                 ) => (
@@ -191,6 +206,7 @@ const AddProfileEntryMaster = () => {
                               type="radio"
                               {...register(name, validation)}
                               value={opt.value}
+                              defaultChecked={opt.value === defaultValue} 
                               className="h-4 w-4 text-teal-600"
                             />
                             <span className="ml-2">{opt.label}</span>

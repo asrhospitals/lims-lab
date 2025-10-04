@@ -25,8 +25,12 @@ const AddNodalHospital = () => {
     trigger,
     setError,
     clearErrors,
-  } = useForm({ mode: "onBlur" });
-
+  } = useForm({
+  mode: "onBlur",
+  defaultValues: {
+    isactive: "true", // ✅ Default Active = Yes
+  },
+});
   useEffect(() => {
     const fetchData = async () => {
       try {

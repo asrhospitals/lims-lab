@@ -11,10 +11,12 @@ const ViewInvestigation = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+   const [currentPage, setCurrentPage] = useState(1);
+   const [totalPages, setTotalPages] = useState(1);
+   const [totalItems, setTotalItems] = useState(0);
+   const [itemsPerPage, setItemsPerPage] = useState(10);
+   
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +26,6 @@ const ViewInvestigation = () => {
           page: currentPage,
           limit: itemsPerPage,
         };
-
         const response = await viewInvestigations(params);
 
         const data = (response.data || []).sort(
@@ -33,7 +34,7 @@ const ViewInvestigation = () => {
 
         setInvestigations(data);
         setFilteredInvestigations(data);
-        setTotalPages(response?.meta?.totalPages || 1);
+         setTotalPages(response?.meta?.totalPages || 1);
         setTotalItems(response?.meta?.totalItems || 0);
       } catch (err) {
         setError(
@@ -45,17 +46,7 @@ const ViewInvestigation = () => {
     };
 
     fetchInvestigations();
-  }, [currentPage, itemsPerPage]);
-
-  
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  const handlePageSizeChange = (newSize) => {
-    setItemsPerPage(newSize);
-    setCurrentPage(1); // Reset to first page when changing page size
-  };
+  },[currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (!search.trim()) {
@@ -72,13 +63,20 @@ const ViewInvestigation = () => {
   }, [search, investigations]);
 
   const handleUpdate = (investigation) => {
-    navigate(`/update-investigation/${investigation.id}`);
+    //  id is the investigation_id only
+    navigate(`/update-investigation/${investigation.investigation_id}`);
   };
 
   const handleViewDetails = (investigation) => {
-    navigate(`/view-investigation-details/${investigation.id}`);
+    navigate(`/view-investigation-details/${investigation.investigation_id}`);
   };
-
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+   const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
   const columns = [
     { key: "id", label: "ID" },
     { key: "testname", label: "Test Name" },
@@ -90,7 +88,7 @@ const ViewInvestigation = () => {
   const mappedItems = (filteredInvestigations || []).map((item, index) => ({
     ...item,
     id: index + 1,
-    investigation_id: item.investigation_id,
+    investigation_id: item.id,
     shortcode: item.shortcode,
     testname: item.testname,
     department:
@@ -176,21 +174,21 @@ const ViewInvestigation = () => {
             </div>
           ) : (
             <DataTable
-            items={mappedItems}
-            columns={columns}
-            serverSidePagination={true}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            showDetailsButtons={false}
-            onUpdate={handleUpdate}
-          />
+              items={mappedItems}
+              columns={columns}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              showDetailsButtons={false}
+              onUpdate={handleUpdate}
+            />
           )}
         </div>
-      </div> 
+      </div>
     </>
   );
 };

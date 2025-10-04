@@ -19,6 +19,9 @@ const AddNodal = () => {
     reset,
   } = useForm({
     mode: "onChange",
+     defaultValues: {
+      isactive: "true", // ✅ Default selected = Yes
+    },
   });
   const watchedFields = watch(); // watch all fields
 
@@ -95,68 +98,76 @@ const AddNodal = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Nodal Name Dropdown */}
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Nodal Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  {...register("nodalname", {
-                    required: "Nodal Name is required",
-                    pattern: {
-                      value: /^[a-zA-Z_,\s]+$/,
-                      message:
-                        "Only letters, underscore (_), comma (,) and spaces allowed",
-                    },
-                    maxLength: {
-                      value: 20,
-                      message: "Max length is 20 characters",
-                    },
-                    validate: (value) =>
-                      !/^[0-9]+$/.test(value) || "Cannot be numbers only",
-                  })}
-                  onBlur={() => trigger("nodalname")}
-                  placeholder="Enter code (e.g., DH)"
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.nodalname
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-teal-500"
-                  } focus:ring-2 focus:border-transparent transition`}
-                  onKeyUp={(e) => {
-                    const value = e.target.value;
-                    if (["dptname", "city", "state"].includes(name)) {
-                      const isValid = /^[a-zA-Z\s]*$/.test(value);
-                      if (!isValid) {
-                        setError(name, {
-                          type: "manual",
-                          message: "Only letters are allowed",
-                        });
-                      } else {
-                        clearErrors(name);
-                      }
-                    }
-                  }}
-                  onInput={(e) => {
-                    const value = e.target.value;
-                    if (["dptname", "city", "state"].includes(name)) {
-                      const isValid = /^[a-zA-Z\s]*$/.test(value);
-                      if (!isValid) {
-                        setError(name, {
-                          type: "manual",
-                          message: "Only letters are allowed",
-                        });
-                      } else {
-                        clearErrors(name);
-                      }
-                    }
-                  }}
-                />
+  <label className="block text-sm font-medium text-gray-700">
+    Nodal Name <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    {...register("nodalname", {
+      required: "Nodal Name is required",
+      pattern: {
+        value: /^[a-zA-Z_,\s]+$/,
+        message:
+          "Only letters, underscore (_), comma (,) and spaces allowed",
+      },
+      maxLength: {
+        value: 20,
+        message: "Max length is 20 characters",
+      },
+      validate: (value) =>
+        !/^[0-9]+$/.test(value) || "Cannot be numbers only",
+    })}
+    onBlur={() => {
+      trigger("nodalname"); // existing validation trigger
+      // --- CURSOR-PRESERVING LOGIC ---
+      if (errors?.nodalname) {
+        const inputElement = document.querySelector(`[name="nodalname"]`);
+        if (inputElement) inputElement.focus(); // keep cursor in the field
+      }
+    }}
+    placeholder="Enter code (e.g., DH)"
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.nodalname
+        ? "border-red-500 focus:ring-red-500"
+        : "border-gray-300 focus:ring-teal-500"
+    } focus:ring-2 focus:border-transparent transition`}
+    onKeyUp={(e) => {
+      const value = e.target.value;
+      if (["dptname", "city", "state"].includes(name)) {
+        const isValid = /^[a-zA-Z\s]*$/.test(value);
+        if (!isValid) {
+          setError(name, {
+            type: "manual",
+            message: "Only letters are allowed",
+          });
+        } else {
+          clearErrors(name);
+        }
+      }
+    }}
+    onInput={(e) => {
+      const value = e.target.value;
+      if (["dptname", "city", "state"].includes(name)) {
+        const isValid = /^[a-zA-Z\s]*$/.test(value);
+        if (!isValid) {
+          setError(name, {
+            type: "manual",
+            message: "Only letters are allowed",
+          });
+        } else {
+          clearErrors(name);
+        }
+      }
+    }}
+  />
 
-                {errors.nodalname && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.nodalname.message}
-                  </p>
-                )}
-              </div>
+  {errors.nodalname && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.nodalname.message}
+    </p>
+  )}
+</div>
+
 
               {/* Mother Lab */}
               <div className="space-y-1">

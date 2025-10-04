@@ -44,21 +44,20 @@ const UpdateLabToLab = () => {
       try {
         setLoading(true);
         const response = await viewLabToLab(id);
-        const data = response;
 
-        if (data) {
-          setLabData(data);
+        if (response) {
+          setLabData(response);
 
           reset({
-            labname: data.labname || "",
-            addressline: data.addressline || "",
-            city: data.city || "",
-            state: data.state || "",
-            pincode: data.pincode || "",
-            contactperson: data.contactperson || "",
-            contactno: data.contactno || "",
-            email: data.email || "",
-            isactive: String(data.isactive),
+            labname: response.labname || "",
+            addressline: response.addressline || "",
+            city: response.city || "",
+            state: response.state || "",
+            pincode: response.pincode || "",
+            contactperson: response.contactperson || "",
+            contactno: response.contactno || "",
+            email: response.email || "",
+            isactive: String(response.isactive),
           });
         }
       } catch (error) {
@@ -109,10 +108,11 @@ const UpdateLabToLab = () => {
   };
 
   // Validation regex
-  const alphanumericRegex = /^[a-zA-Z0-9\s\-_]+$/;
-  const pinCodeRegex = /^\d{6}$/;
-  const phoneRegex = /^[6-9]\d{9}$/;
-  const lettersOnlyRegex = /^[a-zA-Z\s]+$/;
+  const lettersOnlyRegex = /^[A-Za-z\s]+$/;
+  const alphanumericRegex = /^[A-Za-z0-9\s,.-]+$/;
+  const pinCodeRegex = /^[1-9][0-9]{5}$/;
+  const phoneRegex = /^[6-9][0-9]{9}$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const fields = [
     {
@@ -121,9 +121,11 @@ const UpdateLabToLab = () => {
       placeholder: "Enter Lab Name",
       validation: {
         required: "Lab name is required",
+        minLength: { value: 2, message: "Minimum 2 characters" },
+        maxLength: { value: 50, message: "Maximum 50 characters" },
         pattern: {
           value: lettersOnlyRegex,
-          message: "Only letters and spaces are allowed",
+          message: "Only letters and spaces allowed",
         },
       },
     },
@@ -133,9 +135,11 @@ const UpdateLabToLab = () => {
       placeholder: "Enter Address",
       validation: {
         required: "Address is required",
+        minLength: { value: 5, message: "Minimum 5 characters" },
+        maxLength: { value: 100, message: "Maximum 100 characters" },
         pattern: {
           value: alphanumericRegex,
-          message: "Only letters, numbers, space, - and _ are allowed",
+          message: "Only letters, numbers, spaces, comma, dot, and hyphen allowed",
         },
       },
     },
@@ -145,9 +149,11 @@ const UpdateLabToLab = () => {
       placeholder: "Enter City",
       validation: {
         required: "City is required",
+        minLength: { value: 2, message: "Minimum 2 characters" },
+        maxLength: { value: 50, message: "Maximum 50 characters" },
         pattern: {
           value: lettersOnlyRegex,
-          message: "Only letters and spaces are allowed",
+          message: "Only letters and spaces allowed",
         },
       },
     },
@@ -157,9 +163,11 @@ const UpdateLabToLab = () => {
       placeholder: "Enter State",
       validation: {
         required: "State is required",
+        minLength: { value: 2, message: "Minimum 2 characters" },
+        maxLength: { value: 50, message: "Maximum 50 characters" },
         pattern: {
           value: lettersOnlyRegex,
-          message: "Only letters and spaces are allowed",
+          message: "Only letters and spaces allowed",
         },
       },
     },
@@ -172,7 +180,7 @@ const UpdateLabToLab = () => {
         required: "PIN code is required",
         pattern: {
           value: pinCodeRegex,
-          message: "PIN must be exactly 6 digits",
+          message: "PIN must be exactly 6 digits and cannot start with 0",
         },
       },
     },
@@ -182,22 +190,24 @@ const UpdateLabToLab = () => {
       placeholder: "Enter Contact Person",
       validation: {
         required: "Contact person is required",
+        minLength: { value: 2, message: "Minimum 2 characters" },
+        maxLength: { value: 50, message: "Maximum 50 characters" },
         pattern: {
           value: lettersOnlyRegex,
-          message: "Only letters and spaces are allowed",
+          message: "Only letters and spaces allowed",
         },
       },
     },
     {
       name: "contactno",
       label: "Contact Number",
-      type: "text",
       placeholder: "Enter Contact Number",
+      type: "text",
       validation: {
         required: "Contact number is required",
         pattern: {
           value: phoneRegex,
-          message: "Enter valid 10-digit mobile number",
+          message: "Enter valid 10-digit mobile number starting with 6-9",
         },
       },
     },
@@ -207,10 +217,7 @@ const UpdateLabToLab = () => {
       placeholder: "Enter Email",
       validation: {
         required: "Email is required",
-        pattern: {
-          value: /^\S+@\S+\.\S+$/,
-          message: "Invalid email format",
-        },
+        pattern: { value: emailRegex, message: "Invalid email format" },
       },
     },
     {
@@ -221,9 +228,7 @@ const UpdateLabToLab = () => {
         { value: "true", label: "Yes" },
         { value: "false", label: "No" },
       ],
-      validation: {
-        required: "Status is required",
-      },
+      validation: { required: "Status is required" },
     },
   ];
 
@@ -239,7 +244,6 @@ const UpdateLabToLab = () => {
 
   return (
     <>
-      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-50">
         <nav
           className="flex items-center font-medium px-4 py-2 bg-gray-50 border-b shadow-lg"
@@ -263,79 +267,59 @@ const UpdateLabToLab = () => {
         </nav>
       </div>
 
-      {/* Form */}
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
         >
-          {/* Page Title Bar */}
           <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="text-white font-semibold">Update Lab</h4>
           </div>
 
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {fields.map(
-                ({
-                  name,
-                  label,
-                  type = "text",
-                  options,
-                  validation,
-                  readOnly = false,
-                }) => (
-                  <div key={name}>
-                    <label className="block text-sm font-medium text-gray-700">
-                      {label}
-                      {validation?.required && (
-                        <span className="text-red-500">*</span>
-                      )}
-                    </label>
-                    {type === "radio" ? (
-                      <div className="flex space-x-4 pt-2">
-                        {options.map((option) => (
-                          <label
-                            key={option.value}
-                            className="inline-flex items-center"
-                          >
-                            <input
-                              type="radio"
-                              {...register(name, validation)}
-                              value={option.value}
-                              className="h-4 w-4 text-teal-600"
-                            />
-                            <span className="ml-2">{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <input
-                        type={type}
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        placeholder={label}
-                        readOnly={readOnly}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name] ? "border-red-500" : "border-gray-300"
-                        } focus:ring-2 focus:ring-teal-500 ${
-                          readOnly ? "bg-gray-100 cursor-not-allowed" : ""
-                        }`}
-                      />
-                    )}
-                    {errors[name] && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors[name].message}
-                      </p>
-                    )}
-                  </div>
-                )
-              )}
+              {fields.map(({ name, label, type = "text", options, validation }) => (
+                <div key={name}>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {label}
+                    {validation?.required && <span className="text-red-500">*</span>}
+                  </label>
+
+                  {type === "radio" ? (
+                    <div className="flex space-x-4 pt-2">
+                      {options.map((option) => (
+                        <label key={option.value} className="inline-flex items-center">
+                          <input
+                            type="radio"
+                            {...register(name, validation)}
+                            value={option.value}
+                            className="h-4 w-4 text-teal-600"
+                          />
+                          <span className="ml-2">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <input
+                      type={type}
+                      {...register(name, validation)}
+                      onBlur={() => trigger(name)}
+                      placeholder={label}
+                      className={`w-full px-4 py-2 rounded-lg border ${
+                        errors[name] ? "border-red-500" : "border-gray-300"
+                      } focus:ring-2 focus:ring-teal-500`}
+                    />
+                  )}
+
+                  {errors[name] && (
+                    <p className="text-red-500 text-xs mt-1">{errors[name].message}</p>
+                  )}
+                </div>
+              ))}
             </div>
 
-            {/* Buttons */}
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 mt-6">
               <button
                 type="button"
                 onClick={() => navigate("/view-labtolab")}

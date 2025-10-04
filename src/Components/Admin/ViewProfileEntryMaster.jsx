@@ -11,37 +11,52 @@ const ViewProfileEntryMaster = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);   // Current page number
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items per page
+  const [totalPages, setTotalPages] = useState(1);     // Total pages from API
+  const [totalItems, setTotalItems] = useState(0);     // Total items from API
 
   const { setProfileEntryMasterToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
-  // Fetch data from API on mount
+  // Fetch data from API on mount & when pagination changes
   useEffect(() => {
     const fetchProfileEntries = async () => {
+      setLoading(true);
       try {
         const authToken = localStorage.getItem("authToken");
+        const params = {
+          page: currentPage,   // current page
+          limit: itemsPerPage, // items per page
+        };
+
         const response = await axios.get(
           "https://asrlabs.asrhospitalindia.in/lims/master/get-profileentry",
           {
             headers: { Authorization: `Bearer ${authToken}` },
+            params,
           }
         );
-  
+
         const responseData = response.data.data || [];
         const data = responseData.sort((a, b) => Number(a.id) - Number(b.id));
-  
+
+        // ✅ Save data into state
         setProfileEntries(data);
         setFilteredProfileEntries(data);
+
+        // Update total items & pages from API meta (if available)
+        setTotalItems(response.data.meta?.totalItems || responseData.length);
+        setTotalPages(response.data.meta?.totalPages || 1);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch Profile Entries.");
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchProfileEntries();
-  }, []);
-  
+  }, [currentPage, itemsPerPage]);
 
   // Filter on search input
   useEffect(() => {
@@ -51,7 +66,7 @@ const ViewProfileEntryMaster = () => {
       const lower = search.toLowerCase();
       const filtered = profileEntries.filter(
         (entry) =>
-          (entry.profileName || "").toLowerCase().includes(lower) ||
+          (entry.profilename || "").toLowerCase().includes(lower) ||
           (entry.profilecode || "").toLowerCase().includes(lower)
       );
       setFilteredProfileEntries(filtered);
@@ -61,28 +76,32 @@ const ViewProfileEntryMaster = () => {
   const handleUpdate = (entry) => {
     navigate(`/update-profile-entry-master/${entry.id}`);
   };
-  
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1); // reset to first page
+  };
 
   // Define table columns
   const columns = [
     { key: "serial", label: "S. No." },
-    // { key: "profile_id", label: "Profile ID" },
     { key: "profilename", label: "Profile Name" },
     { key: "profilecode", label: "Profile Code" },
     { key: "alternativebarcode", label: "Alternative Barcode" },
     { key: "isactive", label: "Status" },
-    
   ];
 
   // Prepare data for DataTable
   const mappedItems = filteredProfileEntries.map((entry, index) => ({
     ...entry,
-    id: index + 1,  // Serial id (optional, could use entry.id)
-    serial: index + 1,
+    serial: (currentPage - 1) * itemsPerPage + index + 1, // keep serial continuous across pages
     alternativebarcode: entry.alternativebarcode ? "Yes" : "No",
     isactive: entry.isactive ? "Active" : "Inactive",
   }));
-  
 
   return (
     <>
@@ -159,7 +178,13 @@ const ViewProfileEntryMaster = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

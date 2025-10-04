@@ -8,21 +8,20 @@ const ViewUserDetails = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
 
-  // Fetch users on page load
+  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("authToken");
         const res = await fetch(
-          `https://asrlabs.asrhospitalindia.in/lims/authentication/get-all-users`,
+          "https://asrlabs.asrhospitalindia.in/lims/authentication/get-all-users",
           {
             method: "GET",
             headers: {
@@ -34,10 +33,7 @@ const ViewUserDetails = () => {
 
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        console.log("Users data ===", data);
-
-        setUsers(data); // API returns array
-        setTotalItems(data.length);
+        setUsers(data || []);
       } catch (err) {
         console.error("Failed to fetch users", err);
         setError("Failed to fetch users.");
@@ -49,14 +45,7 @@ const ViewUserDetails = () => {
     fetchUsers();
   }, []);
 
-  const handlePageChange = (page) => setCurrentPage(page);
-  const handlePageSizeChange = (newSize) => {
-    setItemsPerPage(newSize);
-    setCurrentPage(1);
-  };
-  const handleUpdate = (user) => navigate(`/update-technician/${user.user_id}`);
-
-  // Columns based on schema
+  // Columns for DataTable
   const columns = [
     { key: "user_id", label: "ID" },
     { key: "first_name", label: "First Name" },
@@ -72,15 +61,22 @@ const ViewUserDetails = () => {
     { key: "updatedAt", label: "Updated At" },
   ];
 
-  // Filter users by search
+  // Filtered users based on search
   const filteredUsers = users.filter(
     (user) =>
-      user.first_name.toLowerCase().includes(search.toLowerCase()) ||
-      user.last_name.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase())
+      user.first_name?.toLowerCase().includes(search.toLowerCase()) ||
+      user.last_name?.toLowerCase().includes(search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const mappedItems = filteredUsers.map((user) => ({
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const mappedItems = paginatedUsers.map((user) => ({
     ...user,
     dob: user.dob ? new Date(user.dob).toLocaleDateString("en-IN") : "-",
     created_date: user.created_date
@@ -95,12 +91,15 @@ const ViewUserDetails = () => {
     isactive: user.isactive ? "Active" : "Inactive",
   }));
 
+  const handleUpdate = (user) => navigate(`/update-user-list/${user.user_id}`);
+  const handlePageChange = (page) => setCurrentPage(page);
+
   return (
     <>
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
@@ -120,7 +119,7 @@ const ViewUserDetails = () => {
         </nav>
       </div>
 
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-12 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -141,7 +140,7 @@ const ViewUserDetails = () => {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Add button & stats */}
           <div className="flex flex-wrap items-center justify-between mb-4 text-sm text-gray-600 gap-2">
             <button
               onClick={() => navigate("/add-user")}
@@ -150,10 +149,10 @@ const ViewUserDetails = () => {
               Add New
             </button>
             <div className="flex flex-wrap gap-2">
-              <span>Total: {totalItems} items</span>
+              <span>Total: {filteredUsers.length} items</span>
               <span>•</span>
               <span>
-                Page {currentPage} of {totalPages}
+                Page {currentPage} of {totalPages || 1}
               </span>
             </div>
           </div>
@@ -171,7 +170,27 @@ const ViewUserDetails = () => {
               columns={columns}
               serverSidePagination={false}
               showDetailsButtons={false}
+              onUpdate={handleUpdate}
             />
+          )}
+
+          {/* Simple Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => handlePageChange(i + 1)}
+                  className={`px-3 py-1 rounded ${
+                    currentPage === i + 1
+                      ? "bg-teal-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>

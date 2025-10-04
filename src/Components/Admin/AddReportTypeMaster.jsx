@@ -13,7 +13,7 @@ const AddReportTypeMaster = () => {
     reset,
     trigger,
     watch,
-  } = useForm({ mode: "onChange" });
+  } = useForm({ mode: "onChange", defaultValues: { isactive: "true" } }); // ✅ Default Active = Yes
 
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,124 +79,125 @@ const AddReportTypeMaster = () => {
             <h4 className="text-white font-semibold">Add Report Type Master</h4>
           </div>
 
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            {/* Report Type */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Report Type <span className="text-red-500">*</span>
-              </label>
-              <input
-  type="text"
-  placeholder="e.g. COVID-19 / POSITIVE!"
-  {...register("reporttype", {
-    required: "Report Type is required",
-    pattern: {
-      value: /^[A-Za-z0-9\s\/\-\!\.]+$/,
-      message: "Only letters, numbers, spaces, and / - ! . are allowed",
-    },
-  })}
-  onKeyUp={() => trigger("reporttype")}
-  onInput={() => trigger("reporttype")}
-  onBlur={() => trigger("reporttype")}
-  className={`w-full px-4 py-2 rounded-lg border ${errors.reporttype ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-/>
-              {errors.reporttype && <p className="text-red-500 text-xs mt-1">{errors.reporttype.message}</p>}
-            </div>
+  {/* Report Type */}
+  <div className="space-y-1">
+    <label className="block text-sm font-medium text-gray-700">
+      Report Type <span className="text-red-500">*</span>
+    </label>
+    <input
+      type="text"
+      placeholder="e.g. COVID-19 / POSITIVE!"
+      {...register("reporttype", {
+        required: "Report Type is required",
+        pattern: {
+          value: /^[A-Za-z0-9\s\/\-\!\.]+$/,
+          message: "Only letters, numbers, spaces, and / - ! . are allowed",
+        },
+      })}
+      onKeyUp={() => trigger("reporttype")}
+      onInput={() => trigger("reporttype")}
+      onBlur={(e) => { trigger("reporttype"); if (errors.reporttype) setTimeout(() => e.target.focus(), 0); }}
+      className={`w-full px-4 py-2 rounded-lg border ${errors.reporttype ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+    />
+    {errors.reporttype && <p className="text-red-500 text-xs mt-1">{errors.reporttype.message}</p>}
+  </div>
 
-            {/* Report Description */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Report Description <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. POSITIVE/NEGATIVE"
-                {...register("reportdescription", {
-                  required: "Report Description is required",
-                  pattern: {
-                    value: /^[A-Za-z0-9\s\/\-]+$/,
-                    message: "Only letters, numbers, spaces, / or - allowed",
-                  },
-                })}
-                onKeyUp={() => trigger("reportdescription")}
-                onInput={() => trigger("reportdescription")}
-                onBlur={() => trigger("reportdescription")}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.reportdescription ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              {errors.reportdescription && <p className="text-red-500 text-xs mt-1">{errors.reportdescription.message}</p>}
-            </div>
+  {/* Report Description */}
+  <div className="space-y-1">
+    <label className="block text-sm font-medium text-gray-700">
+      Report Description <span className="text-red-500">*</span>
+    </label>
+    <input
+      type="text"
+      placeholder="e.g. POSITIVE/NEGATIVE"
+      {...register("reportdescription", {
+        required: "Report Description is required",
+        pattern: {
+          value: /^[A-Za-z0-9\s\/\-]+$/,
+          message: "Only letters, numbers, spaces, / or - allowed",
+        },
+      })}
+      onKeyUp={() => trigger("reportdescription")}
+      onInput={() => trigger("reportdescription")}
+      onBlur={(e) => { trigger("reportdescription"); if (errors.reportdescription) setTimeout(() => e.target.focus(), 0); }}
+      className={`w-full px-4 py-2 rounded-lg border ${errors.reportdescription ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+    />
+    {errors.reportdescription && <p className="text-red-500 text-xs mt-1">{errors.reportdescription.message}</p>}
+  </div>
 
-            {/* Entry Type Dropdown */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Report Entry Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...register("entrytype", { required: "Entry Type is required" })}
-                onKeyUp={() => trigger("entrytype")}
-                onInput={() => trigger("entrytype")}
-                onBlur={() => trigger("entrytype")}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.entrytype ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              >
-                <option value="">-- Select Entry Type --</option>
-                {entryTypeOptions.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-              {errors.entrytype && <p className="text-red-500 text-xs mt-1">{errors.entrytype.message}</p>}
-            </div>
+  {/* Entry Type Dropdown */}
+  <div className="space-y-1">
+    <label className="block text-sm font-medium text-gray-700">
+      Report Entry Type <span className="text-red-500">*</span>
+    </label>
+    <select
+      {...register("entrytype", { required: "Entry Type is required" })}
+      onKeyUp={() => trigger("entrytype")}
+      onInput={() => trigger("entrytype")}
+      onBlur={(e) => { trigger("entrytype"); if (errors.entrytype) setTimeout(() => e.target.focus(), 0); }}
+      className={`w-full px-4 py-2 rounded-lg border ${errors.entrytype ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+    >
+      <option value="">-- Select Entry Type --</option>
+      {entryTypeOptions.map((type) => (
+        <option key={type} value={type}>{type}</option>
+      ))}
+    </select>
+    {errors.entrytype && <p className="text-red-500 text-xs mt-1">{errors.entrytype.message}</p>}
+  </div>
 
-            {/* Entry Values */}
-            <div className="space-y-1 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Report Entry Values</label>
-              <input
-                type="text"
-                placeholder="e.g. POSITIVE, NEGATIVE, EQUIVOCAL"
-                {...register("entryvalues")}
-                onKeyUp={() => trigger("entryvalues")}
-                onInput={() => trigger("entryvalues")}
-                onBlur={() => trigger("entryvalues")}
-                className={`w-full px-4 py-2 rounded-lg border ${errors.entryvalues ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-              />
-              <p className="text-xs text-gray-500 mt-1">Separate values with commas.</p>
-            </div>
+  {/* Entry Values */}
+  <div className="space-y-1 md:col-span-2">
+    <label className="block text-sm font-medium text-gray-700">Report Entry Values</label>
+    <input
+      type="text"
+      placeholder="e.g. POSITIVE, NEGATIVE, EQUIVOCAL"
+      {...register("entryvalues")}
+      onKeyUp={() => trigger("entryvalues")}
+      onInput={() => trigger("entryvalues")}
+      onBlur={(e) => { trigger("entryvalues"); if (errors.entryvalues) setTimeout(() => e.target.focus(), 0); }}
+      className={`w-full px-4 py-2 rounded-lg border ${errors.entryvalues ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
+    />
+    <p className="text-xs text-gray-500 mt-1">Separate values with commas.</p>
+  </div>
 
-            {/* Active Status */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Active Status <span className="text-red-500">*</span>
-              </label>
-              <div className="flex items-center space-x-6">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    value="true"
-                    {...register("isactive", { required: "Active status is required" })}
-                    onKeyUp={() => trigger("isactive")}
-                    onInput={() => trigger("isactive")}
-                    onBlur={() => trigger("isactive")}
-                    className="text-teal-600 focus:ring-teal-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Active</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    value="false"
-                    {...register("isactive", { required: "Active status is required" })}
-                    onKeyUp={() => trigger("isactive")}
-                    onInput={() => trigger("isactive")}
-                    onBlur={() => trigger("isactive")}
-                    className="text-teal-600 focus:ring-teal-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Inactive</span>
-                </label>
-              </div>
-              {errors.isactive && <p className="text-red-500 text-xs mt-1">{errors.isactive.message}</p>}
-            </div>
+  {/* Active Status */}
+  <div className="space-y-1">
+    <label className="block text-sm font-medium text-gray-700">
+      Active Status <span className="text-red-500">*</span>
+    </label>
+    <div className="flex items-center space-x-6">
+      <label className="inline-flex items-center">
+        <input
+          type="radio"
+          value="true"
+          {...register("isactive", { required: "Active status is required" })}
+          defaultChecked
+          onKeyUp={() => trigger("isactive")}
+          onInput={() => trigger("isactive")}
+          onBlur={(e) => { trigger("isactive"); if (errors.isactive) setTimeout(() => e.target.focus(), 0); }}
+          className="text-teal-600 focus:ring-teal-500"
+        />
+        <span className="ml-2 text-sm text-gray-700">Active</span>
+      </label>
+      <label className="inline-flex items-center">
+        <input
+          type="radio"
+          value="false"
+          {...register("isactive", { required: "Active status is required" })}
+          onKeyUp={() => trigger("isactive")}
+          onInput={() => trigger("isactive")}
+          onBlur={(e) => { trigger("isactive"); if (errors.isactive) setTimeout(() => e.target.focus(), 0); }}
+          className="text-teal-600 focus:ring-teal-500"
+        />
+        <span className="ml-2 text-sm text-gray-700">Inactive</span>
+      </label>
+    </div>
+    {errors.isactive && <p className="text-red-500 text-xs mt-1">{errors.isactive.message}</p>}
+  </div>
 
-          </div>
+</div>
 
           <div className="p-6 flex justify-end">
             <button

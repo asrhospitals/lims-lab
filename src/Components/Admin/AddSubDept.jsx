@@ -20,18 +20,14 @@ const AddSubDpt = () => {
     reset,
     clearErrors,
     watch,
+    trigger,
   } = useForm({
     mode: "onChange",
+    defaultValues: {
+      isactive: "true", // ✅ Default selected = Yes
+    },
   });
   const watchedFields = watch(); // watch all fields
-
-  // const {
-  //   register,
-  //   handleSubmit,
-  //   formState: { errors },
-  //   reset,
-  //   trigger,
-  // } = useForm({ mode: "onBlur" });
 
   // Fetch all departments on load
   useEffect(() => {
@@ -73,7 +69,7 @@ const AddSubDpt = () => {
 
       console.log("API Response:", response.data);
       toast.success("New Sub Department created successfully!");
-      reset();
+      reset({ isactive: "true" }); // ✅ keeps Yes checked after reset
       setTimeout(() => navigate("/view-subDpt"), 1500);
     } catch (error) {
       console.error("Error creating sub-department:", error);
@@ -107,14 +103,17 @@ const AddSubDpt = () => {
         minLength: { value: 5, message: "Minimum 5 characters" },
         maxLength: { value: 30, message: "Maximum 30 characters" },
         pattern: {
-          // Allows letters, spaces, underscores, hyphens, but not numbers only
           value: /^(?!\d+$)[A-Za-z\s_-]+$/,
           message:
             "Only letters, spaces, underscores (_) and hyphens (-) are allowed. Numbers alone are not allowed.",
         },
       },
+      onBlur: (e, errors) => {
+        if (errors?.subdptname) {
+          e.target.focus();
+        }
+      },
     },
-
     {
       name: "isactive",
       label: "Is Active?",
@@ -243,7 +242,7 @@ const AddSubDpt = () => {
                         onKeyUp={(e) => {
                           const value = e.target.value;
                           if (["dptname", "city", "state"].includes(name)) {
-                            const isValid = /^[a-zA-Z\s]*$/.test(value); // Only letters and spaces
+                            const isValid = /^[a-zA-Z\s]*$/.test(value);
                             if (!isValid) {
                               setError(name, {
                                 type: "manual",
@@ -257,7 +256,7 @@ const AddSubDpt = () => {
                         onInput={(e) => {
                           const value = e.target.value;
                           if (["dptname", "city", "state"].includes(name)) {
-                            const isValid = /^[a-zA-Z\s]*$/.test(value); // Only letters and spaces
+                            const isValid = /^[a-zA-Z\s]*$/.test(value);
                             if (!isValid) {
                               setError(name, {
                                 type: "manual",
@@ -284,7 +283,7 @@ const AddSubDpt = () => {
             <div className="mt-8 flex justify-end">
               <button
                 type="button"
-                onClick={() => reset()}
+                onClick={() => reset({ isactive: "true" })}
                 className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
               >
                 Reset

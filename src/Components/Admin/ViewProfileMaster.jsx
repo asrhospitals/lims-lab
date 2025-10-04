@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react"; 
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
@@ -15,6 +15,7 @@ const ViewProfileMaster = () => {
   const { setProfileMasterToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
+  // Fetch profiles on mount
   useEffect(() => {
     const fetchProfiles = async () => {
       setLoading(true);
@@ -28,72 +29,78 @@ const ViewProfileMaster = () => {
             },
           }
         );
-  
-        // Access the nested `data` array
+
         const profilesData = response.data?.data || [];
         console.log("profilesData====", profilesData);
-  
+
         setProfiles(profilesData);
         setFilteredProfiles(profilesData);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch Profile Entries.");
+        setError(
+          err.response?.data?.message || "Failed to fetch Profile Entries."
+        );
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchProfiles();
   }, []);
-  
 
+  // Search filter
   useEffect(() => {
     if (!search.trim()) {
       setFilteredProfiles(profiles);
     } else {
       const lower = search.toLowerCase();
       const filtered = profiles.filter((entry) => {
-        const nameMatch = (entry.profileName || "").toLowerCase().includes(lower);
-        // investigations is an array of strings (or objects?), assuming strings here
-        const investigationsMatch = Array.isArray(entry.investigations) && entry.investigations.some(inv => 
-          typeof inv === "string" && inv.toLowerCase().includes(lower)
-        );
+        const nameMatch =
+          (entry.profilename || "").toLowerCase().includes(lower);
+        const investigationsMatch =
+          Array.isArray(entry.investigations) &&
+          entry.investigations.some(
+            (inv) =>
+              typeof inv === "string" &&
+              inv.toLowerCase().includes(lower)
+          );
         return nameMatch || investigationsMatch;
       });
       setFilteredProfiles(filtered);
     }
   }, [search, profiles]);
 
+  // Handle Update
   const handleUpdate = (entry) => {
     setProfileMasterToUpdate(entry);
     localStorage.setItem("profileMasterToUpdate", JSON.stringify(entry));
-    navigate("/update-profileMaster");
+    navigate("/update-profile-master"); // ✅ fixed route
   };
 
+  // Table columns
   const columns = [
     { key: "profile_id", label: "Profile Id" },
     { key: "profilename", label: "Profile Name" },
     { key: "investigations", label: "Investigations" },
   ];
 
+  // Map items for DataTable
   const mappedItems = filteredProfiles.map((entry, index) => ({
     id: index + 1,
     profile_id: entry.id,
     profilename: entry.profilename,
     investigations: Array.isArray(entry.investigations)
-      ? entry.investigations.map(inv => inv.testname).join(", ")
+      ? entry.investigations.map((inv) => inv.testname).join(", ")
       : "",
     status: entry.isactive ? "Active" : "Inactive",
     raw: entry,
   }));
-  
-  
 
   return (
     <>
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
@@ -108,7 +115,7 @@ const ViewProfileMaster = () => {
             <li className="text-gray-400">/</li>
             <li>
               <Link
-                to="/view-profile-Master"
+                to="/view-profile-master"
                 className="text-gray-700 hover:text-teal-600 transition-colors"
               >
                 Profile Masters
@@ -116,7 +123,7 @@ const ViewProfileMaster = () => {
             </li>
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
-              View Profile  Masters
+              View Profile Masters
             </li>
           </ol>
         </nav>
@@ -127,7 +134,7 @@ const ViewProfileMaster = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-              Profile  List
+              Profile List
             </h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
@@ -164,12 +171,12 @@ const ViewProfileMaster = () => {
             </div>
           ) : (
             <DataTable
-            items={mappedItems}
-            columns={columns}
-            itemsPerPage={10}
-            showDetailsButtons={false}
-            onUpdate={(item) => handleUpdate(item.raw)}
-          />
+              items={mappedItems}
+              columns={columns}
+              itemsPerPage={10}
+              showDetailsButtons={false}
+              onUpdate={(item) => handleUpdate(item.raw)}
+            />
           )}
         </div>
       </div>

@@ -6,8 +6,6 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
 
-
-
 import AddInvestigationResult from "./AddInvestigationResult";
 import AccrediationDetails from "./AccrediationDetails";
 import {
@@ -18,6 +16,7 @@ import {
   viewSpecimenTypes,
   viewInstruments,
 } from "../../services/apiService";
+import AddReflexTests from "./AddReflexTests";
 
 const AddInvestigation = () => {
   const [departments, setDepartments] = useState([]);
@@ -88,21 +87,26 @@ const AddInvestigation = () => {
   useEffect(() => {
     const fetchSpecimens = async () => {
       try {
+    const token = localStorage.getItem("authToken");
+
+
         const res = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types"
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",   {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
-  
+
         console.log("Specimens API Response:", res.data);
-  
-        setSpecimens(res.data.data || []);  // <-- Important!
+
+        setSpecimens(res.data.data || []); // <-- Important!
       } catch (err) {
         console.error("Failed to fetch specimens:", err);
       }
     };
-  
+
     fetchSpecimens();
   }, []);
-  
+
   // Fetch SubDepartments
   useEffect(() => {
     const fetchSubDepartments = async () => {
@@ -166,8 +170,8 @@ const AddInvestigation = () => {
       setIsSubmitting(false);
       return;
     }
-    if (!data.barcodeLength) {
-      toast.error("❌ Barcode Length is required");
+    if (!data.colelctioncenter) {
+      toast.error("❌ Colelction Center is required");
       setIsSubmitting(false);
       return;
     }
@@ -184,6 +188,112 @@ const AddInvestigation = () => {
       return;
     }
 
+    // const payload = {
+    //   loniccode: data.loincCode || null,
+    //   cptcode: data.cptCode || null,
+    //   testname: data.testName,
+    //   testcategory: data.testCategory,
+    //   shortname: data.shortName || null,
+    //   shortcode: data.shortCode ? parseInt(data.shortCode) : null,
+    //   departmentId: data.department || null,
+    //   subdepartment: data.subDepartment || null,
+    //   roletype: data.roleType || null,
+    //   reporttype: data.reportType || null,
+    //   sample: data.specimenType || null,
+    //   sampleqty: data.sampleQuantity || null,
+    //   sampletemp: data.sampleTemperature || null,
+    //   method: data.method || null,
+    //   instrumenttype: data.instrumentType || null,
+    //   description: data.description || null,
+    //   sac: data.sac || null,
+    //   order: data.order || null,
+    //   derivedtest: data.derivedTest || null,
+    //   extranal_test_id: data.externalTestId || null,
+    //   containertype: data.container_selection || null,
+    //   seperateprint: data.separatePrint || false,
+    //   qrcode: data.qrCode || false,
+    //   labreg: data.labRegNo || false,
+    //   noheader: data.noHeaderReport || false,
+    //   enableautoemail: data.enableAutoEmailAtApproval || false,
+    //   enaautosms: data.enableAutoSMSAtApproval || false,
+    //   enableautowhatsap: data.enableAutoWhatsappAtApproval || false,
+    //   enableintermidiate: data.enableIntermediateResult || false,
+    //   enablestags: data.enableStages || false,
+    //   showtext: data.showTestDocs || false,
+    //   // walkinprice: data.walkInPrice ? parseFloat(data.walkInPrice) : null,
+    //   // b2bprice: data.b2bPrice ? parseFloat(data.b2bPrice) : null,
+    //   // ppprice: data.pppPrice ? parseFloat(data.pppPrice) : null,
+    //   // govtprice: data.govtPrice ? parseFloat(data.govtPrice) : null,
+    //   price: data.normalPrice ? parseFloat(data.normalPrice) : null,
+    //   checkimage: data.showImagesSide || false,
+    //   template: data.template || null,
+    //   checkoutsrc: data.isOutsourced || false,
+    //   barcodelngt: 8, // Required field, ensure it's an integer
+    //   barcode: data.barcode ? parseInt(data.barcode) : null,
+    //   spbarcode: data.separateBarcode || null,
+    //   suffbarcode: data.suffixedBarcodes || null,
+    //   tat: Number(data.tatValue), // Required field
+    //   tat_unit: data.tatUnit || null,
+    //   stat: data.statValue || null,
+    //   statunit: data.statUnit || null,
+    //   status: data.status || "Active",
+    //   instruction: instruction || null,
+    //   interpretation: interpretation || null,
+    //   remark: remarks || null,
+    //   test_collection: data.colelctioncenter || "No",
+    //   results: results.map((result) => ({
+    //     resultname: result.name,
+    //     unit: result.unit,
+    //     valueType: result.valueType,
+    //     formula: result.formula,
+    //     order: result.order ? parseInt(result.order) : null,
+    //     roundOff: result.roundOff ? parseInt(result.roundOff) : null,
+    //     showTrends: result.showTrends || false,
+    //     defaultValue: result.defaultValue ? parseInt(result.defaultValue): null, // Ensure integer type
+    //     normalValues: [
+    //       {
+    //           "rangeMax": 200
+    //       }
+    //   ],
+    //     // normalValues: result.normalValues.map((nv) => ({
+    //     //   gender: nv.type || null,
+    //     //   ageMin: nv.ageMinYear ? parseInt(nv.ageMinYear) : null,
+    //     //   ageMax: nv.ageMaxYear ? parseInt(nv.ageMaxYear) : null,
+    //     //   rangeMin: nv.rangeMin ? parseFloat(nv.rangeMin) : null,
+    //     //   rangeMax: nv.rangeMax ? parseFloat(nv.rangeMax) : null,
+    //     //   validRangeMin: nv.validRangeMin ? parseFloat(nv.validRangeMin) : null,
+    //     //   validRangeMax: nv.validRangeMax ? parseFloat(nv.validRangeMax) : null,
+    //     //   criticalLow: nv.criticalRangeLow
+    //     //     ? parseFloat(nv.criticalRangeLow)
+    //     //     : null,
+    //     //   criticalHigh: nv.criticalRangeHigh
+    //     //     ? parseFloat(nv.criticalRangeHigh)
+    //     //     : null,
+    //     //   isRangeAbnormal: nv.rangeAbnormal || false,
+    //     //   avoidInReport: nv.avoidRangeInReport || false,
+    //     // })),
+    //     mandatories: [
+    //       {
+    //         resultname: "Total Protine level",
+    //         resultvalue: "12345"
+    //     }
+    //     ],
+    //     reflexTests:[
+    //       {
+    //         triggerparams: "Critical Range",
+    //         reflextest: [
+    //             "TROPONIN I"
+    //         ]
+    //     }
+    //     ],
+    //   })),
+    //   acreeditionname: accreditationItems,
+    //   acreeditiondate :"2025/08/29",
+    //   consumableitems: consumableItems,
+    //   labconsumables: labConsumableItems,
+    // };
+
+
     const payload = {
       loniccode: data.loincCode || null,
       cptcode: data.cptCode || null,
@@ -195,16 +305,16 @@ const AddInvestigation = () => {
       subdepartment: data.subDepartment || null,
       roletype: data.roleType || null,
       reporttype: data.reportType || null,
-      sampletype: data.specimenType || null,
+      sample: data.specimenType || null,
       sampleqty: data.sampleQuantity || null,
       sampletemp: data.sampleTemperature || null,
-      testmethod: data.method || null,
+      method: data.method || null,
       instrumenttype: data.instrumentType || null,
       description: data.description || null,
       sac: data.sac || null,
       order: data.order || null,
       derivedtest: data.derivedTest || null,
-      extranaltest: data.externalTestId || null,
+      extranal_test_id: data.externalTestId || null,
       containertype: data.container_selection || null,
       seperateprint: data.separatePrint || false,
       qrcode: data.qrCode || false,
@@ -216,67 +326,75 @@ const AddInvestigation = () => {
       enableintermidiate: data.enableIntermediateResult || false,
       enablestags: data.enableStages || false,
       showtext: data.showTestDocs || false,
-      walkinprice: data.walkInPrice ? parseFloat(data.walkInPrice) : null,
-      b2bprice: data.b2bPrice ? parseFloat(data.b2bPrice) : null,
-      ppprice: data.pppPrice ? parseFloat(data.pppPrice) : null,
-      govtprice: data.govtPrice ? parseFloat(data.govtPrice) : null,
-      normalprice: data.normalPrice ? parseFloat(data.normalPrice) : null,
+      price: data.normalPrice ? parseFloat(data.normalPrice) : null,
       checkimage: data.showImagesSide || false,
       template: data.template || null,
       checkoutsrc: data.isOutsourced || false,
-      barcodelngt: parseInt(data.barcodeLength), // Required field, ensure it's an integer
-      barcode: data.barcode ? parseInt(data.barcode) : null,
+      barcodelngt: 8, // Required integer
+      barcode: data.barcode ? String(data.barcode) : null, // Store as string
       spbarcode: data.separateBarcode || null,
       suffbarcode: data.suffixedBarcodes || null,
-      tat: data.tatValue, // Required field
-      tatunit: data.tatUnit || null,
+      tat: Number(data.tatValue) || 0, // Required numeric
+      tat_unit: data.tatUnit || null,
       stat: data.statValue || null,
       statunit: data.statUnit || null,
       status: data.status || "Active",
       instruction: instruction || null,
       interpretation: interpretation || null,
       remark: remarks || null,
+      test_collection: data.colelctioncenter || "No", // ENUM: Yes/No
       results: results.map((result) => ({
         resultname: result.name,
         unit: result.unit,
         valueType: result.valueType,
-        formula: result.formula,
+        formula: result.formula || null,
         order: result.order ? parseInt(result.order) : null,
         roundOff: result.roundOff ? parseInt(result.roundOff) : null,
         showTrends: result.showTrends || false,
-        defaultValue: result.defaultValue
-          ? parseInt(result.defaultValue)
-          : null, // Ensure integer type
-        normalValues: result.normalValues.map((nv) => ({
-          gender: nv.type || null,
-          ageMin: nv.ageMinYear ? parseInt(nv.ageMinYear) : null,
-          ageMax: nv.ageMaxYear ? parseInt(nv.ageMaxYear) : null,
-          rangeMin: nv.rangeMin ? parseFloat(nv.rangeMin) : null,
-          rangeMax: nv.rangeMax ? parseFloat(nv.rangeMax) : null,
-          validRangeMin: nv.validRangeMin ? parseFloat(nv.validRangeMin) : null,
-          validRangeMax: nv.validRangeMax ? parseFloat(nv.validRangeMax) : null,
-          criticalLow: nv.criticalRangeLow
-            ? parseFloat(nv.criticalRangeLow)
-            : null,
-          criticalHigh: nv.criticalRangeHigh
-            ? parseFloat(nv.criticalRangeHigh)
-            : null,
-          isRangeAbnormal: nv.rangeAbnormal || false,
-          avoidInReport: nv.avoidRangeInReport || false,
-        })),
-        mandatoryConditions: result.mandatoryConditions || [],
-        reflexTests: result.reflexTests || [],
+        defaultValue: result.defaultValue ? parseInt(result.defaultValue) : null,
+        normalValues: [
+          {
+            gender: "Both",
+            ageMin: 0,
+            ageMax: 120,
+            rangeMin: 0,
+            rangeMax: 200,
+            validRangeMin: 0,
+            validRangeMax: 200,
+            criticalLow: 0,
+            criticalHigh: 200,
+            isRangeAbnormal: false,
+            avoidInReport: false,
+            resultId: result.id || null
+          }
+        ],
+        mandatories: [
+          {
+            resultname: result.name,
+            resultvalue: "12345",
+            resultId: result.id || null
+          }
+        ],
+        reflexTests: [
+          {
+            triggerparams: "Critical Range",
+            reflextest: ["TROPONIN I"],
+            resultId: result.id || null
+          }
+        ]
       })),
-      accreditationItems: accreditationItems,
-      consumableItems: consumableItems,
-      labConsumableItems: labConsumableItems,
+      acreeditionname: accreditationItems || [],
+      acreeditiondate: [new Date("2025-08-29")], // Proper Date array
+      consumableitems: consumableItems || [],
+      labconsumables: labConsumableItems || []
     };
+    
 
     console.log("Complete payload being sent to API:", payload);
 
     try {
       await addInvestigation(payload);
-      toast.success("✅ Investigation added successfully");
+      toast.success("Investigation added successfully");
       reset();
       // Reset child component states
       setResults([]);
@@ -548,11 +666,9 @@ const AddInvestigation = () => {
               </select>
             </div>
 
-    
-
             <div>
               <label className="block text-sm font-medium text-gray-700">
-              Specimen Type
+                Specimen Type
               </label>
               <select
                 {...register("specimenType")}
@@ -874,10 +990,10 @@ const AddInvestigation = () => {
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[
-              { label: "Walk-in Price", name: "walkInPrice" },
-              { label: "B2B Price", name: "b2bPrice" },
-              { label: "PPP Price", name: "pppPrice" },
-              { label: "Govt. Price", name: "govtPrice" },
+              // { label: "Walk-in Price", name: "walkInPrice" },
+              // { label: "B2B Price", name: "b2bPrice" },
+              // { label: "PPP Price", name: "pppPrice" },
+              // { label: "Govt. Price", name: "govtPrice" },
               { label: "Normal Price", name: "normalPrice" },
             ].map((price) => (
               <div key={price.name}>
@@ -976,8 +1092,7 @@ const AddInvestigation = () => {
             <div className="col-span-full border-b mb-4  border-gray-300"></div>
 
             <div className="col-span-full grid grid-cols-4 items-start gap-4 mb-4">
-              {/* Barcode Length */}
-              <div className="mb-3">
+              {/* <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-700">
                   Barcode Length<span className="text-red-500">*</span>
                 </label>
@@ -1006,7 +1121,7 @@ const AddInvestigation = () => {
                 )}
               </div>
 
-              {/* Barcodes */}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Barcode <span className="text-red-500">*</span>
@@ -1032,7 +1147,6 @@ const AddInvestigation = () => {
                 )}
               </div>
 
-              {/* Separate Barcodes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Separate Barcode{" "}
@@ -1057,7 +1171,6 @@ const AddInvestigation = () => {
                 )}
               </div>
 
-              {/* Suffixed Barcodes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Suffixed Barcode
@@ -1067,7 +1180,7 @@ const AddInvestigation = () => {
                   placeholder="e.g., -A, -B"
                   className="w-full border px-3 py-2 rounded"
                 />
-              </div>
+              </div> */}
 
               {/* TAT (Turnaround Time) */}
               <div className="mb-3">
@@ -1157,6 +1270,19 @@ const AddInvestigation = () => {
                   <option value="Inactive">Inactive</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Test At Colelction Center
+              </label>
+              <select
+                {...register("colelctioncenter")}
+                className="w-full border px-3 py-2 rounded"
+              >
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
             </div>
           </div>
           <AccrediationDetails

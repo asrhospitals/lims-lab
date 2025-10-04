@@ -12,7 +12,12 @@ const AddNodalInstrument = () => {
   const [fetchError, setFetchError] = useState("");
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors }, reset, trigger } = useForm({ mode: "onChange" });
+  const { register, handleSubmit, formState: { errors }, reset, trigger } = useForm({
+  mode: "onBlur",
+  defaultValues: {
+    isactive: "true", // ✅ Default Active = Yes
+  },
+});
 
   useEffect(() => {
     const fetchDropdowns = async () => {
@@ -128,14 +133,15 @@ const AddNodalInstrument = () => {
           </div>
 
           {/* Buttons aligned to right */}
-          <div className="mt-8 px-6 flex justify-end gap-4">
-            <button type="button" onClick={() => reset()} className="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">
-              Reset
-            </button>
-            <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg hover:from-teal-700 hover:to-teal-600">
-              {isSubmitting ? "Saving..." : "Add Nodal Instrument"}
-            </button>
-          </div>
+         <div className="mt-8 px-6 py-4 flex justify-end gap-4">
+  <button type="button" onClick={() => reset()} className="px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">
+    Reset
+  </button>
+  <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg hover:from-teal-700 hover:to-teal-600">
+    {isSubmitting ? "Saving..." : "Add Nodal Instrument"}
+  </button>
+</div>
+
         </form>
       </div>
     </>

@@ -70,44 +70,42 @@ const UpdateDept = () => {
   }, [id, setDepartmentToUpdate, reset, navigate]);
 
   // Submit handler
-const onSubmit = async (data) => {
-  try {
-    // Trim department name to avoid leading/trailing spaces
-    const payload = {
-      dptname: data.dptname.trim(),
-      isactive: data.isactive === "true", // convert string to boolean
-    };
+  const onSubmit = async (data) => {
+    try {
+      // Trim department name to avoid leading/trailing spaces
+      const payload = {
+        dptname: data.dptname.trim(),
+        isactive: data.isactive === "true", // convert string to boolean
+      };
 
-    // Call your API function
-    const response =  await updateDepartment(id, payload);
-    // Success feedback
-    toast.success("Department updated successfully!", {
-      position: "top-right",
-      autoClose: 2000,
-    });
-    
+      // Call your API function
+      const response = await updateDepartment(id, payload);
+      // Success feedback
+      toast.success("Department updated successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
 
-    // Clear the form state
-    setDepartmentToUpdate(null);
+      // Clear the form state
+      setDepartmentToUpdate(null);
 
-    // Navigate back to department list
-    navigate("/view-departments");
-  } catch (error) {
-    console.error("Update Department Error:", error);
+      // Navigate back to department list
+      navigate("/view-departments");
+    } catch (error) {
+      console.error("Update Department Error:", error);
 
-    // Show detailed error if available
-    const message =
-      error?.response?.data?.message ||
-      error?.message ||
-      "❌ Failed to update department. Please try again.";
+      // Show detailed error if available
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "❌ Failed to update department. Please try again.";
 
-    toast.error(message, {
-      position: "top-right",
-      autoClose: 3000,
-    });
-  }
-};
-
+      toast.error(message, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -127,7 +125,7 @@ const onSubmit = async (data) => {
 
   return (
     <>
-        <ToastContainer />
+      <ToastContainer />
 
       <div className="fixed top-[61px] w-full z-10">
         <nav
@@ -171,51 +169,55 @@ const onSubmit = async (data) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Department Name */}
               <div>
-  <label className="block text-sm font-medium text-gray-700">
-    Department Name <span className="text-red-500">*</span>
-  </label>
-  <input
-    type="text"
-    {...register("dptname", {
-      required: "Department name is required",
-      minLength: { value: 2, message: "Minimum 2 characters" },
-      maxLength: { value: 50, message: "Maximum 50 characters" },
-      validate: (value) => {
-        const cleaned = value.trim();
-        if (!cleaned) return "Department name cannot be empty";
+                <label className="block text-sm font-medium text-gray-700">
+                  Department Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  {...register("dptname", {
+                    required: "Department name is required",
+                    minLength: { value: 2, message: "Minimum 2 characters" },
+                    maxLength: { value: 50, message: "Maximum 50 characters" },
+                    validate: (value) => {
+                      const cleaned = value.trim();
+                      if (!cleaned) return "Department name cannot be empty";
 
-        // Only letters and single spaces allowed
-        if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(cleaned))
-          return "Only letters and single spaces are allowed";
+                      // ✅ Allow only letters and single spaces
+                      if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(cleaned))
+                        return "Only letters and single spaces are allowed";
 
-        // Check duplicates safely
-        if (Array.isArray(departments)) {
-          const duplicate = departments.find(
-            (dept) =>
-              dept.dptname.trim().toLowerCase() === cleaned.toLowerCase() &&
-              String(dept._id) !== String(id)
-          );
-          if (duplicate) return "This department name already exists";
-        }
+                      // Duplicate check
+                      if (Array.isArray(departments)) {
+                        const duplicate = departments.find(
+                          (dept) =>
+                            dept.dptname.trim().toLowerCase() ===
+                              cleaned.toLowerCase() &&
+                            String(dept._id) !== String(id)
+                        );
+                        if (duplicate)
+                          return "This department name already exists";
+                      }
 
-        return true;
-      },
-    })}
-    placeholder="Enter Department Name"
-    onChange={(e) => {
-      // Remove any numbers or special characters in real-time
-      e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, "");
-      trigger("dptname"); // real-time validation
-    }}
-    className={`w-full px-4 py-2 rounded-lg border ${
-      errors.dptname ? "border-red-500" : "border-gray-300"
-    } focus:ring-2 focus:ring-teal-500`}
-  />
-  {errors.dptname && (
-    <p className="text-red-500 text-xs mt-1">{errors.dptname.message}</p>
-  )}
-</div>
+                      return true;
+                    },
+                  })}
+                  placeholder="Enter Department Name"
+                  onChange={(e) => {
+                    // ✅ Allow only letters and spaces in real-time
+                    e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+                    trigger("dptname");
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.dptname ? "border-red-500" : "border-gray-300"
+                  } focus:ring-2 focus:ring-teal-500`}
+                />
 
+                {errors.dptname && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.dptname.message}
+                  </p>
+                )}
+              </div>
 
               {/* Is Active */}
               <div>

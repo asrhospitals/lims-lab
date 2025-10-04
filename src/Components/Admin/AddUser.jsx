@@ -21,79 +21,39 @@ const AddUser = () => {
     formState: { errors },
     reset,
     trigger,
+    watch,
+    setValue,
   } = useForm({
     mode: "onBlur",
     defaultValues: {
       createddate: today, // Set default value here
+      isactive: "true",   // ✅ Default Active = Yes
     },
   });
 
-  // Get today's date (to restrict DOB)
+  const createdby = localStorage.getItem("userid");
 
-  // const onSubmit = async (data) => {
-  //   setIsSubmitting(true);
-  //   try {
+  const mobileNumberValue = watch("mobileNumber");
+  const whatsappSame = watch("whatsappSame");
 
-  //     const payload = {
-  //       first_name: data.firstName,
-  //       last_name: data.lastName,
-  //       mobile_number: data.mobileNumber,
-  //       wattsapp_number: data.whatsappNumber,
-  //       alternate_number: data.alternateNumber,
-  //       email: data.email,
-  //       dob: data.dob,
-  //       gender: data.gender,
-  //       address: data.address,
-  //       city: data.city,
-  //       state: data.state,
-  //       pincode: data.pincode,
-  //       username: data.loginId,
-  //       password: data.password,
-  //       created_by: createdby,
-  //       module: ["admin"],
-  //       isactive: true, // if required
-  //       image: "profile.jpg"
-  //       // image: data.image
-  //     };
-  
-  //     console.log("payload==", payload);
-      
-  //     const response = await fetch(
-  //       "https://asrlabs.asrhospitalindia.in/lims/authentication/create-user",
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify(payload),
-  //       }
-  //     );
-  
-  //     const result = await response.json();
-  //     if (response.ok) {
-  //       console.log("User created successfully:", result);
-  //     } else {
-  //       console.error("Error:", result);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-  
-  
+  // If checkbox is checked, set WhatsApp number same as mobile
+  useEffect(() => {
+    if (whatsappSame) {
+      setValue("whatsappNumber", mobileNumberValue);
+    }
+  }, [whatsappSame, mobileNumberValue, setValue]);
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
       let uploadedImageName = "profile.jpg"; // default image
-  
+
       if (selectedFile) {
         const formData = new FormData();
         formData.append("profile", selectedFile); // 'profile' as key
-  
+
         const authToken = localStorage.getItem("authToken");
-  
+
         const uploadResponse = await fetch(
           "https://asrphleb.asrhospitalindia.in/profile/upload/upload-profile",
           {
@@ -104,20 +64,18 @@ const AddUser = () => {
             body: formData,
           }
         );
-  
+
         if (uploadResponse.ok) {
           const uploadResult = await uploadResponse.json();
-          uploadedImageName = uploadResult.fileUrl || uploadedImageName; // <-- use fileUrl
+          uploadedImageName = uploadResult.fileUrl || uploadedImageName;
           toast.success("Image uploaded successfully!");
         } else {
           const err = await uploadResponse.json();
           toast.error("Image upload failed: " + (err.message || "Unknown error"));
           console.error("Upload error:", err);
         }
-        
       }
-  
-      // User creation payload
+
       const payload = {
         first_name: data.firstName,
         last_name: data.lastName,
@@ -135,10 +93,10 @@ const AddUser = () => {
         password: data.password,
         created_by: createdby,
         module: [data.selectedmodule],
-        isactive: true,
-        image: uploadedImageName, // use uploaded image
+        isactive: data.isactive === "true", // ✅ Ensure true/false boolean
+        image: uploadedImageName,
       };
-  
+
       const response = await fetch(
         "https://asrlabs.asrhospitalindia.in/lims/authentication/create-user",
         {
@@ -147,9 +105,9 @@ const AddUser = () => {
           body: JSON.stringify(payload),
         }
       );
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         toast.success("User created successfully!");
         reset();
@@ -167,11 +125,7 @@ const AddUser = () => {
       setIsSubmitting(false);
     }
   };
-  
-  
-  
-  
-  // Validation patterns
+
   const alphaNumPattern = {
     value: /^[A-Za-z0-9 _-]+$/,
     message: "Only letters, numbers, spaces, - and _ are allowed",
@@ -182,7 +136,6 @@ const AddUser = () => {
     message: "Only letters and spaces are allowed",
   };
 
-  const createdby = localStorage.getItem("userid");
   const fields = [
     {
       name: "firstName",
@@ -214,11 +167,16 @@ const AddUser = () => {
     {
       name: "whatsappNumber",
       label: "WhatsApp Number",
-      placeholder: "Enter WhatsApp Number",
+      placeholder: "10-digit number",
       validation: {
         required: "WhatsApp number is required",
         pattern: /^\d{10}$/,
       },
+    },
+    {
+      name: "whatsappSame",
+      label: "Same as Mobile Number?",
+      type: "checkbox",
     },
     {
       name: "alternateNumber",
@@ -247,7 +205,7 @@ const AddUser = () => {
     {
       name: "gender",
       label: "Gender",
-      type: "select",
+      type: "radio",
       options: [
         { value: "Male", label: "Male" },
         { value: "Female", label: "Female" },
@@ -283,19 +241,6 @@ const AddUser = () => {
         pattern: /^\d{6}$/,
       },
     },
-
-    {
-      name: "selectedmodule",
-      label: "Select Module",
-      type: "select",
-      options: [
-        { value: "Phlebotomist", label: "Phlebotomist" },
-        { value: "Reception", label: "Reception" },
-        { value: "Technician", label: "Technician" },
-        { value: "Doctor", label: "Doctor" },
-      ],
-      validation: { required: "Module is required" },
-    },
     {
       name: "loginId",
       label: "Login ID",
@@ -309,9 +254,14 @@ const AddUser = () => {
       validation: { required: "Password is required" },
     },
     {
-      name: "createdBy",
-      label: "Created By",
-      placeholder: createdby,
+      name: "selectedmodule",
+      label: "Module",
+      type: "select",
+      options: [
+        { value: "admin", label: "Admin" },
+        { value: "user", label: "User" },
+      ],
+      validation: { required: "Module is required" },
     },
     {
       name: "createdDate",
@@ -331,12 +281,10 @@ const AddUser = () => {
       validation: { required: "Status is required." },
     },
   ];
-  
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.size <= 2 * 1024 * 1024) {
-      // Max 2MB
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -445,6 +393,7 @@ const AddUser = () => {
                               type="radio"
                               {...register(name, validation)}
                               value={opt.value}
+                              defaultChecked={opt.value === "true"} // ✅ Default Yes for Is Active
                               className="h-4 w-4 text-teal-600"
                             />
                             <span className="ml-2">{opt.label}</span>
@@ -461,6 +410,12 @@ const AddUser = () => {
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:ring-teal-500"
                         } focus:ring-2 transition`}
+                      />
+                    ) : type === "checkbox" ? (
+                      <input
+                        type="checkbox"
+                        {...register(name)}
+                        className="h-4 w-4 text-teal-600"
                       />
                     ) : type === "date" && name === "createdDate" ? (
                       <input
@@ -502,7 +457,6 @@ const AddUser = () => {
                 </label>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                  {/* Upload Input */}
                   <label className="block">
                     <div className="border border-gray-300 border-dashed rounded-lg px-6 py-4 cursor-pointer hover:bg-gray-50 transition min-w-[300px] flex items-center justify-center">
                       <div className="flex flex-col items-center justify-center gap-1">
@@ -532,7 +486,6 @@ const AddUser = () => {
                     </div>
                   </label>
 
-                  {/* Image Preview + Remove Button */}
                   <div className="flex flex-col items-center justify-center">
                     {imagePreview ? (
                       <img
@@ -559,6 +512,13 @@ const AddUser = () => {
             </div>
 
             <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => reset()}
+                className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              >
+                Reset
+              </button>
               <button
                 type="submit"
                 disabled={isSubmitting}

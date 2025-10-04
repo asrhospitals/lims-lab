@@ -16,7 +16,12 @@ const AddDept = () => {
     formState: { errors },
     reset,
     clearErrors,
-  } = useForm({ mode: "onChange" });
+  } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      isactive: "true", // ✅ Default selected = True (Active Yes)
+    },
+  });
 
   // ✅ Load existing departments for duplicate check
   useEffect(() => {
@@ -147,7 +152,19 @@ const AddDept = () => {
                       clearErrors("dptname");
                   }}
                   onInput={(e) => {
-                    e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+                    const input = e.target;
+                    const cursorPos = input.selectionStart;
+
+                    // Remove invalid characters
+                    const cleanedValue = input.value.replace(/[^A-Za-z\s]/g, "");
+
+                    // Adjust cursor position
+                    const diff = input.value.length - cleanedValue.length;
+                    input.value = cleanedValue;
+                    input.setSelectionRange(
+                      cursorPos - diff,
+                      cursorPos - diff
+                    );
                   }}
                 />
                 {errors.dptname && (

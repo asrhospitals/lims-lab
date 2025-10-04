@@ -15,7 +15,7 @@ const AddSpecimenType = () => {
     formState: { errors },
     reset,
     trigger,
-  } = useForm({ mode: "onChange" }); // "onChange" triggers validation on input changes
+  } = useForm({ mode: "onChange", defaultValues: { isactive: "true" } }); // ✅ default active
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -23,7 +23,7 @@ const AddSpecimenType = () => {
 
     try {
       await axios.post(
-        "https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types",
+        "https://asrlabs.asrhospitalindia.in/api/lims/master/add-specimen",
         {
           specimenname: data.specimenname,
           specimendes: data.specimendes,
@@ -162,6 +162,7 @@ const AddSpecimenType = () => {
                         onKeyUp: () => trigger("isactive"),
                       })}
                       className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
+                      defaultChecked
                     />
                     <span className="ml-2 text-gray-700">Active</span>
                   </label>

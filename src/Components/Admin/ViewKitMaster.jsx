@@ -22,7 +22,7 @@ const ViewKitMaster = () => {
       try {
         const authToken = localStorage.getItem("authToken");
         const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/api/lims/master/kits",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-kit",
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
   

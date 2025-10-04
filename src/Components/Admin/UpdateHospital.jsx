@@ -190,7 +190,9 @@ const UpdateHospital = () => {
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             {fields.map(({ name, label, placeholder, type = "text", options = [] }) => (
               <div key={name}>
-                <label className="block text-sm font-medium text-gray-700">{label}</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {label} <span className="text-red-500">*</span>
+                </label>
 
                 {type === "select" ? (
                   <select {...register(name, { required: `${label} is required` })} className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}>

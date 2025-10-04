@@ -7,6 +7,7 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { FaSortUp, FaSortDown, FaSort } from "react-icons/fa";
+import { FaArrowRight, FaEye, FaEdit, FaTimes } from "react-icons/fa";
 
 // Badge color utility
 const getBadgeColor = (status) => {
@@ -27,7 +28,7 @@ const PhlebotomistDataTable = ({
   defaultSorter = { column: "status", state: "asc" },
   showDetailsButtons = true,
   onUpdate,
-  onView, 
+  onView,
 
   serverSidePagination = false,
   currentPage = 1,
@@ -84,17 +85,20 @@ const PhlebotomistDataTable = ({
         cell: ({ row }) => (
           <div className="flex space-x-2">
             <button
-              className="text-sm text-white bg-teal-600 hover:bg-teal-700 px-2 py-1 rounded"
+              className="p-2 bg-yellow-100 rounded-full hover:bg-yellow-500"
               onClick={() => onUpdate && onUpdate(row.original)}
+              title="Edit"
             >
-              Update
+              <FaEdit className="text-yellow-600" />
             </button>
-              <button
-                className="text-sm text-white bg-teal-600 hover:bg-teal-700 px-2 py-1 rounded"
-                onClick={() => onView(row.original)} // View button
-              >
-                View
-              </button>
+
+            <button
+              className="p-2 bg-red-400 rounded-full hover:bg-red-500"
+              onClick={() => onView(row.original)}
+              title="Reject"
+            >
+              <FaTimes className="text-white" />
+            </button>
           </div>
         ),
       },
@@ -187,43 +191,47 @@ const PhlebotomistDataTable = ({
                 ))}
               </tr>
               {expandedRows.includes(row.original.id) && (
-  <tr className="bg-gray-50">
-    <td colSpan={row.getVisibleCells().length} className="px-4 py-4">
-      {row.original.tests?.length > 0 ? (
-        row.original.tests.map((test) => (
-          <div
-            key={test.patient_test_id}
-            className="p-3 border rounded mb-2 bg-white shadow-sm"
-          >
-            <p className="font-semibold">{test.testname}</p>
-            <p className="text-sm text-gray-600">
-              Department: {test.department?.dptname || "N/A"}
-            </p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="font-semibold">Status:</span>
-              <span
-                className={`px-2 py-1 rounded text-xs font-medium ${getBadgeColor(
-                  test.status
-                )}`}
-              >
-                {test.status || "N/A"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="font-semibold">Rejection Reason:</span>
-              <span className="text-gray-700">
-                {test.rejection_reason ?? "None"}
-              </span>
-            </div>
-          </div>
-        ))
-      ) : (
-        <p className="text-gray-500">No tests available</p>
-      )}
-    </td>
-  </tr>
-)}
-
+                <tr className="bg-gray-50">
+                  <td
+                    colSpan={row.getVisibleCells().length}
+                    className="px-4 py-4"
+                  >
+                    {row.original.tests?.length > 0 ? (
+                      row.original.tests.map((test) => (
+                        <div
+                          key={test.patient_test_id}
+                          className="p-3 border rounded mb-2 bg-white shadow-sm"
+                        >
+                          <p className="font-semibold">{test.testname}</p>
+                          <p className="text-sm text-gray-600">
+                            Department: {test.department?.dptname || "N/A"}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="font-semibold">Status:</span>
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${getBadgeColor(
+                                test.status
+                              )}`}
+                            >
+                              {test.status || "N/A"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="font-semibold">
+                              Rejection Reason:
+                            </span>
+                            <span className="text-gray-700">
+                              {test.rejection_reason ?? "None"}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500">No tests available</p>
+                    )}
+                  </td>
+                </tr>
+              )}
             </React.Fragment>
           ))}
         </tbody>

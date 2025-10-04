@@ -174,9 +174,9 @@ const UpdateReportTypeMaster = () => {
     {...register("reportdescription", {
       required: "Description is required",
       pattern: {
-        value: /^[A-Za-z0-9\s-]+$/,
-        message: "Only letters, numbers, spaces, and hyphens are allowed",
-      },
+  value: /^[A-Za-z0-9\s\-\/]+$/,
+  message: "Only letters, numbers, spaces, hyphens, and / are allowed",
+},
     })}
     onBlur={() => trigger("reportdescription")}
     className={`w-full px-4 py-2 rounded-lg border ${

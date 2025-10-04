@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { viewTechnicians } from "../../services/apiService";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
+import { viewTechnicians } from "../../services/apiService";
 
 const ViewTechnician = () => {
   const [technicians, setTechnicians] = useState([]);
@@ -16,6 +16,15 @@ const ViewTechnician = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Refetch list when coming back from update
+  useEffect(() => {
+    if (location.state?.refresh) {
+      setCurrentPage(1); // optional: reset page
+      navigate(location.pathname, { replace: true, state: {} }); // clear state
+    }
+  }, [location, navigate]);
 
   // Fetch technicians with pagination
   useEffect(() => {
@@ -26,10 +35,11 @@ const ViewTechnician = () => {
         const response = await viewTechnicians(params);
 
         if (response?.data) {
-          const data = response.data.sort((a, b) => Number(a.id) - Number(b.id));
+          const data = response.data.sort(
+            (a, b) => Number(a.id) - Number(b.id)
+          );
           setTechnicians(data);
           setFilteredTechnicians(data);
-
           setTotalPages(response?.meta?.totalPages || 1);
           setTotalItems(response?.meta?.totalItems || 0);
         }
@@ -43,7 +53,7 @@ const ViewTechnician = () => {
     fetchTechnicians();
   }, [currentPage, itemsPerPage]);
 
-  // Client-side search
+  // Client-side search filtering
   useEffect(() => {
     if (!search.trim()) {
       setFilteredTechnicians(technicians);
@@ -71,11 +81,31 @@ const ViewTechnician = () => {
     setCurrentPage(1);
   };
 
+  // Correctly navigate to UpdateTechnician page
   const handleUpdate = (technician) => {
-    navigate(`/update-technician/${technician.id}`);
+    if (technician?.id) {
+      navigate(`/update-technician/${technician.id}`);
+    }
   };
 
-  // Columns based on schema
+  // const columns = [
+  //   { key: "id", label: "ID" },
+  //   { key: "technicianname", label: "Technician Name" },
+  //   { key: "contactno", label: "Phone" },
+  //   { key: "addressline", label: "Address" },
+  //   { key: "city", label: "City" },
+  //   { key: "state", label: "State" },
+  //   { key: "pincode", label: "PIN Code" },
+  //   { key: "dob", label: "DOB" },
+  //   { key: "gender", label: "Gender" },
+  //   { key: "status", label: "Status" },
+  // ];
+
+  // const mappedItems = (filteredTechnicians || []).map((t) => ({
+  //   ...t,
+  //   dob: t.dob ? new Date(t.dob).toLocaleDateString("en-IN") : "-",
+  //   status: t.isactive ? "Active" : "Inactive",
+  // }));
   const columns = [
     { key: "id", label: "ID" },
     { key: "technicianname", label: "Technician Name" },
@@ -86,9 +116,20 @@ const ViewTechnician = () => {
     { key: "pincode", label: "PIN Code" },
     { key: "dob", label: "DOB" },
     { key: "gender", label: "Gender" },
-    { key: "status", label: "Status" }, // Active / Inactive
+    { key: "status", label: "Status" },
+    // {
+    //   key: "actions",
+    //   label: "Actions",
+    //   render: (technician) => (
+    //     <button
+    //       onClick={() => handleUpdate(technician)}
+    //       className="px-2 py-1 bg-teal-500 text-white rounded hover:bg-teal-600"
+    //     >
+    //       Update
+    //     </button>
+    //   ),
+    // },
   ];
-
   const mappedItems = (filteredTechnicians || []).map((t) => ({
     ...t,
     dob: t.dob ? new Date(t.dob).toLocaleDateString("en-IN") : "-",
@@ -115,6 +156,10 @@ const ViewTechnician = () => {
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
               Technicians
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              View Technicians
             </li>
           </ol>
         </nav>
@@ -153,7 +198,7 @@ const ViewTechnician = () => {
           {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
-              onClick={() => navigate("/add-technician")}
+              onClick={() => navigate("/add-user")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
@@ -181,7 +226,7 @@ const ViewTechnician = () => {
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
-              onUpdate={handleUpdate}
+              onUpdate={handleUpdate} // <-- ensures navigate works
             />
           )}
         </div>

@@ -72,6 +72,8 @@ const AddPatientDetails = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBillingCompleted, setIsBillingCompleted] = useState(false);
 
+
+
   // Handle payment mode changes
   useEffect(() => {
     if (paymentModeType === "single" && payments.length > 1) {
@@ -273,18 +275,28 @@ const AddPatientDetails = () => {
   const fetchPatientData = async (phone) => {
     setLoading(true);
     setApiError("");
-    try {
+    try { 
+      const authToken = localStorage.getItem("authToken");
+  
       const response = await axios.get(
-        `https://asrphleb.asrhospitalindia.in/api/v2/phleb/get-data-mobile?phone=${phone}`
+        `https://asrphleb.asrhospitalindia.in/api/v2/phleb/get-data-mobile?phone=${phone}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
       );
+  
       setPatientList(response.data || []);
     } catch (err) {
+      console.error(err); // Optional: log the real error
       setPatientList([]);
       setApiError("No patient found or API error.");
     } finally {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     if (mobileNumber && /^[0-9]{10}$/.test(mobileNumber)) {
@@ -855,7 +867,7 @@ const AddPatientDetails = () => {
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Select Hospital
+                Select Hospital<span className="text-red-500">*</span>
               </label>
               <select
                 {...register("referralSource", {
@@ -1002,7 +1014,7 @@ const AddPatientDetails = () => {
           {/* Contact and Identity */}
           <div className="px-6 pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-0">
-              Contact and Identity
+              Contact and Identity<span className="text-red-500">*</span>
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
@@ -1010,7 +1022,7 @@ const AddPatientDetails = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Mobile Number
+                  Mobile Number<span className="text-red-500">*</span>
                 </label>
                 <input
                   {...register("p_mobile", {
@@ -1043,7 +1055,7 @@ const AddPatientDetails = () => {
             {patientList.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Select Patient
+                  Select Patient<span className="text-red-500">*</span>
                 </label>
                 <select
                   {...register("selectedPatientId", { required: true })}
@@ -1082,37 +1094,70 @@ const AddPatientDetails = () => {
                 <p className="text-red-600 text-xs mt-1">Title is required</p>
               )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                First Name
-              </label>
-              <input
-                {...register("p_name", {
-                  required: true,
-                  pattern: /^[A-Za-z\s.]+$/,
-                })}
-                className="w-full border px-3 py-2 rounded"
-              />
-              {errors.patientName && (
-                <p className="text-red-600 text-xs mt-1">
-                  First name is required
-                </p>
-              )}
-            </div>
+            {/* First Name */}
+<div>
+  <label className="block text-sm font-medium text-gray-700">
+    First Name <span className="text-red-500">*</span>
+  </label>
+  <input
+    {...register("p_name", {
+      required: "First name is required",
+      pattern: {
+        value: /^[A-Za-z\s.-]+$/,
+        message: "Only alphabets, spaces, periods, and hyphens allowed"
+      },
+      minLength: {
+        value: 2,
+        message: "First name must be at least 2 characters"
+      },
+      maxLength: {
+        value: 50,
+        message: "First name cannot exceed 50 characters"
+      },
+      setValueAs: (v) => v.trim() // remove extra spaces
+    })}
+    className="w-full border px-3 py-2 rounded"
+    placeholder="Enter first name"
+  />
+  {errors.p_name && (
+    <p className="text-red-600 text-xs mt-1">{errors.p_name.message}</p>
+  )}
+</div>
+
+{/* Last Name */}
+<div>
+  <label className="block text-sm font-medium text-gray-700">
+    Last Name <span className="text-red-500">*</span>
+  </label>
+  <input
+    {...register("lastName", {
+      required: "Last name is required",
+      pattern: {
+        value: /^[A-Za-z\s.-]+$/,
+        message: "Only alphabets, spaces, periods, and hyphens allowed"
+      },
+      minLength: {
+        value: 2,
+        message: "Last name must be at least 2 characters"
+      },
+      maxLength: {
+        value: 50,
+        message: "Last name cannot exceed 50 characters"
+      },
+      setValueAs: (v) => v.trim()
+    })}
+    className="w-full border px-3 py-2 rounded"
+    placeholder="Enter last name"
+  />
+  {errors.lastName && (
+    <p className="text-red-600 text-xs mt-1">{errors.lastName.message}</p>
+  )}
+</div>
+
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Last Name
-              </label>
-              <input
-                {...register("lastName")}
-                className="w-full border px-3 py-2 rounded"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Gender
+                Gender<span className="text-red-500">*</span>
               </label>
               <select
                 {...register("p_gender", { required: true })}
@@ -1131,7 +1176,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Registration Date
+                Registration Date<span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -1157,7 +1202,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Date of Birth
+                Date of Birth<span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -1182,7 +1227,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Age
+                Age<span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -1205,7 +1250,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Blood Group
+                Blood Group<span className="text-red-500">*</span>
               </label>
               <select
                 {...register("bloodGroup", { required: true })}
@@ -1232,68 +1277,84 @@ const AddPatientDetails = () => {
           {/* ID Proof Details */}
           <div className="px-6 pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-0">
-              ID Proof Details
+              ID Proof Details<span className="text-red-500">*</span>
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                ID Type
-              </label>
-              <select
-                {...register("idType", { required: true })}
-                className="w-full border px-3 py-2 rounded"
-              >
-                <option value="">Select ID Type</option>
-                <option value="Aadhaar">Aadhaar</option>
-                <option value="PAN">PAN</option>
-              </select>
-              {errors.idType && (
-                <p className="text-red-600 text-xs mt-1">ID Type is required</p>
-              )}
-            </div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+  {/* ID Type */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700">
+      ID Type <span className="text-red-500">*</span>
+    </label>
+    <select
+      {...register("idType", {
+        required: "ID Type is required",
+      })}
+      className="w-full border px-3 py-2 rounded"
+    >
+      <option value="">Select ID Type</option>
+      <option value="Aadhaar">Aadhaar</option>
+      <option value="PAN">PAN</option>
+    </select>
+    {errors.idType && (
+      <p className="text-red-600 text-xs mt-1">{errors.idType.message}</p>
+    )}
+  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                ID Number
-              </label>
-              <input
-                {...register("idNumber", {
-                  required: true,
-                  pattern: /^[A-Za-z0-9]+$/,
-                })}
-                className="w-full border px-3 py-2 rounded"
-              />
-              {errors.idNumber && (
-                <p className="text-red-600 text-xs mt-1">
-                  ID Number is required
-                </p>
-              )}
-            </div>
+  {/* ID Number */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700">
+      ID Number <span className="text-red-500">*</span>
+    </label>
+    <input
+      {...register("idNumber", {
+        required: "ID Number is required",
+        validate: (value, formValues) => {
+          if (formValues.idType === "Aadhaar") {
+            return /^[0-9]{12}$/.test(value) || "Aadhaar must be exactly 12 digits";
+          } else if (formValues.idType === "PAN") {
+            return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.toUpperCase()) || "PAN must be 10 characters (e.g., ABCDE1234F)";
+          }
+          return true;
+        },
+        setValueAs: (v) => v.trim().toUpperCase(), // uppercase for PAN
+      })}
+      className="w-full border px-3 py-2 rounded"
+      placeholder="Enter ID Number"
+    />
+    {errors.idNumber && (
+      <p className="text-red-600 text-xs mt-1">{errors.idNumber.message}</p>
+    )}
+  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                {...register("email", {
-                  pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                })}
-                className="w-full border px-3 py-2 rounded"
-              />
-              {errors.email && (
-                <p className="text-red-600 text-xs mt-1">
-                  Invalid email format
-                </p>
-              )}
-            </div>
-          </div>
+  {/* Email */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700">
+      Email <span className="text-red-500">*</span>
+    </label>
+    <input
+      {...register("email", {
+        required: "Email is required",
+        pattern: {
+          value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+          message: "Invalid email format",
+        },
+      })}
+      className="w-full border px-3 py-2 rounded"
+      placeholder="Enter email"
+    />
+    {errors.email && (
+      <p className="text-red-600 text-xs mt-1">{errors.email.message}</p>
+    )}
+  </div>
+</div>
+
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                WhatsApp Number
+                WhatsApp Number<span className="text-red-500">*</span>
               </label>
               <div className="flex mt-2 items-center space-x-2">
                 <input
@@ -1324,7 +1385,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Photo Capture
+                Photo Capture<span className="text-red-500">*</span>
               </label>
 
               <div className="border mt-2 p-2 w-full rounded flex items-center space-x-2">
@@ -1469,7 +1530,7 @@ const AddPatientDetails = () => {
 
           <div className="px-6 pt-6">
             <h3 className=" text-lg font-medium text-gray-900 mb-0">
-              Guardian Information
+              Guardian Information<span className="text-red-500">*</span>
               <span className="ml-2 text-sm font-normal text-gray-400">
                 (required if patient is minor or elderly)
               </span>
@@ -1480,7 +1541,7 @@ const AddPatientDetails = () => {
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Name
+                Name<span className="text-red-500">*</span>
               </label>
               <input
                 {...register("guardianName", {
@@ -1499,7 +1560,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Mobile
+                Mobile<span className="text-red-500">*</span>
               </label>
               <input
                 {...register("guardianMobile", {
@@ -1516,7 +1577,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Address (Optional)
+                Address (Optional)<span className="text-red-500">*</span>
               </label>
               <input
                 {...register("street")}
@@ -1544,14 +1605,14 @@ const AddPatientDetails = () => {
 
           <div className="px-6 pt-6">
             <h3 className=" text-lg font-medium text-gray-900 mb-0">
-              Address Details
+              Address Details<span className="text-red-500">*</span>
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Street
+                Street<span className="text-red-500">*</span>
               </label>
               <input
                 {...register("street", { maxLength: 100 })}
@@ -1566,31 +1627,57 @@ const AddPatientDetails = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Landmark
-              </label>
-              <input
-                {...register("landmark")}
-                className="w-full border px-3 py-2 rounded"
-              />
-            </div>
+  <label className="block text-sm font-medium text-gray-700">
+    Landmark
+  </label>
+  <input
+    {...register("landmark", {
+      maxLength: {
+        value: 100,
+        message: "Landmark cannot exceed 100 characters",
+      },
+      pattern: {
+        value: /^[A-Za-z0-9\s.,'-]*$/,
+        message: "Invalid characters in Landmark",
+      },
+      setValueAs: (v) => v.trim(),
+    })}
+    className="w-full border px-3 py-2 rounded"
+    placeholder="Enter landmark"
+  />
+  {errors.landmark && (
+    <p className="text-red-600 text-xs mt-1">{errors.landmark.message}</p>
+  )}
+</div>
+
+<div>
+  <label className="block text-sm font-medium text-gray-700">
+    City <span className="text-red-500">*</span>
+  </label>
+  <input
+    {...register("city", {
+      required: "City is required",
+      maxLength: {
+        value: 50,
+        message: "City cannot exceed 50 characters",
+      },
+      pattern: {
+        value: /^[A-Za-z\s]+$/,
+        message: "City must contain only letters and spaces",
+      },
+      setValueAs: (v) => v.trim(),
+    })}
+    className="w-full border px-3 py-2 rounded"
+    placeholder="Enter city"
+  />
+  {errors.city && (
+    <p className="text-red-600 text-xs mt-1">{errors.city.message}</p>
+  )}
+</div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                City
-              </label>
-              <input
-                {...register("city", { required: true })}
-                className="w-full border px-3 py-2 rounded"
-              />
-              {errors.city && (
-                <p className="text-red-600 text-xs mt-1">City is required</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                State
+                State<span className="text-red-500">*</span>
               </label>
               <select
                 {...register("state", { required: true })}
@@ -1633,7 +1720,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                PIN Code
+                PIN Code<span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -1651,7 +1738,7 @@ const AddPatientDetails = () => {
 
           <div className="px-6 pt-6">
             <h3 className=" text-lg font-medium text-gray-900 mb-0">
-              Communication Preferences
+              Communication Preferences<span className="text-red-500">*</span>
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
@@ -1700,7 +1787,7 @@ const AddPatientDetails = () => {
           {/* Barcode Management */}
           <div className="px-6 pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-0">
-              Barcode Management
+              Barcode Management<span className="text-red-500">*</span>
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
@@ -1721,7 +1808,7 @@ const AddPatientDetails = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Sample Type
+                Sample Type<span className="text-red-500">*</span>
               </label>
               <select
                 {...register("sampleType")}
@@ -1733,16 +1820,42 @@ const AddPatientDetails = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Barcode Number
-              </label>
-              <input
-                {...register("barcodeNumber")}
-                className="w-full border px-3 py-2 rounded"
-                placeholder="Enter barcode number"
-              />
-            </div>
+           <div>
+  <label className="block text-sm font-medium text-gray-700">
+    Barcode Number<span className="text-red-500">*</span>
+  </label>
+  <input
+    {...register("barcodeNumber", {
+      required: "Barcode Number is required",
+      pattern: {
+        value: /^[0-9]+$/,
+        message: "Barcode must contain only digits",
+      },
+      minLength: {
+        value: 6,
+        message: "Barcode must be at least 6 digits",
+      },
+      maxLength: {
+        value: 20,
+        message: "Barcode cannot exceed 20 digits",
+      },
+      validate: (value) => {
+        // Replace with your actual list of existing barcodes
+        const existingBarcodes = ["123456", "987654", "555555"];
+        if (existingBarcodes.includes(value)) {
+          return "❌ Barcode already exists";
+        }
+        return true;
+      },
+    })}
+    className="w-full border px-3 py-2 rounded"
+    placeholder="Enter barcode number"
+  />
+  {errors.barcodeNumber && (
+    <p className="text-red-600 text-xs mt-1">{errors.barcodeNumber.message}</p>
+  )}
+</div>
+
           </div>
 
           {/* Barcode Generatin  */}
@@ -1911,14 +2024,14 @@ const AddPatientDetails = () => {
               <TabPanel value="react">
                 <div className="px-6 pt-6">
                   <h3 className=" text-lg font-medium text-gray-900 mb-0">
-                    Hospital / Scheme Information
+                    Hospital / Scheme Information<span className="text-red-500">*</span>
                   </h3>
                   <div className="mt-1 border-b border-gray-100"></div>
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Number Type
+                      Select Number Type<span className="text-red-500">*</span>
                     </label>
                     <select
                       id="numberType"
@@ -1932,18 +2045,37 @@ const AddPatientDetails = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      OP/IP Number
-                    </label>
-                    <input
-                      {...register("opNumber")}
-                      className="w-full border px-3 py-2 rounded"
-                    />
-                  </div>
+  <label className="block text-sm font-medium text-gray-700">
+    OP/IP Number<span className="text-red-500">*</span>
+  </label>
+  <input
+    {...register("opNumber", {
+      required: "OP/IP Number is required",
+      pattern: {
+        value: /^[A-Za-z0-9-]+$/,
+        message: "Only letters, numbers, and hyphens are allowed",
+      },
+      validate: (value) => {
+        // Replace this array with your actual existing OP/IP numbers
+        const existingOPNumbers = ["OP-123", "IP-456", "OP-789"];
+        if (existingOPNumbers.includes(value)) {
+          return "❌ This OP/IP Number already exists";
+        }
+        return true;
+      },
+    })}
+    className="w-full border px-3 py-2 rounded"
+    placeholder="Enter OP/IP Number"
+  />
+  {errors.opNumber && (
+    <p className="text-red-600 text-xs mt-1">{errors.opNumber.message}</p>
+  )}
+</div>
+
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Scheme Type
+                      Scheme Type<span className="text-red-500">*</span>
                     </label>
                     <select
                       {...register("schemeType")}
@@ -1957,7 +2089,7 @@ const AddPatientDetails = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Registration Number
+                      Registration Number<span className="text-red-500">*</span>
                     </label>
                     <input
                       {...register("registrationNumber")}
@@ -1967,7 +2099,7 @@ const AddPatientDetails = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Referral Doctor Name
+                      Referral Doctor Name<span className="text-red-500">*</span>
                     </label>
                     <input
                       {...register("referralDoctorName")}
@@ -1977,7 +2109,7 @@ const AddPatientDetails = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Barcode No
+                      Barcode No<span className="text-red-500">*</span>
                     </label>
                     <input
                       {...register("barcodeNo")}
@@ -1985,16 +2117,35 @@ const AddPatientDetails = () => {
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      TRF Number
-                    </label>
-                    <input
-                      {...register("trfNumber")}
-                      type="text"
-                      className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                 <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    TRF Number<span className="text-red-500">*</span>
+  </label>
+  <input
+    {...register("trfNumber", {
+      required: "TRF Number is required",
+      pattern: {
+        value: /^[A-Za-z0-9-]+$/,
+        message: "Only letters, numbers, and hyphens are allowed",
+      },
+      validate: (value) => {
+        // Replace this array with your existing TRF numbers
+        const existingTRFNumbers = ["TRF-001", "TRF-002", "TRF-003"];
+        if (existingTRFNumbers.includes(value)) {
+          return "❌ This TRF Number already exists";
+        }
+        return true;
+      },
+    })}
+    type="text"
+    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    placeholder="Enter TRF Number"
+  />
+  {errors.trfNumber && (
+    <p className="text-red-600 text-xs mt-1">{errors.trfNumber.message}</p>
+  )}
+</div>
+
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2057,7 +2208,7 @@ const AddPatientDetails = () => {
                         <div className="bg-gray-50 p-4 rounded-lg border">
                           <div className="flex justify-between items-center">
                             <h3 className="text-lg font-medium text-gray-800">
-                              Add Tests by Code
+                              Add Tests by Code<span className="text-red-500">*</span>
                             </h3>
 
                             <button
@@ -2350,12 +2501,12 @@ const AddPatientDetails = () => {
                       {/* Discount Controls */}
                       <div className="bg-white border rounded-lg p-4">
                         <h3 className="text-lg font-medium text-gray-800 mb-3">
-                          Discount
+                          Discount<span className="text-red-500">*</span>
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Discount Type
+                              Discount Type<span className="text-red-500">*</span>
                             </label>
                             <select
                               value={pdisc.type}
@@ -2370,7 +2521,7 @@ const AddPatientDetails = () => {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Discount Value
+                              Discount Value<span className="text-red-500">*</span>
                             </label>
                             <input
                               type="number"
@@ -2451,7 +2602,7 @@ const AddPatientDetails = () => {
                       <div className="bg-white border rounded-lg p-4">
                         <div className="flex justify-between items-center mb-3">
                           <h3 className="text-lg font-medium text-gray-800">
-                            Payments
+                            Payments<span className="text-red-500">*</span>
                           </h3>
                           {paymentModeType === "multiple" && (
                             <button
@@ -2474,7 +2625,7 @@ const AddPatientDetails = () => {
                             >
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Method
+                                  Method<span className="text-red-500">*</span>
                                 </label>
                                 <select
                                   value={payment.method}
@@ -2495,7 +2646,7 @@ const AddPatientDetails = () => {
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Amount
+                                  Amount<span className="text-red-500">*</span>
                                 </label>
                                 <input
                                   type="number"
@@ -2540,7 +2691,7 @@ const AddPatientDetails = () => {
                         {/* Notes */}
                         <div className="bg-white border rounded-lg p-4">
                           <h3 className="text-lg font-medium text-gray-800 mb-3">
-                            Notes
+                            Notes<span className="text-red-500">*</span>
                           </h3>
                           <textarea
                             rows="4"
@@ -2555,7 +2706,7 @@ const AddPatientDetails = () => {
                         {/* File Upload */}
                         <div className="bg-white border rounded-lg p-4">
                           <h3 className="text-lg font-medium text-gray-800 mb-3">
-                            Prescription / TRF - Upload
+                            Prescription / TRF - Upload<span className="text-red-500">*</span>
                           </h3>
                           <div className="space-y-4">
                             <label className="block text-sm font-medium text-gray-700 mb-1">

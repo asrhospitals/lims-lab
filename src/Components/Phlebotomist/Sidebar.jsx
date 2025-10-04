@@ -41,7 +41,7 @@ const Sidebar = ({
       name: "Patient Registration",
       icon: <FaUserDoctor />,
       roles: ["phlebotomist"],
-      link: "/patient-registration",
+      link: "/patient-registration-add",
       // children: [
       //   { name: "Patient Registration", link: "/patient-registration", roles: ["phlebotomist"] },
       //   // { name: "General Registration", link: "/patient-general-registration", roles: ["phlebotomist"] },
@@ -69,7 +69,7 @@ const Sidebar = ({
       icon: <FaChartBar />,
       roles: ["phlebotomist"],
       children: [
-        { name: "Report Details", link: "/patient-registartion-details", roles: ["phlebotomist"] },
+        { name: "Registration Details", link: "/patient-registration", roles: ["phlebotomist"] },
         { name: "Test Details", link: "/test-details", roles: ["phlebotomist"] },
       ]
     },

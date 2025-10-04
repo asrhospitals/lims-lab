@@ -103,74 +103,85 @@ const AddHospitalType = () => {
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Hospital Type Code */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Hospital Type Code <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  {...register("hsptltype", {
-                    required: "Hospital type code is required",
-                    pattern: {
-                      value: /^[A-Za-z\s]+$/, // ✅ only letters and spaces
-                      message: "Only letters and spaces are allowed",
-                    },
-                    maxLength: {
-                      value: 20,
-                      message: "Max length is 20 characters",
-                    },
-                  })}
-                  placeholder="Enter code (e.g., DH)"
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.hsptltype
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-teal-500"
-                  } focus:ring-2 focus:border-transparent transition`}
-                />
-                {errors.hsptltype && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    {errors.hsptltype.message}
-                  </p>
-                )}
-              </div>
+             {/* Hospital Type Code */}
+<div className="space-y-1">
+  <label className="block text-sm font-medium text-gray-700">
+    Hospital Type Code <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    {...register("hsptltype", {
+      required: "Hospital type code is required",
+      pattern: {
+        value: /^[A-Za-z\s]+$/,
+        message: "Only letters and spaces are allowed",
+      },
+      maxLength: {
+        value: 20,
+        message: "Max length is 20 characters",
+      },
+      onBlur: (e) => {
+        if (errors?.hsptltype) {
+          e.target.focus(); // cursor-preserving
+        }
+      },
+    })}
+    placeholder="Enter code (e.g., DH)"
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.hsptltype
+        ? "border-red-500 focus:ring-red-500"
+        : "border-gray-300 focus:ring-teal-500"
+    } focus:ring-2 focus:border-transparent transition`}
+  />
+  {errors.hsptltype && (
+    <p className="text-red-500 text-xs mt-1 flex items-center">
+      {errors.hsptltype.message}
+    </p>
+  )}
+</div>
 
-              {/* Hospital Description */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Hospital Description <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  {...register("hsptldsc", {
-                    required: "Description is required",
-                    minLength: {
-                      value: 5,
-                      message: "Minimum 5 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: "Maximum 100 characters",
-                    },
-                    pattern: {
-                      value: /^[A-Za-z\s]+$/, // ✅ only letters and spaces
-                      message:
-                        "Only letters and spaces are allowed (no numbers or special characters)",
-                    },
-                  })}
-                  placeholder="Enter full description"
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.hsptldsc
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-gray-300 focus:ring-teal-500"
-                  } focus:ring-2 focus:border-transparent transition`}
-                />
-                {errors.hsptldsc && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    {errors.hsptldsc.message}
-                  </p>
-                )}
-              </div>
+{/* Hospital Description */}
+<div className="space-y-1">
+  <label className="block text-sm font-medium text-gray-700">
+    Hospital Description <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="text"
+    {...register("hsptldsc", {
+      required: "Description is required",
+      minLength: {
+        value: 5,
+        message: "Minimum 5 characters",
+      },
+      maxLength: {
+        value: 100,
+        message: "Maximum 100 characters",
+      },
+      pattern: {
+        value: /^[A-Za-z\s]+$/,
+        message:
+          "Only letters and spaces are allowed (no numbers or special characters)",
+      },
+      onBlur: (e) => {
+        if (errors?.hsptldsc) {
+          e.target.focus(); // cursor-preserving
+        }
+      },
+    })}
+    placeholder="Enter full description"
+    className={`w-full px-4 py-2 rounded-lg border ${
+      errors.hsptldsc
+        ? "border-red-500 focus:ring-red-500"
+        : "border-gray-300 focus:ring-teal-500"
+    } focus:ring-2 focus:border-transparent transition`}
+  />
+  {errors.hsptldsc && (
+    <p className="text-red-500 text-xs mt-1 flex items-center">
+      {errors.hsptldsc.message}
+    </p>
+  )}
+</div>
+
 
               {/* Is Active */}
               <div className="space-y-1">

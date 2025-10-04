@@ -29,7 +29,7 @@ const AddReceptionist = () => {
       city: data.city.trim(),
       state: data.state.trim(),
       pincode: Number(data.pincode),
-      dob: today, // force present date only
+      dob: data.dob, // ✅ take from user instead of forcing today
       contactno: data.contactno.trim(),
       gender: data.gender,
       isactive: data.isactive === "true",
@@ -71,12 +71,24 @@ const AddReceptionist = () => {
           message: "Name should only contain letters and spaces",
         },
       },
+      onBlur: (e, errors) => {
+        if (errors?.receptionistname) {
+          const input = document.querySelector(`[name="receptionistname"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
       name: "addressline",
       label: "Address",
       placeholder: "Enter Address",
       validation: { required: "Address is required" },
+      onBlur: (e, errors) => {
+        if (errors?.addressline) {
+          const input = document.querySelector(`[name="addressline"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
       name: "city",
@@ -89,6 +101,12 @@ const AddReceptionist = () => {
           message: "City should only contain letters and spaces",
         },
       },
+      onBlur: (e, errors) => {
+        if (errors?.city) {
+          const input = document.querySelector(`[name="city"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
       name: "state",
@@ -100,6 +118,12 @@ const AddReceptionist = () => {
           value: /^[a-zA-Z\s]+$/,
           message: "State should only contain letters and spaces",
         },
+      },
+      onBlur: (e, errors) => {
+        if (errors?.state) {
+          const input = document.querySelector(`[name="state"]`);
+          if (input) input.focus();
+        }
       },
     },
     {
@@ -114,13 +138,25 @@ const AddReceptionist = () => {
           message: "PIN must be exactly 6 digits",
         },
       },
+      onBlur: (e, errors) => {
+        if (errors?.pincode) {
+          const input = document.querySelector(`[name="pincode"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
       name: "dob",
       label: "Date of Birth",
       type: "date",
       validation: { required: "Date of birth is required" },
-      max: today, // restrict to today or past
+      max: today, // ✅ only allow today or earlier
+      onBlur: (e, errors) => {
+        if (errors?.dob) {
+          const input = document.querySelector(`[name="dob"]`);
+          if (input) input.focus();
+        }
+      },
     },
     {
       name: "contactno",
@@ -133,6 +169,12 @@ const AddReceptionist = () => {
           value: /^\d{10}$/,
           message: "Contact number must be 10 digits",
         },
+      },
+      onBlur: (e, errors) => {
+        if (errors?.contactno) {
+          const input = document.querySelector(`[name="contactno"]`);
+          if (input) input.focus();
+        }
       },
     },
     {
@@ -202,7 +244,7 @@ const AddReceptionist = () => {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {fields.map(
-                ({ name, label, placeholder, type = "text", options, validation }) => (
+                ({ name, label, placeholder, type = "text", options, validation, max }) => (
                   <div key={name} className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">
                       {label}
@@ -231,8 +273,7 @@ const AddReceptionist = () => {
                         type="date"
                         {...register(name, validation)}
                         onInput={() => trigger(name)}
-                        min={today}
-                        max={today}
+                        max={max} // ✅ only restrict future
                         className={`w-full px-4 py-2 rounded-lg border ${
                           errors[name]
                             ? "border-red-500 focus:ring-red-500"

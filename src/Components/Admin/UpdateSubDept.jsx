@@ -7,14 +7,14 @@ import {
   updateSubDepartment,
   viewDepartments,
   viewSubDepartment,
-  viewSubDepartments, // ✅ make sure your API service has this
+  viewSubDepartments,
 } from "../../services/apiService";
 
 const UpdateSubDpt = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [departments, setDepartments] = useState([]);
-  const [allSubDepartments, setAllSubDepartments] = useState([]); // ✅ keep all for duplicate check
+  const [allSubDepartments, setAllSubDepartments] = useState([]);
   const [subDptToUpdate, setSubDptToUpdate] = useState(null);
 
   const navigate = useNavigate();
@@ -25,10 +25,8 @@ const UpdateSubDpt = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    trigger,
-    watch,
   } = useForm({
-    mode: "onChange", // ✅ validates live while typing
+    mode: "onChange",
     defaultValues: {
       dptname: "",
       subdptname: "",
@@ -51,28 +49,18 @@ const UpdateSubDpt = () => {
           await Promise.all([
             viewDepartments(),
             viewSubDepartment(id),
-            viewSubDepartments(), // ✅ fetch all for duplicate validation
+            viewSubDepartments(),
           ]);
 
         setDepartments(departmentsResponse.data || []);
         setAllSubDepartments(subDeptsResponse.data || []);
         setSubDptToUpdate(subDeptResponse);
 
-        console.log("departmentsResponse.data==", departmentsResponse.data);
-        console.log("selectedDeptName==", subDeptsResponse.data);
-
-        const selectedDeptName = (departmentsResponse.data || []).find(
-          (dept) => dept.id === subDeptResponse.department_id
-        )?.dptname;
-
-        console.log("selectedDeptName==", selectedDeptName);
-
         reset({
-          dptname: subDeptResponse.department_id || "",      // the dropdown expects the ID
-          subdptname: subDeptResponse.subdptname || "",      // the text input expects sub-department name
+          dptname: subDeptResponse.department_id || "",
+          subdptname: subDeptResponse.subdptname || "",
           isactive: String(subDeptResponse.isactive),
         });
-        
       } catch (error) {
         console.error("Failed to fetch data:", error);
         toast.error(
@@ -169,7 +157,8 @@ const UpdateSubDpt = () => {
           </div>
 
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* All Fields in One Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Department Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -198,44 +187,41 @@ const UpdateSubDpt = () => {
               </div>
 
               {/* Sub-Department Name */}
-              {/* Sub-Department Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Sub Department Name <span className="text-red-500">*</span>
                 </label>
                 <input
-  type="text"
-  {...register("subdptname", {
-    required: "Sub-department name is required",
-    minLength: { value: 2, message: "Minimum 2 characters" },
-    maxLength: { value: 50, message: "Maximum 50 characters" },
-    pattern: {
-      value: /^[A-Za-z\s]+$/,
-      message: "Only letters and spaces are allowed",
-    },
-    validate: (value) => {
-      const cleaned = value.trim();
-      const duplicate = allSubDepartments.find(
-        (sub) =>
-          sub.subdptname.toLowerCase() === cleaned.toLowerCase() &&
-          sub.id !== subDptToUpdate.id
-      );
-      return duplicate ? "This sub-department already exists" : true;
-    },
-  })}
-  placeholder="Enter Sub-Department Name"
-  className={`w-full px-4 py-2 rounded-lg border ${
-    errors.subdptname ? "border-red-500" : "border-gray-300"
-  } focus:ring-2 focus:ring-teal-500`}
-  onInput={(e) => {
-    // Prevent typing invalid characters
-    e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, "");
-  }}
-/>
-
-
-
-
+                  type="text"
+                  {...register("subdptname", {
+                    required: "Sub-department name is required",
+                    minLength: { value: 2, message: "Minimum 2 characters" },
+                    maxLength: { value: 50, message: "Maximum 50 characters" },
+                    pattern: {
+                      value: /^[A-Za-z\s]+$/,
+                      message: "Only letters and spaces are allowed",
+                    },
+                    validate: (value) => {
+                      const cleaned = value.trim();
+                      const duplicate = allSubDepartments.find(
+                        (sub) =>
+                          sub.subdptname.toLowerCase() ===
+                            cleaned.toLowerCase() &&
+                          sub.id !== subDptToUpdate.id
+                      );
+                      return duplicate
+                        ? "This sub-department already exists"
+                        : true;
+                    },
+                  })}
+                  placeholder="Enter Sub-Department Name"
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.subdptname ? "border-red-500" : "border-gray-300"
+                  } focus:ring-2 focus:ring-teal-500`}
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+                  }}
+                />
                 {errors.subdptname && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.subdptname.message}
@@ -248,20 +234,29 @@ const UpdateSubDpt = () => {
                 <label className="block text-sm font-medium text-gray-700">
                   Is Active? <span className="text-red-500">*</span>
                 </label>
-                <div className="flex space-x-4 pt-2">
-                  {["true", "false"].map((val) => (
-                    <label key={val} className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        {...register("isactive", {
-                          required: "This field is required",
-                        })}
-                        value={val}
-                        className="h-4 w-4 text-teal-600"
-                      />
-                      <span className="ml-2 capitalize">{val}</span>
-                    </label>
-                  ))}
+                <div className="flex space-x-6 pt-2">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register("isactive", {
+                        required: "This field is required",
+                      })}
+                      value="true"
+                      className="h-4 w-4 text-teal-600"
+                    />
+                    <span className="ml-2">Yes</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      {...register("isactive", {
+                        required: "This field is required",
+                      })}
+                      value="false"
+                      className="h-4 w-4 text-teal-600"
+                    />
+                    <span className="ml-2">No</span>
+                  </label>
                 </div>
                 {errors.isactive && (
                   <p className="text-red-500 text-xs mt-1">
@@ -271,6 +266,7 @@ const UpdateSubDpt = () => {
               </div>
             </div>
 
+            {/* Buttons */}
             <div className="flex justify-end space-x-4">
               <button
                 type="button"

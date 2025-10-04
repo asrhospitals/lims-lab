@@ -125,7 +125,8 @@ const sections = [
     title: "Phlebotomist",
     icon: <RiUserAddLine className="text-3xl text-[#238781]" />,
     buttons: [
-      { label: "Add Phlebotomist", route: "/add-phlebotomist" },
+      // { label: "Add Phlebotomist", route: "/add-phlebotomist" },
+      { label: "Add Phlebotomist", route: "/add-user" },
       { label: "View Phlebotomists", route: "/view-phlebotomist" },
     ],
   },
@@ -133,7 +134,8 @@ const sections = [
     title: "Receptionist",
     icon: <RiUserSearchLine className="text-3xl text-[#238781]" />,
     buttons: [
-      { label: "Add Receptionist", route: "/add-reception" },
+      { label: "Add Receptionist", route: "/add-user" },
+      // { label: "Add Receptionist", route: "/add-reception" },
       { label: "View Receptionists", route: "/view-reception" },
     ],
   },
@@ -141,8 +143,19 @@ const sections = [
     title: "Technician",
     icon: <RiUserSettingsLine className="text-3xl text-[#238781]" />,
     buttons: [
-      { label: "Add Technician", route: "/add-technician" },
+      { label: "Add Technician", route: "/add-user" },
+      // { label: "Add Technician", route: "/add-technician" },
       { label: "View Technicians", route: "/view-technician" },
+    ],
+  },
+  {
+    title: "Investigation",
+    icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
+    inProgress: true,
+
+    buttons: [
+      { label: "Add Investigation", route: "/add-investigation" },
+      { label: "View Investigations", route: "/view-investigation" },
     ],
   },
   {
@@ -161,17 +174,24 @@ const sections = [
       { label: "View Profiles", route: "/view-profile-master" },
     ],
   },
+
+
   {
-    title: "Investigation",
-    icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
+    title: "Accession Master",
+    icon: <RiFileList2Line className="text-3xl text-[#238781]" />,
+    inProgress: true,
     buttons: [
-      { label: "Add Investigation", route: "/add-investigation" },
-      { label: "View Investigations", route: "/view-investigation" },
+      { label: "Add Accession", route: "/add-accession-master" },
+      { label: "View Accession", route: "/view-accession-master" },
     ],
   },
+  
+
   {
     title: "Patient Registration",
     icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
+    inProgress: true,
+
     buttons: [
       { label: "Add Patient Details", route: "/admin-add-patient-details" },
       { label: "View Patient Details", route: "/admin-view-patient-details" },
@@ -212,6 +232,8 @@ const sections = [
   {
     title: "Doctor Registration",
     icon: <FaUserDoctor  className="text-3xl text-[#238781]" />,
+    inProgress: true,
+
     buttons: [
       { label: "Doctor Registration", route: "/doctor-registration" },
      
@@ -233,6 +255,8 @@ const sections = [
               {section.icon}
               <h2 className="text-lg font-semibold text-gray-700">
                 {section.title}
+                {section.inProgress && <span className="ml-2 mr-2 text-red-500">*</span>}
+                {section.inProgress && <span className="text-red-500">*</span>}
               </h2>
             </div>
             <div className="flex flex-col gap-3">

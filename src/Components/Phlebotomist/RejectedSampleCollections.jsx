@@ -2,7 +2,10 @@ import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../context/adminContext";
-import PhlebotomistDataTable from "../utils/PhlebotomistDataTable";
+import RejectedSamplePhlbTable from "../utils/RejectedSamplePhlbTable";
+import axios from "axios";
+
+import { toast } from "react-toastify";
 
 const RejectedSampleCollections = () => {
   const [reportDoctors, setReportDoctors] = useState([]);
@@ -14,47 +17,49 @@ const RejectedSampleCollections = () => {
 
   const [startDate, setStartDate] = useState(""); // From Date
   const [endDate, setEndDate] = useState(""); // To Date
+  const [apiMessage, setApiMessage] = useState("");
 
-  // Hardcoded data
   useEffect(() => {
-    const data = [
-      {
-        id: 1,
-        patientCode: "P1001",
-        opType: "Mahukaram / Cardiology",
-        opNo: "BC001",
-        patientDetails: "T001",
-        mobile: "Blood Test",
-        barcode: "Sample Damaged",
-        hospitalName: "2025-09-20",
-        registeredBy: "Dr. Sharma",
-      },
-      {
-        id: 2,
-        patientCode: "P1002",
-        opType: "Suresh / Neurology",
-        opNo: "BC002",
-        patientDetails: "T002",
-        mobile: "Urine Test",
-        barcode: "Insufficient Sample",
-        hospitalName: "2025-09-21",
-        registeredBy: "Dr. Rao",
-      },
-      {
-        id: 3,
-        patientCode: "P1003",
-        opType: "Anita / Orthopedics",
-        opNo: "BC003",
-        patientDetails: "T003",
-        mobile: "X-Ray",
-        barcode: "Wrong Label",
-        hospitalName: "2025-09-22",
-        registeredBy: "Dr. Mehta",
-      },
-    ];
+    console.log("useEffect fired"); // <-- check this
 
-    setReportDoctors(data);
-    setFilteredDoctors(data);
+    const fetchRejectedReportEntry = async () => {
+      try {
+        const authToken = localStorage.getItem("authToken");
+        console.log("authToken:", authToken); // check token
+
+        const response = await axios.get(
+          "https://asrphleb.asrhospitalindia.in/api/v1/phleb/report/get-reject-report/2",
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        );
+
+        console.log("response==", response);
+
+        const formattedData = (response.data.data || []).map((item) => ({
+          id: item.id,
+          patientCode: item.patientPPModes?.[0]?.pbarcode || "-",
+          patientname: item.p_name || "-",
+          patientage: item.p_age || "-",
+          patientgender: item.p_gender || "-",
+          dateofregistration: item.p_regdate || "-",
+          mobilenumber: item.p_mobile || "-",
+
+          hospitalName: item.hospital?.hospitalname || "-",
+          trfnumber: item.patientPPModes?.[0]?.trfno || "-",
+          registeredBy: item.reg_by || "-",
+          rejectionReason: item.patientTests?.[0]?.rejection_reason || "-",
+          rejectionstatus: item.patientTests?.[0]?.status || "-",
+        }));
+
+        setReportDoctors(formattedData);
+        setFilteredDoctors(formattedData);
+        console.log("Formatted Data >>>", formattedData);
+      } catch (error) {
+        console.error("Error fetching report:", error);
+        toast.error("❌ Failed to fetch report");
+      }
+    };
+
+    fetchRejectedReportEntry();
   }, []);
 
   // Search filter
@@ -77,18 +82,19 @@ const RejectedSampleCollections = () => {
 
   const columns = [
     { key: "id", label: "ID" },
-    { key: "patientCode", label: "Patient Code" },
-    { key: "opType", label: "Patient Details" },
-    { key: "opNo", label: "Barcode" },
-    { key: "patientDetails", label: "Test Code" },
-    { key: "mobile", label: "Test Name" },
-    { key: "barcode", label: "Rejection Reason" },
-    { key: "hospitalName", label: "Date of Rejection" },
-    { key: "registeredBy", label: "Rejected By" },
+    { key: "patientCode", label: "Barcode" },
+    { key: "patientname", label: "Patient Name" },
+    { key: "patientage", label: "Age" },
+    { key: "patientgender", label: "Gender" },
+    { key: "mobilenumber", label: "Mobile Number" },
+    { key: "dateofregistration", label: "Registered Date" },
+    { key: "hospitalName", label: "Hospital Name" },
+    { key: "rejectionReason", label: "Rejected Reason" },
+    { key: "rejectionstatus", label: "Rejected Status" },
   ];
   const mappedItems = filteredDoctors.map((doc) => ({
     ...doc,
-    status: doc.isactive ? "Active" : "Inactive",
+    status: doc.isactive ? "Active" : "Inactive", // optional, remove if not needed
   }));
 
   const handleUpdate = (item) => {
@@ -260,10 +266,10 @@ const RejectedSampleCollections = () => {
           {/* Table */}
           {mappedItems.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
-              No report entry found.
+              No rejected report entry found.
             </div>
           ) : (
-            <PhlebotomistDataTable
+            <RejectedSamplePhlbTable
               items={mappedItems}
               columns={columns}
               itemsPerPage={10}

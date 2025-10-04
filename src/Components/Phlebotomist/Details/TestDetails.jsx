@@ -1,66 +1,76 @@
-
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../../context/adminContext";
-import PhlebotomistDataTable from "../../utils/PhlebotomistDataTable";
+import DataTableWithoutAction from "../../utils/DataTableWithoutAction";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const TestDetails = () => {
   const [reportDoctors, setReportDoctors] = useState([]);
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [search, setSearch] = useState("");
-  const [searchInvestigation, setSearchInvestigation] = useState("");
   const { setReportDoctorToUpdate } = useContext(AdminContext);
-  const [searchBarcode, setSearchBarcode] = useState("");
 
-  const [startDate, setStartDate] = useState(""); // From Date
-  const [endDate, setEndDate] = useState("");     // To Date
-
-  // Hardcoded data
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const doc = new jsPDF();
+  // Fetch API data on component mount
   useEffect(() => {
-   
-const data = [
-     {
-       id: 1,
-       patientCode: "P001",
-       opType: "OP",
-       opNo: "OP12345",
-       patientDetails: "Mahukaram / Cardiology",
-       mobile: "9876543210",
-       barcode: "B001",
-       hospitalName: "City Hospital",
-       registeredBy: "Dr. Sharma",
-       dateOfRegistration: "2025-09-25",
-     },
-     {
-       id: 2,
-       patientCode: "P002",
-       opType: "IP",
-       opNo: "IP54321",
-       patientDetails: "Suresh / Neurology",
-       mobile: "9123456780",
-       barcode: "B002",
-       hospitalName: "Green Valley Hospital",
-       registeredBy: "Dr. Rao",
-       dateOfRegistration: "2025-09-24",
-     },
-     {
-       id: 3,
-       patientCode: "P003",
-       opType: "OP",
-       opNo: "OP67890",
-       patientDetails: "Anita / Orthopedics",
-       mobile: "9988776655",
-       barcode: "B003",
-       hospitalName: "Sunrise Hospital",
-       registeredBy: "Dr. Mehta",
-       dateOfRegistration: "2025-09-23",
-     },
-   ];
+    const fetchData = async () => {
+      try {
+        const authToken = localStorage.getItem("authToken");
 
-    setReportDoctors(data);
-    setFilteredDoctors(data);
+        const response = await fetch(
+          "https://asrphleb.asrhospitalindia.in/api/v1/phleb/get-patient-test/2",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
+
+  // Map API response to table format
+  useEffect(() => {
+    if (data?.data) {
+      const mapped = data.data.map((item) => ({
+        id: item.id,
+        patientCode: item.patientPPModes?.[0]?.popno || "",
+        opType: item.patientPPModes?.[0]?.pop || "",
+        opNo: item.patientPPModes?.[0]?.popno || "",
+        patientDetails: `${item.p_name} / Age: ${item.p_age} / Gender: ${item.p_gender} / Tests: ${
+          item.patientTests.map((t) => t.investigation?.testname).join(", ")
+        }`,
+        mobile: item.p_mobile || "",
+        barcode: item.patientPPModes?.[0]?.pbarcode || "",
+        hospitalName: item.hospital?.hospitalname || "",
+        registeredBy: item.reg_by || "",
+        dateOfRegistration: item.p_regdate || "",
+      }));
+
+      setReportDoctors(mapped);
+      setFilteredDoctors(mapped);
+    }
+  }, [data]);
 
   // Search filter
   useEffect(() => {
@@ -70,76 +80,79 @@ const data = [
       const lower = search.toLowerCase();
       const filtered = reportDoctors.filter(
         (doc) =>
-          (doc.patientid || "").toLowerCase().includes(lower) ||
-          (doc.patientname || "").toLowerCase().includes(lower) ||
+          (doc.patientCode || "").toLowerCase().includes(lower) ||
+          (doc.patientDetails || "").toLowerCase().includes(lower) ||
+          (doc.mobile || "").toLowerCase().includes(lower) ||
           (doc.barcode || "").toLowerCase().includes(lower) ||
-          (doc.hospitalname || "").toLowerCase().includes(lower) ||
-          (doc.investigationregistrerd || "").toLowerCase().includes(lower)
-
+          (doc.hospitalName || "").toLowerCase().includes(lower) ||
+          (doc.registeredBy || "").toLowerCase().includes(lower)
       );
       setFilteredDoctors(filtered);
     }
   }, [search, reportDoctors]);
 
   const columns = [
-     { key: "id", label: "ID" },
-     { key: "patientCode", label: "Patient Code" },
-     { key: "opType", label: "OP / IP" },
-     { key: "opNo", label: "OP / IP No" },
-     { key: "patientDetails", label: "Patient Details" },
-     { key: "mobile", label: "Mobile" },
-     { key: "barcode", label: "Barcode" },
-     { key: "hospitalName", label: "Hospital Name" },
-     { key: "registeredBy", label: "Registered By" },
-     { key: "dateOfRegistration", label: "Date of Registration" },
-   ];
-  const mappedItems = filteredDoctors.map((doc) => ({
-    ...doc,
-    status: doc.isactive ? "Active" : "Inactive",
-  }));
+    { key: "id", label: "ID" },
+    { key: "patientCode", label: "Patient Code" },
+    { key: "opType", label: "OP / IP" },
+    { key: "opNo", label: "OP / IP No" },
+    { key: "patientDetails", label: "Patient Details / Test Details" },
+    { key: "mobile", label: "Mobile" },
+    { key: "barcode", label: "Barcode" },
+    { key: "hospitalName", label: "Hospital Name" },
+    { key: "registeredBy", label: "Registered By" },
+    { key: "dateOfRegistration", label: "Date of Registration" },
+  ];
+
+  const mappedItems = filteredDoctors;
 
   const handleUpdate = (item) => {
     setReportDoctorToUpdate(item);
-    // navigate("/update-report-doctor"); // Optional if using navigation
+    // navigate("/update-report-doctor"); // Uncomment if using navigation
   };
 
-  const handleSearch = () => {
-    let filtered = reportDoctors;
 
-    if (searchInvestigation.trim()) {
-      const lower = searchInvestigation.toLowerCase();
-      filtered = filtered.filter(
-        (doc) =>
-          (doc.doctorName || "").toLowerCase().includes(lower) ||
-          (doc.department || "").toLowerCase().includes(lower)
-      );
-    }
-
-    if (searchBarcode.trim()) {
-      const lower = searchBarcode.toLowerCase();
-      filtered = filtered.filter((doc) =>
-        (doc.medicalRegNo || "").toLowerCase().includes(lower)
-      );
-    }
-
-    if (searchDate) {
-      filtered = filtered.filter(
-        (doc) => doc.dateOfRegistration === searchDate
-      );
-    }
-
-    setFilteredDoctors(filtered);
-  };
-
+  
+  // inside TestDetails component
   const handleExportExcel = () => {
-    console.log("Exporting to Excel...");
-    // TODO: add logic (xlsx or SheetJS)
+    if (!mappedItems || mappedItems.length === 0) {
+      alert("No data to export");
+      return;
+    }
+  
+    // Prepare data for Excel
+    const exportData = mappedItems.map((item) => ({
+      ID: item.id,
+      "Patient Code": item.patientCode,
+      "OP / IP": item.opType,
+      "OP / IP No": item.opNo,
+      "Patient Details / Test Details": item.patientDetails,
+      Mobile: item.mobile,
+      Barcode: item.barcode,
+      "Hospital Name": item.hospitalName,
+      "Registered By": item.registeredBy,
+      "Date of Registration": item.dateOfRegistration,
+    }));
+  
+    // Create a new workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Patient Tests");
+  
+    // Write workbook and trigger download
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, "PatientTestData.xlsx");
   };
+  
 
   const handleExportPDF = () => {
     console.log("Exporting to PDF...");
-    // TODO: add logic (jspdf or pdfmake)
+    // TODO: add logic using jsPDF or pdfmake
   };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <>
@@ -164,7 +177,7 @@ const data = [
                 to="/view-report-doctor"
                 className="text-gray-700 hover:text-teal-600 transition-colors"
               >
-            Test Details
+                Test Details
               </Link>
             </li>
             <li className="text-gray-400">/</li>
@@ -175,14 +188,12 @@ const data = [
         </nav>
       </div>
 
+      {/* Page Content */}
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-            {/* Title */}
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-            Test Details
-            </h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Test Details</h2>
 
             {/* Action Buttons */}
             <div className="flex flex-row gap-3">
@@ -190,11 +201,7 @@ const data = [
                 onClick={handleExportExcel}
                 className="bg-green-100 rounded-lg p-2 cursor-pointer hover:bg-green-200 transition flex items-center justify-center"
               >
-                <img
-                  src="./excel.png"
-                  alt="Export to Excel"
-                  className="w-7 h-7"
-                />
+                <img src="./excel.png" alt="Export to Excel" className="w-7 h-7" />
               </div>
 
               <div
@@ -206,20 +213,26 @@ const data = [
             </div>
           </div>
 
- 
+          {/* Search Input */}
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border p-2 rounded w-full sm:w-1/3"
+            />
+          </div>
 
           {/* Table */}
           {mappedItems.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              No report entry found.
-            </div>
+            <div className="text-center py-6 text-gray-500">No report entry found.</div>
           ) : (
-            <PhlebotomistDataTable
+            <DataTableWithoutAction
               items={mappedItems}
               columns={columns}
               itemsPerPage={10}
               showDetailsButtons={false}
-              onUpdate={handleUpdate}
             />
           )}
         </div>

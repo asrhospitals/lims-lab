@@ -158,7 +158,7 @@ const ViewPhlebotomist = () => {
           {/* Add New Button */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
-              onClick={() => navigate("/add-phlebotomist")}
+              onClick={() => navigate("/add-user")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New

@@ -18,18 +18,15 @@ const ViewInstrument = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Fetch instruments with pagination
   const fetchInstruments = async (page = 1, limit = 10) => {
     setLoading(true);
     try {
-      const params = { page, limit };
-      const response = await viewInstruments(params);
-      const data = response.data || [];
-
-      setInstruments(data);
-      setFilteredInstruments(data);
-
-      setTotalItems(response.meta?.totalItems || data.length);
-      setTotalPages(response.meta?.totalPages || 1);
+      const response = await viewInstruments({ page, limit });
+      setInstruments(response.data);
+      setFilteredInstruments(response.data);
+      setTotalItems(response.meta.totalItems);
+      setTotalPages(response.meta.totalPages);
     } catch (err) {
       console.error("Failed to fetch instruments:", err);
       setError(err?.response?.data?.message || "Failed to fetch instruments.");
@@ -51,8 +48,7 @@ const ViewInstrument = () => {
       setFilteredInstruments(
         instruments.filter(
           (inst) =>
-            (inst.instrumentname &&
-              inst.instrumentname.toLowerCase().includes(lower)) ||
+            (inst.instrumentname && inst.instrumentname.toLowerCase().includes(lower)) ||
             (inst.make && inst.make.toLowerCase().includes(lower)) ||
             (inst.short_code && inst.short_code.toLowerCase().includes(lower))
         )
@@ -79,16 +75,15 @@ const ViewInstrument = () => {
     { key: "status", label: "Status" },
   ];
 
- const mappedItems = (filteredInstruments || []).map((inst, index) => ({
-  id: inst.id ?? (index + 1 + (currentPage - 1) * itemsPerPage), // Correct global index
-  instrumentname: inst.instrumentname || "-",
-  make: inst.make || "-",
-  short_code: inst.short_code || "-",
-  installdate: inst.installdate
-    ? new Date(inst.installdate).toLocaleDateString("en-CA")
-    : "-",
-  status: inst.isactive ? "Active" : "Inactive",
-}));
+  const mappedItems = (filteredInstruments || []).map((inst, index) => ({
+    id: inst.id ?? index + 1 + (currentPage - 1) * itemsPerPage,
+    instrumentname: inst.instrumentname || "-",
+    make: inst.make || "-",
+    short_code: inst.short_code || "-",
+    installdate: inst.installdate ? new Date(inst.installdate).toLocaleDateString("en-CA") : "-",
+    status: inst.isactive ? "Active" : "Inactive",
+  }));
+
   return (
     <>
       {/* Breadcrumb */}
@@ -110,6 +105,10 @@ const ViewInstrument = () => {
             <li aria-current="page" className="text-gray-500">
               Instruments
             </li>
+             <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              View Instruments
+            </li>
           </ol>
         </nav>
       </div>
@@ -126,10 +125,7 @@ const ViewInstrument = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^[a-zA-Z0-9_,\s]*$/.test(val)) setSearch(val);
-                  }}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
                   placeholder="Search instrument..."
                 />
@@ -140,7 +136,7 @@ const ViewInstrument = () => {
 
           {/* Stats and Add Button */}
           <div className="flex flex-wrap justify-between mb-4 text-sm text-gray-600">
-          <button
+            <button
               onClick={() => navigate("/add-instrument")}
               className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
@@ -153,7 +149,6 @@ const ViewInstrument = () => {
                 Page {currentPage} of {totalPages}
               </span>
             </div>
-       
           </div>
 
           {/* Data Table */}
@@ -162,9 +157,7 @@ const ViewInstrument = () => {
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
           ) : filteredInstruments.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              No instruments found.
-            </div>
+            <div className="text-center py-6 text-gray-500">No instruments found.</div>
           ) : (
             <DataTable
               items={mappedItems}

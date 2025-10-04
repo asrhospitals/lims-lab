@@ -113,6 +113,10 @@ import AddUser from "./Components/Admin/AddUser";
 import ViewUserDetails from "./Components/Admin/ViewUserDetails";
 import AddUserMapping from "./Components/Admin/AddUserMapping";
 import ViewUserMapping from "./Components/Admin/ViewUserMapping";
+import AddAccessionMaster from "./Components/Admin/AddAccessionMaster";
+import ViewAccessionMaster from "./Components/Admin/ViewAccessionMaster";
+import UpdateAccessionMaster from "./Components/Admin/UpdateAccessionMaster";
+import UpdateUserDetails from "./Components/Admin/UpdateUserDetails";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -135,12 +139,11 @@ function App() {
   // Simple route protection
   const requireRole = (requiredRole, element) => {
     if (isLoading) return <div>Loading...</div>;
-    console.log("im here requiredRole", requiredRole);
+    // console.log("im here requiredRole", requiredRole);
 
     if (requiredRole === "admin" && !hasAdminAccess) return <Navigate to="/" />;
     if (requiredRole === "doctor" && !hasDoctorAccess && !hasAdminAccess)
       return <Navigate to="/" />;
-    console.log("im here");
     
     return element;
   };
@@ -360,6 +363,11 @@ function App() {
             element: requireRole("admin", <ViewUserDetails />),
           },
           {
+            path: "update-user-list/:id",
+            element: requireRole("admin", <UpdateUserDetails />),
+          },
+          
+          {
             path: "add-user-mapping",
             element: requireRole("admin", <AddUserMapping />),
           },
@@ -475,6 +483,20 @@ function App() {
           {
             path: "update-investigation/:id",
             element: requireRole("admin", <UpdateInvestigation />),
+          },
+
+
+          {
+            path: "add-accession-master",
+            element: requireRole("admin", <AddAccessionMaster />),
+          },
+          {
+            path: "view-accession-master",
+            element: requireRole("admin", <ViewAccessionMaster />),
+          },
+          {
+            path: "update-add-accession-master/:id",
+            element: requireRole("admin", <UpdateAccessionMaster />),
           },
           // Master Data Management
           {

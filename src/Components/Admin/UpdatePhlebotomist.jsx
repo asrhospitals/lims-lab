@@ -20,6 +20,7 @@ const UpdatePhlebotomist = () => {
     handleSubmit,
     reset,
     formState: { errors },
+    trigger,
   } = useForm();
 
   useEffect(() => {
@@ -34,6 +35,8 @@ const UpdatePhlebotomist = () => {
         setLoading(true);
         const phlebo = await viewPhlebotomist(id);
 
+        console.log("phlebo", phlebo);
+
         if (phlebo) {
           reset({
             phleboname: phlebo.phleboname || "",
@@ -43,6 +46,7 @@ const UpdatePhlebotomist = () => {
             pincode: phlebo.pincode || "",
             dob: phlebo.dob ? phlebo.dob.split("T")[0] : "",
             contactno: phlebo.contactno || "",
+            gender: phlebo.gender || "",
             email: phlebo.email || "",
             isactive: String(phlebo.isactive ?? "true"),
           });
@@ -67,7 +71,6 @@ const UpdatePhlebotomist = () => {
 
     setIsSubmitting(true);
     try {
-      // 🔍 Duplicate Check
       const allPhlebos = await viewPhlebotomists();
       const duplicates = allPhlebos.filter(
         (p) =>
@@ -93,9 +96,14 @@ const UpdatePhlebotomist = () => {
         pincode: Number(data.pincode),
         dob: data.dob,
         contactno: data.contactno,
-        email: data.email,
+        // email: data.email,
+        gender: data.gender,
+        nodal: data.contactno,
+        hospital: "",
         isactive: data.isactive === "true",
       };
+
+      console.log("payload", payload);
 
       await updatePhlebotomist(id, payload);
 
@@ -132,7 +140,7 @@ const UpdatePhlebotomist = () => {
                 to="/"
                 className="inline-flex items-center text-gray-700 hover:text-teal-600"
               >
-                🏠︎ Home
+                🏠 Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
@@ -152,192 +160,198 @@ const UpdatePhlebotomist = () => {
         </nav>
       </div>
 
-      <div className="w-full mt-14 px-2 md:px-6">
+      <div className="w-full mt-14 px-4 sm:px-6 space-y-4 text-sm">
         <ToastContainer />
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white shadow-lg rounded-xl border border-gray-200"
         >
+          {/* Header */}
           <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="text-white font-semibold">Update Phlebotomist</h4>
           </div>
 
+          {/* Form Fields */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Full Name */}
-            <div>
-              <label className="block mb-1 font-medium">Full Name*</label>
-              <input
-                type="text"
-                {...register("phleboname", {
-                  required: "Full Name is required.",
+            {[
+              {
+                name: "phleboname",
+                label: "Full Name",
+                type: "text",
+                validation: {
+                  required: "Full Name is required",
                   pattern: {
-                    value: /^[A-Za-z\s]+$/,
-                    message: "Only letters and spaces are allowed.",
+                    value: /^[A-Za-z\s]{3,50}$/,
+                    message: "Only letters and spaces allowed (3-50 chars)",
                   },
-                })}
-                className="border rounded px-3 py-2 w-full"
-              />
-              {errors.phleboname && (
-                <p className="text-red-500 text-xs">
-                  {errors.phleboname.message}
-                </p>
-              )}
-            </div>
-
-            {/* Address */}
-            <div>
-              <label className="block mb-1 font-medium">Address Line*</label>
-              <input
-                type="text"
-                {...register("addressline", {
-                  required: "Address is required.",
+                },
+              },
+              {
+                name: "addressline",
+                label: "Address Line",
+                type: "text",
+                validation: {
+                  required: "Address is required",
                   pattern: {
-                    value: /^[A-Za-z0-9\s]+$/,
-                    message: "Only letters, numbers and spaces allowed.",
+                    value: /^[A-Za-z0-9\s,.-]{5,100}$/,
+                    message:
+                      "Letters, numbers, spaces, comma, dot, hyphen allowed (5-100 chars)",
                   },
-                })}
-                className="border rounded px-3 py-2 w-full"
-              />
-              {errors.addressline && (
-                <p className="text-red-500 text-xs">
-                  {errors.addressline.message}
-                </p>
-              )}
-            </div>
-
-            {/* City */}
-            <div>
-              <label className="block mb-1 font-medium">City*</label>
-              <input
-                type="text"
-                {...register("city", {
-                  required: "City is required.",
+                },
+              },
+              {
+                name: "city",
+                label: "City",
+                type: "text",
+                validation: {
+                  required: "City is required",
                   pattern: {
-                    value: /^[A-Za-z0-9\s]+$/,
-                    message: "Only letters, numbers and spaces allowed.",
+                    value: /^[A-Za-z\s]{2,50}$/,
+                    message: "Only letters and spaces allowed (2-50 chars)",
                   },
-                })}
-                className="border rounded px-3 py-2 w-full"
-              />
-              {errors.city && (
-                <p className="text-red-500 text-xs">{errors.city.message}</p>
-              )}
-            </div>
-
-            {/* State */}
-            <div>
-              <label className="block mb-1 font-medium">State*</label>
-              <input
-                type="text"
-                {...register("state", {
-                  required: "State is required.",
+                },
+              },
+              {
+                name: "state",
+                label: "State",
+                type: "text",
+                validation: {
+                  required: "State is required",
                   pattern: {
-                    value: /^[A-Za-z0-9\s]+$/,
-                    message: "Only letters, numbers and spaces allowed.",
+                    value: /^[A-Za-z\s]{2,50}$/,
+                    message: "Only letters and spaces allowed (2-50 chars)",
                   },
-                })}
-                className="border rounded px-3 py-2 w-full"
-              />
-              {errors.state && (
-                <p className="text-red-500 text-xs">{errors.state.message}</p>
-              )}
-            </div>
-
-            {/* Pincode */}
-            <div>
-              <label className="block mb-1 font-medium">Pincode*</label>
-              <input
-                type="text"
-                {...register("pincode", {
-                  required: "Pincode is required.",
+                },
+              },
+              {
+                name: "pincode",
+                label: "Pincode",
+                type: "text",
+                validation: {
+                  required: "PIN Code is required",
                   pattern: {
-                    value: /^[0-9]{6}$/,
-                    message: "Pincode must be 6 digits.",
+                    value: /^\d{6}$/,
+                    message: "PIN must be exactly 6 digits",
                   },
-                })}
-                className="border rounded px-3 py-2 w-full"
-              />
-              {errors.pincode && (
-                <p className="text-red-500 text-xs">
-                  {errors.pincode.message}
-                </p>
-              )}
-            </div>
+                },
+              },
+              {
+                name: "dob",
+                label: "Date of Birth",
+                type: "date",
+                validation: {
+                  required: "Date of Birth is required",
+                  validate: (value) =>
+                    new Date(value) < new Date() ||
+                    "DOB cannot be today/future",
+                },
+              },
 
-            {/* DOB */}
-            <div>
-              <label className="block mb-1 font-medium">Date of Birth*</label>
-              <input
-                type="date"
-                {...register("dob", { required: "DOB is required." })}
-                className="border rounded px-3 py-2 w-full"
-              />
-              {errors.dob && (
-                <p className="text-red-500 text-xs">{errors.dob.message}</p>
-              )}
-            </div>
 
-            {/* Contact */}
-            <div>
-              <label className="block mb-1 font-medium">Contact No*</label>
-              <input
-                type="text"
-                {...register("contactno", {
-                  required: "Contact No is required.",
+              {
+                name: "gender",
+                label: "Gender",
+                type: "text",
+                validation: {
+                  required: "Gender is required",
+                },
+              },
+
+
+
+
+
+
+
+
+
+
+
+              {
+                name: "contactno",
+                label: "Contact No",
+                type: "text",
+                validation: {
+                  required: "Contact No is required",
                   pattern: {
-                    value: /^[0-9]{10}$/,
-                    message: "Must be a valid 10-digit number.",
+                    value: /^[6-9]\d{9}$/,
+                    message: "Contact must be 10 digits starting with 6-9",
                   },
-                })}
-                className="border rounded px-3 py-2 w-full"
-              />
-              {errors.contactno && (
-                <p className="text-red-500 text-xs">
-                  {errors.contactno.message}
-                </p>
-              )}
-            </div>
-
-            {/* Email (Optional) */}
-            <div>
-              <label className="block mb-1 font-medium">Email</label>
-              <input
-                type="email"
-                {...register("email", {
+                },
+              },
+              {
+                name: "email",
+                label: "Email",
+                type: "email",
+                validation: {
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: "Enter a valid email address.",
+                    message: "Enter a valid email address",
                   },
-                })}
-                className="border rounded px-3 py-2 w-full"
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs">{errors.email.message}</p>
-              )}
-            </div>
+                },
+              },
+              {
+                name: "isactive",
+                label: "Status",
+                type: "select",
+                options: [
+                  { value: "true", label: "Active" },
+                  { value: "false", label: "Inactive" },
+                ],
+                validation: { required: "Status is required" },
+              },
+            ].map(({ name, label, type, options, validation }) => (
+              <div key={name} className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  {label}{" "}
+                  {name !== "email" && <span className="text-red-500">*</span>}
+                </label>
 
-            {/* Status */}
-            <div>
-              <label className="block mb-1 font-medium">Status*</label>
-              <select
-                {...register("isactive", { required: "Status is required." })}
-                className="border rounded px-3 py-2 w-full"
-              >
-                <option value="">Select</option>
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-              {errors.isactive && (
-                <p className="text-red-500 text-xs">{errors.isactive.message}</p>
-              )}
-            </div>
+                {type === "select" ? (
+                  <select
+                    {...register(name, validation)}
+                    onBlur={() => trigger(name)}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      errors[name]
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-teal-500"
+                    } focus:ring-2 transition`}
+                  >
+                    <option value="">Select {label}</option>
+                    {options.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type={type}
+                    {...register(name, validation)}
+                    onBlur={() => trigger(name)}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      errors[name]
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-teal-500"
+                    } focus:ring-2 transition`}
+                  />
+                )}
+
+                {errors[name] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors[name]?.message}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
 
-          <div className="px-6 py-4 border-t text-right bg-gray-50">
+          {/* Submit */}
+          <div className="p-6 flex justify-end border-t bg-gray-50">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded shadow disabled:opacity-50"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg shadow disabled:opacity-50 transition"
             >
               {isSubmitting ? "Updating..." : "Update Phlebotomist"}
             </button>
