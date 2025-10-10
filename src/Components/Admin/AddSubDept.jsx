@@ -38,7 +38,7 @@ const AddSubDpt = () => {
     const fetchDepartments = async () => {
       try {
         const res = await viewDepartments();
-        setDepartments(res?.data || []);
+        setDepartments(res || []);
       } catch (error) {
         setFetchError(
           error.response?.data?.message || "Failed to fetch departments."

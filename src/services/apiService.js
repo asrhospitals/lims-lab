@@ -22,9 +22,7 @@ export const addDepartment = async (departmentData) => {
 export const viewDepartments = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-department${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-all-departments`;
 
     const res = await axios.get(url);
     return res.data;
@@ -718,6 +716,21 @@ export const updateInvestigation = async (id, investigationData) => {
     );
   } catch (error) {
     console.error("Error updating investigation:", error);
+    throw error;
+  }
+};
+
+// User API functions
+export const viewUsers = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_ROOT_URL}/authentication/get-all-users${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    const res = await axios.get(url);
+    return res.data;
+  } catch (error) {
     throw error;
   }
 };
