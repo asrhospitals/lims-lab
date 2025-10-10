@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
@@ -30,7 +30,9 @@ const ViewUserDetails = () => {
             },
           }
         );
-
+  
+        console.log("res ==", res);
+  
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setUsers(data || []);
@@ -41,9 +43,10 @@ const ViewUserDetails = () => {
         setLoading(false);
       }
     };
-
+  
     fetchUsers();
   }, []);
+  
 
   // Columns for DataTable
   const columns = [
@@ -75,21 +78,27 @@ const ViewUserDetails = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+  
 
-  const mappedItems = paginatedUsers.map((user) => ({
-    ...user,
-    dob: user.dob ? new Date(user.dob).toLocaleDateString("en-IN") : "-",
-    created_date: user.created_date
-      ? new Date(user.created_date).toLocaleDateString("en-IN")
-      : "-",
-    createdAt: user.createdAt
-      ? new Date(user.createdAt).toLocaleString("en-IN")
-      : "-",
-    updatedAt: user.updatedAt
-      ? new Date(user.updatedAt).toLocaleString("en-IN")
-      : "-",
-    isactive: user.isactive ? "Active" : "Inactive",
-  }));
+  const mappedItems = useMemo(() => 
+    paginatedUsers.map((user) => ({
+      ...user,
+      dob: user.dob ? new Date(user.dob).toLocaleDateString("en-IN") : "-",
+      created_date: user.created_date
+        ? new Date(user.created_date).toLocaleDateString("en-IN")
+        : "-",
+      createdAt: user.createdAt
+        ? new Date(user.createdAt).toLocaleString("en-IN")
+        : "-",
+      updatedAt: user.updatedAt
+        ? new Date(user.updatedAt).toLocaleString("en-IN")
+        : "-",
+      isactive: user.isactive ? "Active" : "Inactive",
+    })), 
+    [paginatedUsers]
+  );
+  
+  
 
   const handleUpdate = (user) => navigate(`/update-user-list/${user.user_id}`);
   const handlePageChange = (page) => setCurrentPage(page);

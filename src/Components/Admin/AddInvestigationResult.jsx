@@ -59,6 +59,8 @@ const AddInvestigationResult = ({ results = [], setResults }) => {
     e.preventDefault();
     e.stopPropagation();
     
+    console.log("newResult", newResult);
+    
     // Validate required fields
     if (!newResult.name.trim()) {
       alert("Result Name is required");
@@ -71,6 +73,9 @@ const AddInvestigationResult = ({ results = [], setResults }) => {
     }
     
     setResults([...results, newResult]);
+
+    console.log("...results", ...results);
+    console.log("...newResult", newResult);
 
     setNewResult({
       name: "",

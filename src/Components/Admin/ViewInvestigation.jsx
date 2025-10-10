@@ -11,11 +11,10 @@ const ViewInvestigation = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-   const [currentPage, setCurrentPage] = useState(1);
-   const [totalPages, setTotalPages] = useState(1);
-   const [totalItems, setTotalItems] = useState(0);
-   const [itemsPerPage, setItemsPerPage] = useState(10);
-   
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
 
@@ -34,7 +33,7 @@ const ViewInvestigation = () => {
 
         setInvestigations(data);
         setFilteredInvestigations(data);
-         setTotalPages(response?.meta?.totalPages || 1);
+        setTotalPages(response?.meta?.totalPages || 1);
         setTotalItems(response?.meta?.totalItems || 0);
       } catch (err) {
         setError(
@@ -46,7 +45,7 @@ const ViewInvestigation = () => {
     };
 
     fetchInvestigations();
-  },[currentPage, itemsPerPage]);
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (!search.trim()) {
@@ -73,7 +72,7 @@ const ViewInvestigation = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
-   const handlePageSizeChange = (newSize) => {
+  const handlePageSizeChange = (newSize) => {
     setItemsPerPage(newSize);
     setCurrentPage(1); // Reset to first page when changing page size
   };
@@ -87,17 +86,18 @@ const ViewInvestigation = () => {
 
   const mappedItems = (filteredInvestigations || []).map((item, index) => ({
     ...item,
-    id: index + 1,
+    id: (currentPage - 1) * itemsPerPage + index + 1, // correct row numbering
     investigation_id: item.id,
     shortcode: item.shortcode,
     testname: item.testname,
     department:
       item.department && typeof item.department === "object"
         ? item.department.dptname
-        : item.department || "-", // fallback if null or undefined
+        : item.department || "-",
     status: item.status ? "Active" : "Inactive",
   }));
   
+
   return (
     <>
       {/* Breadcrumb */}

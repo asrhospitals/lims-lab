@@ -41,6 +41,7 @@ const UpdateInvestigation = () => {
   const [normalValues, setNormalValues] = useState([]); // Existing values from API
   const [selectedIndex, setSelectedIndex] = useState(null); // Index of value being edited
 
+
   const [formData, setFormData] = useState({
     type: "",
     ageMinYear: "",
@@ -152,51 +153,17 @@ const UpdateInvestigation = () => {
       navigate("/view-investigation");
       return;
     }
-  
+
     try {
       setLoading(true);
       const data = await viewInvestigation(id);
-      console.log("Investigation data ===>>> :", data);
-  
+      console.log("Investigation data:", data);
+      console.log("Investigation data resultname:", data.results[0]?.resultname);
+
       setInvestigationData(data); // store raw investigation data
       setInvestigation(data);
       setResults(data.results || []);
-  
-      // Map and store normalValues for the first result (or all results if needed)
-      const fetchedNormalValues = (data.results[0]?.normalValues || []).map(nv => {
-        console.log("Investigation nv.id ===>>> :", nv.id);
-      
-        return {
-          id: nv.id,                   // preserve original ID
-          resultId: nv.resultId,
-          gender: nv.gender,
-          ageMin: nv.ageMin,
-          ageMax: nv.ageMax,
-          rangeMin: nv.rangeMin,
-          rangeMax: nv.rangeMax,
-          validRangeMin: nv.validRangeMin,
-          validRangeMax: nv.validRangeMax,
-          criticalLow: nv.criticalLow,
-          criticalHigh: nv.criticalHigh,
-          isRangeAbnormal: nv.isRangeAbnormal,
-          avoidInReport: nv.avoidInReport,
-      
-          // For form editing
-          type: nv.gender,
-          ageMinYear: nv.ageMin,
-          ageMaxYear: nv.ageMax,
-          criticalRangeLow: nv.criticalLow,
-          criticalRangeHigh: nv.criticalHigh,
-          rangeAbnormal: nv.isRangeAbnormal,
-          avoidRangeInReport: nv.avoidInReport
-        };
-      });
-      
-  
-      
-      setNormalValues(fetchedNormalValues);
-      console.log("Fetched normal value IDs:", fetchedNormalValues.map(nv => nv.id));
-      
+
       // Set rich text editor values
       setInstruction(data.instruction || "");
       setInterpretation(data.interpretation || "");
@@ -209,7 +176,6 @@ const UpdateInvestigation = () => {
       setLoading(false);
     }
   };
-  
 
   // Populate main form
   useEffect(() => {
@@ -362,21 +328,25 @@ const UpdateInvestigation = () => {
       // Update existing item
       const updatedItems = [...items[type]];
       updatedItems[editing.index] = currentInput;
-      setItems((prev) => ({ ...prev, [type]: updatedItems }));
+      setItems((prev) => ({
+        ...prev,
+        [type]: updatedItems,
+      }));
       setEditing({ type: null, index: null });
     } else {
       // Add new item
-      setItems((prev) => ({ ...prev, [type]: [...prev[type], currentInput] }));
+      setItems((prev) => ({
+        ...prev,
+        [type]: [...prev[type], currentInput],
+      }));
     }
 
     // Clear inputs
-    setInputs((prev) => ({
-      ...prev,
-      [type]:
-        type === "accreditation"
-          ? { name: "", date: "" }
-          : { name: "", qty: "" },
-    }));
+    const [inputs, setInputs] = useState({
+      accreditation: { name: "", date: "" },
+      consumable: { name: "", qty: "" },
+      labConsumable: { name: "", qty: "" },
+    });
   };
 
   // Edit item
@@ -388,15 +358,6 @@ const UpdateInvestigation = () => {
       [type]: { ...itemToEdit },
     }));
     setEditing({ type, index });
-  };
-
-  const handleNormalValuesUpdate = (normalValues) => {
-    console.log("inside handleNormalValuesUpdate", normalValues);
-    
-    setNewResult((prev) => ({
-      ...prev,
-      normalValues: normalValues,
-    }));
   };
 
   useEffect(() => {
@@ -546,7 +507,42 @@ const UpdateInvestigation = () => {
     }
   }, [investigationData]);
 
+  const handleEditNormalValues = (index) => {
+    const value = normalValues[index];
+    setFormData({
+      type: value.type,
+      ageMinYear: value.ageMinYear,
+      ageMinMonth: value.ageMinMonth,
+      ageMinDay: value.ageMinDay,
+      ageMaxYear: value.ageMaxYear,
+      ageMaxMonth: value.ageMaxMonth,
+      ageMaxDay: value.ageMaxDay,
+      rangeMin: value.rangeMin,
+      rangeMax: value.rangeMax,
+      rangeAbnormal: value.rangeAbnormal,
+      avoidRangeInReport: value.avoidRangeInReport,
+      validRangeMin: value.validRangeMin,
+      validRangeMax: value.validRangeMax,
+      criticalRangeLow: value.criticalRangeLow,
+      criticalRangeHigh: value.criticalRangeHigh,
+    });
+    setSelectedIndex(index); // mark which entry is being edited
+    // setShowModalNormalValues(true);
+    
+  };
 
+  const handleRemoveNormalValues = (index) => {
+    const updated = [...normalValues];
+    updated.splice(index, 1);
+    setNormalValues(updated);
+  };
+
+  const handleCloseNormalValue = (e) => {
+    e.preventDefault();
+    setShowModalNormalValues(false);
+  };
+
+  
   // const handleAddNormalValues = () => {
   //   const newValue = { ...formData };
 
@@ -566,40 +562,21 @@ const UpdateInvestigation = () => {
   //   handleSubmitNormalValues();
   // };
 
-  const handleAddNormalValues = (e) => {
-    e.preventDefault();
-  
-    if (!formData.type) {
-      alert("Please select a Type");
-      return;
-    }
-  
-    const normalValuesIds = JSON.parse(localStorage.getItem("normalValuesIds") || "[]");
+  const handleAddNormalValues = () => {
+    // Copy current form data as a new normal value
+    const newValue = { ...formData };
   
     if (selectedIndex !== null) {
-      // Update existing record
-      const updated = [...normalValues];
-      updated[selectedIndex] = {
-        ...formData,
-        id: updated[selectedIndex].id || normalValuesIds[selectedIndex], // keep ID if exists
-        resultId: updated[selectedIndex].resultId || normalValuesIds[selectedIndex],
-      };
-      setNormalValues(updated);
-      setSelectedIndex(null);
+      // Update existing normal value
+      const updatedValues = [...normalValues];
+      updatedValues[selectedIndex] = newValue;
+      setNormalValues(updatedValues);
     } else {
-      // Add new record
-      const newIndex = normalValues.length;
-      setNormalValues([
-        ...normalValues,
-        {
-          ...formData,
-          id: normalValuesIds[newIndex] || null,       // assign ID from localStorage if available
-          resultId: normalValuesIds[newIndex] || null, // assign resultId from localStorage if available
-        },
-      ]);
+      // Add new normal value
+      setNormalValues([...normalValues, newValue]);
     }
   
-    // Reset form
+    // Reset form & edit state
     setFormData({
       type: "",
       ageMinYear: "",
@@ -617,79 +594,44 @@ const UpdateInvestigation = () => {
       criticalRangeLow: "",
       criticalRangeHigh: "",
     });
+    setSelectedIndex(null);
+  
+    // Optional: Call API to save normal values immediately
+    handleSubmitNormalValues([...normalValues, newValue]);
   };
-  
-
-
-
-
-
 
   
+  const handleSubmitNormalValues = () => {
+    setNormalValues([...normalValues, formData]);
+    setFormData({
+      type: "",
+      ageMinYear: "",
+      ageMinMonth: "",
+      ageMinDay: "",
+      ageMaxYear: "",
+      ageMaxMonth: "",
+      ageMaxDay: "",
+      rangeMin: "",
+      rangeMax: "",
+      validRangeMin: "",
+      validRangeMax: "",
+      criticalRangeLow: "",
+      criticalRangeHigh: "",
+      rangeAbnormal: false,
+      avoidRangeInReport: false,
+    });
+  };
 
-  
-
-  const [newResult, setNewResult] = useState({
-    name: "",
-    otherLanguageName: "",
-    extResultId: "",
-    order: "",
-    unit: "",
-    formula: "",
-    valueType: "",
-    defaultValue: "",
-    roundOff: "",
-    normalValues: [],
-    mandatoryConditions: [],
-    reflexTests: [],
-    showTrends: false,
-  });
 
 
 
-  
+
   const handleShowNormalValue = () => {
     setShowModalNormalValues(true); // Opens the modal
     console.log("im hereee");
     
   };
 
-  const handleEditNormalValues = (index) => {
-    setFormData(normalValues[index]);
-    setSelectedIndex(index);
-  };
-  
-  
-
-  const handleRemoveNormalValues = (index) => {
-    const updated = [...normalValues];
-    updated.splice(index, 1);
-    setNormalValues(updated);
-  };
-
-  const handleCloseNormalValue = (e) => {
-    e.preventDefault();
-    setShowModalNormalValues(false);
-  };
-
-  const handleSaveNormalValues = (e) => {
-    e?.preventDefault(); // optional safeguard
-    console.log("✅ Final Normal Values:", normalValues);
-    setShowModalNormalValues(false);
-  };
-  
-
-  // const handleSaveNormalValues = (normalValues) => {
-  //   console.log("normalValues",normalValues);
-
-  //   setNewResult(prev => ({
-  //     ...prev,
-  //     normalValues: normalValues, // ✅ update state
-  //   }));
-  // };
-
-
-  
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -775,7 +717,7 @@ const UpdateInvestigation = () => {
         const response = await fetch(apiUrl, {
           method: "PUT",
           headers: {
-            Authorization: `Bearer ${token}`,
+            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(resultPayload),
@@ -790,64 +732,42 @@ const UpdateInvestigation = () => {
   
       await Promise.all(updateResults);
   
-      // Step 3️⃣: Update or create normal values
-      const updateNormalValues = async () => {
-        if (!normalValues || normalValues.length === 0) {
-          console.warn("⚠️ No normal values to update");
-          return;
-        }
+      // Step 3️⃣: Update normal values for each result
+      const updateNormalValues = normalValues.map(async (nv) => {
+        const normalPayload = {
+          gender: nv.type || "",
+          ageMin: Number(nv.ageMinYear || 0),
+          ageMax: Number(nv.ageMaxYear || 0),
+          rangeMin: Number(nv.rangeMin || 0),
+          rangeMax: Number(nv.rangeMax || 0),
+          validRangeMin: Number(nv.validRangeMin || 0),
+          validRangeMax: Number(nv.validRangeMax || 0),
+          criticalLow: Number(nv.criticalRangeLow || 0),
+          criticalHigh: Number(nv.criticalRangeHigh || 0),
+          isRangeAbnormal: nv.rangeAbnormal || false,
+          avoidInReport: nv.avoidRangeInReport || false,
+          resultId: nv.resultId, 
+        };
   
-        const updatePromises = normalValues.map(async (nv, index) => {
-          console.log(`🟡 Processing normal value #${index}:`, nv);
+        const normalApiUrl = `https://asrlabs.asrhospitalindia.in/lims/master/update-normal/${investigation.id}/normal-values/${nv.id}`;
   
-          if (!investigation?.id) {
-            console.error("❌ Missing investigation ID");
-            return;
-          }
-  
-          const createPayload = {
-            gender: nv.type || nv.gender || "",
-            ageMin: Number(nv.ageMinYear || nv.ageMin || 0),
-            ageMax: Number(nv.ageMaxYear || nv.ageMax || 0),
-            rangeMin: Number(nv.rangeMin || 0),
-            rangeMax: Number(nv.rangeMax || 0),
-            validRangeMin: Number(nv.validRangeMin || 0),
-            validRangeMax: Number(nv.validRangeMax || 0),
-            criticalLow: Number(nv.criticalRangeLow || 0),
-            criticalHigh: Number(nv.criticalRangeHigh || 0),
-            isRangeAbnormal: nv.rangeAbnormal || nv.isRangeAbnormal || false,
-            avoidInReport: nv.avoidRangeInReport || nv.avoidInReport || false,
-            resultId: nv.resultId,
-          };
-  
-          try {
-
-            const getNormalValId = JSON.parse(localStorage.getItem("normalValuesIds") || "[]"); 
-   
-            
-
-console.log("getNormalValId ==", getNormalValId);
-
-
-              const updateNormalUrl = `https://asrlabs.asrhospitalindia.in/lims/master/update-normal/${investigation.id}/normal-values/${getNormalValId}`;
-              await fetch(updateNormalUrl, {
-                method: "PUT",
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(createPayload),
-              });
-
-            
-            
-          } catch (error) {
-            console.error(`🚨 Error processing normal value:`, error);
-          }
+        const response = await fetch(normalApiUrl, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(normalPayload),
         });
   
-        await Promise.all(updatePromises);
-      };
+        if (!response.ok) {
+          console.error(`❌ Failed to update normal value ${nv.id}`);
+        } else {
+          console.log(`✅ Normal value ${nv.id} updated successfully`);
+        }
+      });
   
-      // 🔥 You forgot this line earlier
-      await updateNormalValues();
+      await Promise.all(updateNormalValues);
   
       toast.success("✅ Investigation, results & normal values updated successfully");
       fetchInvestigationData();
@@ -858,179 +778,85 @@ console.log("getNormalValId ==", getNormalValId);
       setIsSubmitting(false);
     }
   };
+
   
 
 
-// Save/Update normal values for a specific result
-// const handleSaveNormalValues = (resultId) => {
-//   console.log("resultId", resultId);
-//   console.log("prevResults", prevResults);
+  const [newResult, setNewResult] = useState({
+    name: "",
+    otherLanguageName: "",
+    extResultId: "",
+    order: "",
+    unit: "",
+    formula: "",
+    valueType: "",
+    defaultValue: "",
+    roundOff: "",
+    normalValues: [],
+    mandatoryConditions: [],
+    reflexTests: [],
+    showTrends: false,
+  });
+
+  const [result, setResult] = useState({
+    name: '123',
+    normalValues: [],
+    // other fields...
+  });
   
-//   setResults((prevResults) =>
-//     prevResults.map((res) => {
-//       if (res.id === resultId) {
-//         return {
-//           ...res,
-//           normalValues: [
-//             ...(res.normalValues || []),
-//             ...normalValues.map((nv) => ({ ...nv, resultId: res.id })),
-//           ],
-//         };
-//       }
-//       return res;
-//     })
-//   );
-
-
-//   setShowModalNormalValues(false);
-// };
-
-// Add new result (example)
-const handleAddResult = () => {
-
-  if (!newResult.resultname.trim()) {
-    alert("Result Name is required");
-    return;
-  }
-
-  if (!newResult.valueType) {
-    alert("Value Type is required");
-    return;
-  }
-
-
-  const newResult = {
-    id: results.length + 1, // or use uuid
-    name: formData.name || `Result ${results.length + 1}`,
-    normalValues: [...normalValues], // attach the current normalValues
-  };
-
-
-  setResults([...results, newResult]);
-  setNormalValues([]); // clear form after adding
-};
-
-
-
-// const handleAddResult = () => {
-
-//   console.log("newResulte ===== >>",newResult);
-//   console.log("newResult.name ===== >>",newResult.resultname);
-
-//   // Validate required fields
-//   if (!newResult.resultname.trim()) {
-//     alert("Result Name is required");
-//     return;
-//   }
-
-//   if (!newResult.valueType) {
-//     alert("Value Type is required");
-//     return;
-//   }
-
-//   setResults([...results, newResult]);
-
-//   console.log("...results", ...results);
-//   console.log("...newResult", ...newResult);
+  // const handleSaveNormalValues = (normalValues) => {
+  //   console.log("normalValues",normalValues);
   
-//   setNewResult({
-//     name: "",
-//     otherLanguageName: "",
-//     extResultId: "",
-//     order: "",
-//     unit: "",
-//     formula: "",
-//     valueType: "",
-//     defaultValue: "",
-//     roundOff: "",
-//     normalValues: [],
-//     mandatoryConditions: [],
-//     reflexTests: [],
-//     showTrends: false,
-//   });
-// };
-
-
-
-  // const handleNormalValuesUpdate = (normalValues) => {
   //   setNewResult(prev => ({
   //     ...prev,
-  //     normalValues: normalValues
+  //     normalValues: normalValues, // ✅ update state
   //   }));
   // };
 
-//   const handleSaveNormalValues = () => {
+  const handleSaveNormalValues = () => {
+
+    setResult((prev) => ({
+      ...prev,
+      normalValues: normalValues, // update the normalValues array
+    }));
+    console.log("normalValues",normalValues);
+  };
   
-//     handleSubmitNormalValues();
-// };
-
-const handleSubmitNormalValues = () => {
-  if (selectedIndex !== null) {
-    // Update existing entry
-    const updatedNormalValues = [...normalValues];
-    updatedNormalValues[selectedIndex] = { ...formData }; // replace at index
-    setNormalValues(updatedNormalValues);
-  } else {
-    // Add new entry
-    setNormalValues([...normalValues, formData]);
-  }
-
-  // Reset form and selectedIndex
-  setFormData({
-    type: '',
-    ageMinYear: '',
-    ageMinMonth: '',
-    ageMinDay: '',
-    ageMaxYear: '',
-    ageMaxMonth: '',
-    ageMaxDay: '',
-    rangeMin: '',
-    rangeMax: '',
-    validRangeMin: '',
-    validRangeMax: '',
-    criticalRangeLow: '',
-    criticalRangeHigh: '',
-    rangeAbnormal: false,
-    avoidRangeInReport: false,
-  });
-  setSelectedIndex(null);
-};
 
 
+  const handleAddResult = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
 
-  // const handleAddResult = (e) => {
-  //   e.preventDefault();
-  //   e.stopPropagation();
+    setResults([...results, newResult]);
 
-  //   setResults([...results, newResult]);
-
-  //   setNewResult({
-  //     resultname: "",
-  //     otherLanguageName: "",
-  //     extResultId: "",
-  //     order: "",
-  //     unit: "",
-  //     formula: "",
-  //     valueType: "",
-  //     defaultValue: "",
-  //     roundOff: "",
-  //     normalValues: [],
-  //     mandatoryConditions: [],
-  //     reflexTests: [],
-  //     showTrends: false,
-  //   });
-  // };
-
- 
+    setNewResult({
+      name: "",
+      otherLanguageName: "",
+      extResultId: "",
+      order: "",
+      unit: "",
+      formula: "",
+      valueType: "",
+      defaultValue: "",
+      roundOff: "",
+      normalValues: [],
+      mandatoryConditions: [],
+      reflexTests: [],
+      showTrends: false,
+    });
+  };
 
   const handleResultChange = (e, idx) => {
     const { name, value } = e.target;
-
+  
     const updatedResults = [...results];
     updatedResults[idx] = { ...updatedResults[idx], [name]: value };
     setResults(updatedResults);
   };
-
+  
+  
   return (
     <>
       <div className="fixed top-[61px] w-full z-10">
@@ -1553,60 +1379,65 @@ const handleSubmitNormalValues = () => {
                     </tr>
                   </thead>
                   <tbody>
-                  {results.map((result, index) => (
-              <tr key={index} className="bg-white hover:bg-gray-50">
-                <td className="border px-2 py-1">{result.resultname}</td>
-                <td className="border px-2 py-1">{result.otherLanguageName}</td>
-                <td className="border px-2 py-1">{result.extResultId}</td>
-                <td className="border px-2 py-1">{result.order}</td>
-                <td className="border px-2 py-1">{result.unit}</td>
-                <td className="border px-2 py-1">{result.formula}</td>
-                <td className="border px-2 py-1">{result.valueType}</td>
-                <td className="border px-2 py-1">{result.defaultValue}</td>
-                <td className="border px-2 py-1">{result.roundOff}</td>
-                <td className="border px-2 py-1">
-                  {Array.isArray(result.normalValues) ? 
-                    result.normalValues.length > 0 ? 
-                      `${result.normalValues.length} normal value(s)` : 
-                      "None" : 
-                    "None"
-                  }
-                </td>
-                <td className="border px-2 py-1">
-                  {Array.isArray(result.mandatoryConditions) ? 
-                    result.mandatoryConditions.length > 0 ? 
-                      `${result.mandatoryConditions.length} condition(s)` : 
-                      "None" : 
-                    "None"
-                  }
-                </td>
-                <td className="border px-2 py-1">
-                  {Array.isArray(result.reflexTests) ? 
-                    result.reflexTests.length > 0 ? 
-                      `${result.reflexTests.length} test(s)` : 
-                      "None" : 
-                    "None"
-                  }
-                </td>
-                <td className="border px-2 py-1">
-                  {result.showTrends ? "Yes" : "No"}
-                </td>
-                <td className="border px-2 py-1 text-center">
-                  <button
-                    type="button"
-                    className="text-red-600 hover:text-red-800 text-xs"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const updatedResults = results.filter((_, i) => i !== index);
-                      setResults(updatedResults);
-                    }}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+                    {results.map((result, index) => (
+                      <tr key={index} className="bg-white hover:bg-gray-50">
+                        <td className="border px-2 py-1">{result.resultname}</td>
+                        <td className="border px-2 py-1">
+                          {result.otherLanguageName}
+                        </td>
+                        <td className="border px-2 py-1">
+                          {result.extResultId}
+                        </td>
+                        <td className="border px-2 py-1">{result.order}</td>
+                        <td className="border px-2 py-1">{result.unit}</td>
+                        <td className="border px-2 py-1">{result.formula}</td>
+                        <td className="border px-2 py-1">{result.valueType}</td>
+                        <td className="border px-2 py-1">
+                          {result.defaultValue}
+                        </td>
+                        <td className="border px-2 py-1">{result.roundOff}</td>
+                        <td className="border px-2 py-1">
+                          {Array.isArray(result.normalValues)
+                            ? result.normalValues.length > 0
+                              ? `${result.normalValues.length} normal value(s)`
+                              : "None"
+                            : "None"}
+                        </td>
+                        <td className="border px-2 py-1">
+                          {Array.isArray(result.mandatoryConditions)
+                            ? result.mandatoryConditions.length > 0
+                              ? `${result.mandatoryConditions.length} condition(s)`
+                              : "None"
+                            : "None"}
+                        </td>
+                        <td className="border px-2 py-1">
+                          {Array.isArray(result.reflexTests)
+                            ? result.reflexTests.length > 0
+                              ? `${result.reflexTests.length} test(s)`
+                              : "None"
+                            : "None"}
+                        </td>
+                        <td className="border px-2 py-1">
+                          {result.showTrends ? "Yes" : "No"}
+                        </td>
+                        <td className="border px-2 py-1 text-center">
+                          <button
+                            type="button"
+                            className="text-red-600 hover:text-red-800 text-xs"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const updatedResults = results.filter(
+                                (_, i) => i !== index
+                              );
+                              setResults(updatedResults);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1621,7 +1452,7 @@ const handleSubmitNormalValues = () => {
                       </label>
                       <input
                         type="text"
-                        name="name"
+                        name="resultname"
                         value={res.resultname}
                         onChange={(e) => handleResultChange(e, idx)}
                         className="w-full border px-3 py-2 rounded"
@@ -1797,10 +1628,10 @@ const handleSubmitNormalValues = () => {
                           </div>
                           <div className="p-6 overflow-auto max-h-90">
                             <form
-                              // onClick={handleAddNormalValues}
+                            // onClick={handleAddNormalValues}
                               onSubmit={(e) => {
                                 e.preventDefault();
-                                handleNormalValuesUpdate();
+                                handleAddNormalValues();
                               }}
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
@@ -2013,7 +1844,7 @@ const handleSubmitNormalValues = () => {
 
                               <div className="flex justify-center mt-4">
                                 <button
-                                  type="button"
+                                  type="submit"
                                   className="bg-orange-500 text-white rounded-lg py-2 px-8 hover:bg-orange-600"
                                   onClick={handleAddNormalValues}
                                 >
@@ -2023,6 +1854,7 @@ const handleSubmitNormalValues = () => {
                             </form>
                           </div>
 
+      
                           <div className="border-t border-gray-400 p-4 max-h-96 overflow-auto">
                             <h3 className="text-lg font-semibold">
                               Edited Normal Value List
@@ -2098,7 +1930,6 @@ const handleSubmitNormalValues = () => {
                                     </td>
                                     <td className="border px-4 py-2 space-x-2">
                                       <button
-                                      type="button" 
                                         className="text-blue-500 hover:underline"
                                         onClick={() =>
                                           handleEditNormalValues(index)
@@ -2107,7 +1938,6 @@ const handleSubmitNormalValues = () => {
                                         Edit
                                       </button>
                                       <button
-                                      type="button" 
                                         className="text-red-500 hover:underline"
                                         onClick={() =>
                                           handleRemoveNormalValues(index)
@@ -2125,7 +1955,7 @@ const handleSubmitNormalValues = () => {
                           {/* Footer */}
                           <div className="p-4 bg-gray-200 space-x-2 flex justify-between">
                             <button
-                              type="button"
+                            type="button"  
                               className="bg-gray-500 text-white rounded-lg w-1/2 py-2 hover:bg-gray-600"
                               onClick={handleCloseNormalValue}
                             >
@@ -2134,9 +1964,9 @@ const handleSubmitNormalValues = () => {
                             <button
                               type="button"
                               className="bg-green-500 text-white rounded-lg w-1/2 py-2 hover:bg-green-600"
-                              onClick={() => handleSaveNormalValues()}
+                              onClick={handleSaveNormalValues}
                             >
-                              Submit
+                              Submit123
                             </button>
                           </div>
                         </div>
@@ -2182,15 +2012,15 @@ const handleSubmitNormalValues = () => {
                         onDataUpdate={handleReflexTestsUpdate}
                       />
                     </div> */}
-                    {/* <div className="col-span-full text-center">
+                    <div className="col-span-full text-center">
                       <button
                         type="button"
                         className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700"
                         onClick={handleAddResult}
                       >
-                        Add Result123
+                        Add Result
                       </button>
-                    </div> */}
+                    </div>
                   </React.Fragment>
                 ))}
               </div>
@@ -2202,13 +2032,14 @@ const handleSubmitNormalValues = () => {
                   Output Template
                 </h2>
                 <div className="col-span-full border-b border-gray-300 mb-4"></div>
+
                 <div className="flex items-center mb-4">
                   <input
+                    {...register("checkimage")}
                     type="checkbox"
                     id="showImagesSide"
                     className="mr-2"
-                    {...register("checkimage")}
-                    defaultChecked={investigation?.checkimage || false} // okay for initial value
+                    defaultChecked={investigation?.checkimage || false}
                   />
                   <label
                     htmlFor="showImagesSide"
