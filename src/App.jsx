@@ -117,6 +117,7 @@ import AddAccessionMaster from "./Components/Admin/AddAccessionMaster";
 import ViewAccessionMaster from "./Components/Admin/ViewAccessionMaster";
 import UpdateAccessionMaster from "./Components/Admin/UpdateAccessionMaster";
 import UpdateUserDetails from "./Components/Admin/UpdateUserDetails";
+import UpdatePatientDetails from "./Components/Admin/UpdatePatientDetails";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -554,6 +555,10 @@ function App() {
           {
             path: "admin-view-patient-details",
             element: requireRole("admin", <ViewPatientDetails />),
+          },
+          {
+            path: "admin-update-patient-details/:id",
+            element: requireRole("admin", <UpdatePatientDetails />),
           },
           // Fallback route
           {

@@ -14,6 +14,7 @@
     "@coreui/react-pro": "^5.17.0",
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
+    "@material-tailwind/react": "^2.1.10",
     "@radix-ui/react-slider": "^1.2.2",
     "@tanstack/react-table": "^8.21.3",
     "ag-grid-community": "^33.3.2",
