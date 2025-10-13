@@ -8,6 +8,7 @@ import axios from "axios";
 import { addAccessionMaster } from "../../services/apiService";
 
 const AddAccessionMaster = () => {
+  const authToken = localStorage.getItem("authToken");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedId, setSavedId] = useState(null);
   const [barcodeValue, setBarcodeValue] = useState("");
@@ -110,7 +111,12 @@ const AddAccessionMaster = () => {
       const response = await axios.post(
         `https://asrlabs.asrhospitalindia.in/lims/master/get-barcode/${sampleData.sampleId}`,
         sampleData,
-        { headers: { "Content-Type": "application/json" } }
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`, 
+          },
+        }
       );
 
       if (response.status === 200) {
@@ -194,6 +200,7 @@ const AddAccessionMaster = () => {
               ))}
 
               <button
+                type="button"
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-70"
                 onClick={handleGenerateBarCode}
               >
@@ -274,7 +281,7 @@ const AddAccessionMaster = () => {
                   type="radio"
                   value="false"
                   {...register("isactive", { required: true })}
-                  defaultChecked={true} 
+                  defaultChecked={true}
                   className="h-4 w-4 text-teal-600"
                 />
                 <span className="ml-2">False</span>

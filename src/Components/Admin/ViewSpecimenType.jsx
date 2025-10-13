@@ -10,6 +10,10 @@ const ViewSpecimenType = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
 
@@ -22,6 +26,7 @@ const ViewSpecimenType = () => {
         const response = await axios.get(
           "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",
           {
+            params: { page: currentPage, limit: itemsPerPage },
             headers: { Authorization: `Bearer ${token}` },
           }
         );
@@ -29,6 +34,9 @@ const ViewSpecimenType = () => {
         const data = response.data.data || [];
         setSpecimenTypes(data);
         setFilteredSpecimenTypes(data);
+        setTotalPages(response?.data?.meta?.totalPages || 1);
+        setTotalItems(response?.data?.meta?.totalItems);
+        console.log("Fetched specimen types:", data);
       } catch (err) {
         console.error("Error fetching specimen types:", err);
         setError("Failed to fetch specimen types.");
@@ -38,7 +46,7 @@ const ViewSpecimenType = () => {
     };
 
     fetchSpecimenTypes();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   // Search filter
   useEffect(() => {
@@ -55,7 +63,18 @@ const ViewSpecimenType = () => {
     }
   }, [search, specimenTypes]);
 
+   const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
+  };
+
+
   const handleUpdate = (specimenType) => {
+    console.log("Update specimen type:", specimenType?.id);
     navigate(`/update-specimen-type/${specimenType.id}`);
   };
 
@@ -155,7 +174,13 @@ const ViewSpecimenType = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              itemsPerPage={itemsPerPage}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

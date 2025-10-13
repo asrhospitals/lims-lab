@@ -1,4 +1,4 @@
-      import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
@@ -12,68 +12,66 @@ const ViewReportTypeMaster = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const [totalItems, setTotalItems] = useState(0);
-const [itemsPerPage, setItemsPerPage] = useState(10);
-
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const { setTechnicianToUpdate } = useContext(AdminContext); // optional
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchReportTypes = async () => {
-  try {
-    const authToken = localStorage.getItem("authToken");
-    const response = await axios.get(
-      "https://asrlabs.asrhospitalindia.in/api/lims/master/report-types",
-      {
-        params: { page: currentPage, limit: itemsPerPage },
-        headers: { Authorization: `Bearer ${authToken}` },
+      try {
+        const authToken = localStorage.getItem("authToken");
+        const response = await axios.get(
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-report",
+          {
+            params: { page: currentPage, limit: itemsPerPage },
+            headers: { Authorization: `Bearer ${authToken}` },
+          }
+        );
+
+        const data = (response.data?.data || []).sort(
+          (a, b) => Number(a.id) - Number(b.id)
+        );
+
+        setReportTypes(data);
+        setFilteredReportTypes(data);
+        setTotalPages(response?.data?.meta?.totalPages || 1);
+        setTotalItems(response?.data?.meta?.totalItems);
+      } catch (err) {
+        setError(
+          err.response?.data?.message || "Failed to fetch Report Types."
+        );
+      } finally {
+        setLoading(false);
       }
-    );
-
-    const data = (response.data?.data || []).sort(
-      (a, b) => Number(a.id) - Number(b.id)
-    );
-
-    setReportTypes(data);
-    setFilteredReportTypes(data);
-    setTotalPages(response?.meta?.totalPages || 1);
-    setTotalItems(response?.meta?.totalItems || data.length);
-  } catch (err) {
-    setError(err.response?.data?.message || "Failed to fetch Report Types.");
-  } finally {
-    setLoading(false);
-  }
-};
+    };
 
     fetchReportTypes();
-  }, []);
-  
+  }, [itemsPerPage, currentPage]);
 
   useEffect(() => {
-  if (!search.trim()) {
-    setFilteredReportTypes(reportTypes);
-  } else {
-    const lower = search.toLowerCase();
-    const filtered = reportTypes.filter(
-      (r) =>
-        (r.reporttype || "").toLowerCase().includes(lower) ||
-        (r.reportdescription || "").toLowerCase().includes(lower)
-    );
-    setFilteredReportTypes(filtered);
-  }
-}, [search, reportTypes]);
-const handlePageChange = (page) => {
-  setCurrentPage(page);
-};
+    if (!search.trim()) {
+      setFilteredReportTypes(reportTypes);
+    } else {
+      const lower = search.toLowerCase();
+      const filtered = reportTypes.filter(
+        (r) =>
+          (r.reporttype || "").toLowerCase().includes(lower) ||
+          (r.reportdescription || "").toLowerCase().includes(lower)
+      );
+      setFilteredReportTypes(filtered);
+    }
+  }, [search, reportTypes]);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
-const handlePageSizeChange = (newSize) => {
-  setItemsPerPage(newSize);
-  setCurrentPage(1);
-};
-
-
+  const handlePageSizeChange = (newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
+  };
 
   const handleUpdate = (reportType) => {
     setTechnicianToUpdate(reportType); // reuse context if needed
@@ -89,20 +87,18 @@ const handlePageSizeChange = (newSize) => {
     { key: "entryvalues", label: "Entry Values" },
     { key: "status", label: "Status" },
 
-
     // { key: "createdAt", label: "Created At" },
     // { key: "updatedAt", label: "Updated At" },
   ];
 
-  const mappedItems = reportTypes.map(rt => ({
+  const mappedItems = reportTypes.map((rt) => ({
     id: rt.id,
     reporttype: rt.reporttype,
     reportdescription: rt.reportdescription,
     entrytype: rt.entrytype,
-    entryvalues: rt.entryvalues.join(", "),  // Convert array to string
-    status: rt.isactive ? "Active" : "Inactive"
+    entryvalues: rt.entryvalues.join(", "), // Convert array to string
+    status: rt.isactive ? "Active" : "Inactive",
   }));
-  
 
   return (
     <>
@@ -180,14 +176,18 @@ const handlePageSizeChange = (newSize) => {
             </div>
           ) : (
             <DataTable
-  items={mappedItems}
-  columns={columns}
-  itemsPerPage={10}
-  showDetailsButtons={false}
-  onUpdate={handleUpdate}
-/>
-
-          
+              items={mappedItems}
+              columns={columns}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              itemsPerPage={10}
+              showDetailsButtons={false}
+              onUpdate={handleUpdate}
+            />
           )}
         </div>
       </div>

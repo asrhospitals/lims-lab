@@ -140,7 +140,7 @@ const AddProfileMaster = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen">
       <ToastContainer />
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
@@ -156,7 +156,7 @@ const AddProfileMaster = () => {
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <span className="text-gray-700">Profile Master</span>
+              <Link to="/view-profile-master" className="text-gray-700 hover:text-teal-600">Profile Master</Link>
             </li>
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
@@ -167,7 +167,7 @@ const AddProfileMaster = () => {
       </div>
 
       {/* Form Container */}
-      <div className="w-full mt-16">
+      <div className="w-full p-6 mt-16">
         <div className="bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden">
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add New Profile</h4>

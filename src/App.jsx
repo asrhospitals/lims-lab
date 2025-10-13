@@ -82,6 +82,7 @@ import DoctorRegistration from "./Components/Admin/DoctorRegistration";
 // Profile & Investigation Management
 import AddProfileMaster from "./Components/Admin/AddProfileMaster";
 import ViewProfileMaster from "./Components/Admin/ViewProfileMaster";
+import UpdateProfileMaster from "./Components/Admin/UpdateProfileMaster";
 import AddProfileEntryMaster from "./Components/Admin/AddProfileEntryMaster";
 import ViewProfileEntryMaster from "./Components/Admin/ViewProfileEntryMaster";
 import UpdateProfileEntryMaster from "./Components/Admin/UpdateProfileEntryMaster";
@@ -464,6 +465,10 @@ function App() {
           {
             path: "view-profile-master",
             element: requireRole("admin", <ViewProfileMaster />),
+          },
+          {
+            path: "update-profile-master/:id",
+            element: requireRole("admin", <UpdateProfileMaster />),
           },
           {
             path: "add-investigation",

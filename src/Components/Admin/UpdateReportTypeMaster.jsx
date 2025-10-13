@@ -76,7 +76,7 @@ const UpdateReportTypeMaster = () => {
       };
   
       await axios.put(
-        `https://asrlabs.asrhospitalindia.in/api/lims/master/report-types/${reportId}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-report/${reportId}`,
         payload,
         { headers: { Authorization: `Bearer ${authToken}` } }
       );

@@ -31,7 +31,7 @@ const UpdateSpecimenType = () => {
       try {
         const token = localStorage.getItem("authToken");
         const response = await axios.get(
-          `https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types/${id}`,
+          `https://asrlabs.asrhospitalindia.in/lims/master/get-specimen/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -57,7 +57,7 @@ const UpdateSpecimenType = () => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.put(
-        `https://asrlabs.asrhospitalindia.in/api/lims/master/specimen-types/${id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-specimen/${id}`,
         {
           specimenname: data.specimenname,
           specimendes: data.specimendes,

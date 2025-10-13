@@ -23,7 +23,7 @@ const AddSpecimenType = () => {
 
     try {
       await axios.post(
-        "https://asrlabs.asrhospitalindia.in/api/lims/master/add-specimen",
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-specimen",
         {
           specimenname: data.specimenname,
           specimendes: data.specimendes,
@@ -59,7 +59,7 @@ const AddSpecimenType = () => {
             <li className="text-gray-400">/</li>
             <li>
               <Link
-                to="/view-specimen-types"
+                to="/view-specimen-type"
                 className="text-gray-700 hover:text-teal-600"
               >
                 Specimen Types
