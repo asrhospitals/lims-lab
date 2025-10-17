@@ -2,9 +2,10 @@ import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../../context/adminContext";
-import PhlebotomistDataTable from "../../utils/PhlebotomistDataTable";
 import { fetchPatientReportData } from "../../../services/apiService";
 import { toast } from "react-toastify";
+import WithoutActionTable from "../../utils/WithoutActionTable";
+
 
 const PendingReportRegister = () => {
   const [reportDoctors, setReportDoctors] = useState([]); // full API data
@@ -20,58 +21,53 @@ const PendingReportRegister = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // ------------------ Fetch report data ------------------
-  useEffect(() => {
-    const fetchReportData = async () => {
-      const id = localStorage.getItem("hospital_id");
-      if (!id) {
-        toast.error("No hospital ID found in localStorage");
-        return;
+useEffect(() => {
+  const fetchReportData = async () => {
+    const id = localStorage.getItem("hospital_id");
+    if (!id) {
+      toast.error("No hospital ID found in localStorage");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetchPatientReportData(id);
+
+      if (response?.data) {
+        const data = response.data || [];
+
+        const mapped = data.map((item) => ({
+          id: item.id,
+          patientid: item.id,
+          patientname: item.p_name,
+          patientregdate: item.p_regdate,
+          barcode: item.patientPPModes?.[0]?.pbarcode || "",
+          hospitalname: item.hospital?.hospitalname || "",
+          attatchfile: item.patientPPModes?.[0]?.attatchfile || "",
+          testregdates: item.patientTests
+            .filter((t) => t.status === "docpending")
+            .map((t) => t.createddatetime || "") // Assuming createddatetime is test registration date
+            .join(", "),
+        }));
+
+        setReportDoctors(mapped);
+        setfilteredReportData(mapped);
+        setTotalItems(response.meta?.totalItems || mapped.length);
+        setTotalPages(response.meta?.totalPages || 1);
+
+      } else {
+        toast.error(response?.message || "Failed to fetch report data");
       }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred while fetching the report");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      setIsLoading(true);
-      try {
-        const response = await fetchPatientReportData(id);
-        if (response?.data) {
-          const data = response.data || [];
-
-          // Map API response to table-friendly format
-          const mapped = data.map((item) => ({
-            id: item.id,
-            patientid: item.id,
-            patientname: item.p_name,
-            patientregdate: item.p_regdate,
-            barcode: item.patientPPModes?.[0]?.pbarcode || "",
-            investigationregistrerd: item.patientTests
-              .filter((t) => t.status === "docpending") // Only pending investigations
-              .map((t) => t.investigation?.testname)
-              .join(", "),
-            hospitalname: item.hospital?.hospitalname || "",
-            attatchfile: item.patientPPModes?.[0]?.attatchfile || "",
-          }));
-
-          setReportDoctors(mapped);
-          setfilteredReportData(mapped);
-
-          // Pagination
-          // setTotalItems(response.meta?.totalItems || mapped.length);
-          // setTotalPages(response.meta?.totalPages || 1);
-
-        setTotalPages(response?.meta?.totalPages || 1);
-        setTotalItems(response?.meta?.totalItems || 1);
-
-        } else {
-          toast.error(response?.message || "Failed to fetch report data");
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error("An error occurred while fetching the report");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchReportData();
-  }, [itemsPerPage]);
+  fetchReportData();
+}, [itemsPerPage]);
 
   // ------------------ Search & filter ------------------
   const handleSearch = () => {
@@ -98,29 +94,27 @@ const PendingReportRegister = () => {
   };
 
   // ------------------ Table columns ------------------
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "patientid", label: "Patient ID" },
-    { key: "patientname", label: "Patient Name" },
-    { key: "barcode", label: "Barcode" },
-    { key: "hospitalname", label: "Hospital Name" },
-    { key: "investigationregistrerd", label: "Investigation Pending" },
-  ];
-
-  // ------------------ Pagination ------------------
-// const paginatedItems = filteredReportData.slice(
-//   (currentPage - 1) * itemsPerPage,
-//   currentPage * itemsPerPage
-// );
+const columns = [
+  { key: "id", label: "ID" },
+  { key: "patientid", label: "Patient ID" },
+  { key: "patientname", label: "Patient Name" },
+  { key: "barcode", label: "Barcode" },
+  { key: "hospitalname", label: "Hospital Name" },
+  { key: "patientregdate", label: "Patient Reg. Date" },
+  { key: "testregdates", label: "Test Reg. Date" },
+];
 
 // Use index + offset to create a continuous row number
 const mappedItems = filteredReportData.map((t, index) => ({
-  id: (currentPage - 1) * itemsPerPage + index + 1, // Row number
+  id: (currentPage - 1) * itemsPerPage + index + 1,
   patientid: t.patientid,
   patientname: t.patientname,
   barcode: t.barcode,
   hospitalname: t.hospitalname,
+  patientregdate: t.patientregdate,
   investigationregistrerd: t.investigationregistrerd,
+  testregdates: t.testregdates,
+  attatchfile: t.attatchfile,
 }));
 
 
@@ -255,7 +249,7 @@ const mappedItems = filteredReportData.map((t, index) => ({
               No report entry found.
             </div>
           ) : (
-            <PhlebotomistDataTable
+            <WithoutActionTable
               items={mappedItems}
               columns={columns}
               showDetailsButtons={false}

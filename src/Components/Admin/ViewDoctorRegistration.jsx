@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import DataTable from "../utils/DataTable";
-
+import ImageDIsplatDataTable from "../utils/ImageDIsplatDataTable";
 // Utility to generate consistent gradient based on name
 const stringToColor = (str) => {
   let hash = 0;
@@ -86,6 +85,7 @@ const ViewDoctorRegistration = () => {
   };
 
   const columns = [
+    { key: "id", label: "ID" },
     { key: "dname", label: "Name" },
     { key: "dqlf", label: "Qualification" },
     { key: "dspclty", label: "Specialty" },
@@ -117,25 +117,20 @@ const ViewDoctorRegistration = () => {
 
         return (
           <div className="relative group">
-           {d.dphoto ? (
-  <img
-    src={encodeURI(d.dphoto)}
-    alt={d.dname}
-    className="w-12 h-12 rounded-full border-4 border-gradient-to-r from-teal-400 to-blue-500 object-cover transition-transform group-hover:scale-110 cursor-pointer"
-  />
-) : (
-  <div
-    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer"
-    style={{ backgroundColor: color }}
-  >
-    {initials}
-  </div>
-)}
-
-            <div
-              className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-white"
-              title="Active"
-            ></div>
+            {d.dphoto ? (
+              <img
+                src={encodeURI(d.dphoto)}
+                alt={d.dname}
+                className="w-24 h-24 rounded-full border-4 border-gradient-to-r from-teal-400 to-blue-500 object-cover transition-transform group-hover:scale-110 cursor-pointer"
+              />
+            ) : (
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer"
+                style={{ backgroundColor: color }}
+              >
+                {initials}
+              </div>
+            )}
           </div>
         );
       },
@@ -225,7 +220,7 @@ const ViewDoctorRegistration = () => {
               No doctors found.
             </div>
           ) : (
-            <DataTable
+            <ImageDIsplatDataTable
               items={filteredDoctors}
               columns={columns}
               serverSidePagination

@@ -131,12 +131,13 @@ function PhlebotomistApp() {
           element: <EditReportEntryData />,
         },
         {
-          path: "*",
+          path: "/dashboard",
           element: <>Not found</>,
         },
       ],
     },
   ]);
+
 
   return <RouterProvider router={router} />;
 }
