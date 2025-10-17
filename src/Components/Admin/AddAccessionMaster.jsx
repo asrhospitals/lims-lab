@@ -12,13 +12,10 @@ const AddAccessionMaster = () => {
   const [savedId, setSavedId] = useState(null);
   const [barcodeValue, setBarcodeValue] = useState("");
 
-  // Starting value
-  const [sampleId, setSampleId] = useState(1005);
-  const generateRandomId = (min = 1000, max = 9999) => {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  };
+  // Sample Data State
+  const generateRandomId = (min = 1000, max = 9999) =>
+    Math.floor(Math.random() * (max - min + 1)) + min;
 
-  // Sample data object
   const [sampleData, setSampleData] = useState({
     year: "2025",
     locationId: 1,
@@ -27,19 +24,7 @@ const AddAccessionMaster = () => {
     sampleId: generateRandomId(),
   });
 
-  // Auto-increment sampleId locally
-  const incrementSampleId = () => {
-    setSampleId((prev) => {
-      const nextId = prev + 1;
-      setSampleData((prevData) => ({
-        ...prevData,
-        sampleId: nextId,
-      }));
-      return nextId;
-    });
-  };
-
-  // Checkbox settings
+  // Barcode Settings
   const [settings, setSettings] = useState({
     enableLocation: false,
     enableContainer: false,
@@ -60,13 +45,18 @@ const AddAccessionMaster = () => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleGenerateBarCode = async () => {
-    const nextSampleId = sampleData.sampleId + 1;
+  // -------------------------------
+  // API Calls
+  // -------------------------------
 
-    // Update state only for UI
+  // 1️⃣ Save accession and return savedId
+  const saveAccession = async () => {
+    const nextSampleId = sampleData.sampleId + 1;
     setSampleData((prev) => ({ ...prev, sampleId: nextSampleId }));
 
-    // Payload MUST use nextSampleId, never sampleData.sampleId
+    const token = localStorage.getItem("authToken");
+    if (!token) throw new Error("Authorization token missing");
+
     const payload = {
       a_year: Number(sampleData.year),
       a_location_id: sampleData.locationId,
@@ -75,61 +65,72 @@ const AddAccessionMaster = () => {
       a_sample_id: nextSampleId,
     };
 
-    console.log("Sending payload:", payload);
+    const response = await addAccessionMaster(payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-    try {
-      const response = await addAccessionMaster(payload);
-
-      console.log("API response:", response);
-
-      if (response.status === 200 || response.status === 201) {
-        setSavedId(response.data?.id);
-        setBarcodeValue(nextSampleId.toString());
-        toast.success("Accession saved successfully!");
-      } else {
-        toast.error("Unexpected server response during save.");
-      }
-    } catch (err) {
-      console.error("API error:", err);
-      toast.error(
-        err?.response?.data?.message || err.message || "Error saving accession."
-      );
+    if (response.status === 200 || response.status === 201) {
+      toast.success("Accession saved successfully!");
+      setSavedId(response.data.id);
+      return response.data.id;
+    } else {
+      throw new Error("Unexpected server response during save.");
     }
   };
 
-  // Submit form → generate barcode (mocked with API here)
-  const onSubmit = async () => {
-    if (!sampleData.sampleId) {
-      toast.error("Sample ID not set.");
-      return;
-    }
+  // 2️⃣ Generate barcode from savedId
+  const generateBarcode = async (id) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) throw new Error("Authorization token missing");
 
-    setIsSubmitting(true);
     try {
-      // Normally you'd call backend here — keeping your axios call
-      const response = await axios.post(
-        `https://asrlabs.asrhospitalindia.in/lims/master/get-barcode/${sampleData.sampleId}`,
-        sampleData,
-        { headers: { "Content-Type": "application/json" } }
+      const response = await axios.get(
+        `https://asrlabs.asrhospitalindia.in/lims/master/get-barcode/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          responseType: "blob", // <- important
+        }
       );
 
       if (response.status === 200) {
-        setBarcodeValue(response.data.barcode);
+        // Convert binary data to URL
+        const imageUrl = URL.createObjectURL(response.data);
+        setBarcodeValue(imageUrl); // set it to state
         toast.success("Barcode generated successfully!");
       } else {
         toast.error("Failed to generate barcode.");
       }
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Error generating barcode."
-      );
+      console.error(err);
+      toast.error(err?.message || "Error generating barcode.");
+    }
+  };
+
+  // -------------------------------
+  // Form Submit Handler
+  // -------------------------------
+  const onSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const id = await saveAccession();
+      await generateBarcode(id);
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.message || "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // -------------------------------
+  // Render
+  // -------------------------------
   return (
     <>
       <ToastContainer />
@@ -173,6 +174,7 @@ const AddAccessionMaster = () => {
               <h2 className="text-lg font-semibold text-green-600 border-b pb-2">
                 Barcode Settings
               </h2>
+
               {[
                 { key: "enableLocation", label: "Enable Hospital ID" },
                 { key: "enableContainer", label: "Enable Container ID" },
@@ -194,18 +196,21 @@ const AddAccessionMaster = () => {
               ))}
 
               <button
+                type="button"
+                onClick={onSubmit}
+                disabled={isSubmitting}
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-70"
-                onClick={handleGenerateBarCode}
               >
-                Generate Bar Code
+                {isSubmitting ? "Generating Barcode..." : "Generate Bar Code"}
               </button>
             </div>
 
-            {/* Preview */}
+            {/* Barcode Preview */}
             <div className="lg:col-span-2 bg-white/90 backdrop-blur border rounded-2xl shadow-xl p-6">
               <h2 className="text-lg font-semibold text-gray-700 mb-4">
                 Barcode Preview
               </h2>
+
               <table className="w-full border mb-6 text-center rounded-lg overflow-hidden">
                 <thead>
                   <tr className="bg-green-50 text-green-600 font-semibold">
@@ -240,10 +245,14 @@ const AddAccessionMaster = () => {
               {barcodeValue ? (
                 <div className="flex flex-col items-center space-y-2">
                   <div className="bg-gradient-to-r from-green-100 to-green-50 border rounded-lg p-4 shadow-inner">
-                    <Barcode value={barcodeValue} height={60} />
+                    <img
+                      src={barcodeValue}
+                      alt="Generated Barcode"
+                      className="h-16"
+                    />
                   </div>
                   <div className="text-gray-700 font-medium">
-                    {barcodeValue}
+                    Barcode Preview
                   </div>
                 </div>
               ) : (
@@ -252,55 +261,6 @@ const AddAccessionMaster = () => {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Active */}
-          <div className="space-y-1 mt-4 p-5">
-            <label className="block text-sm font-medium text-gray-700">
-              Is Active? <span className="text-red-500">*</span>
-            </label>
-            <div className="flex space-x-4 pt-2">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  value="true"
-                  {...register("isactive", { required: true })}
-                  className="h-4 w-4 text-teal-600"
-                />
-                <span className="ml-2">True</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  value="false"
-                  {...register("isactive", { required: true })}
-                  defaultChecked={true} 
-                  className="h-4 w-4 text-teal-600"
-                />
-                <span className="ml-2">False</span>
-              </label>
-            </div>
-            {errors.isactive && (
-              <p className="text-red-500 text-xs mt-1">Mandatory field</p>
-            )}
-          </div>
-
-          {/* Submit */}
-          <div className="mt-8 flex justify-end p-5">
-            <button
-              type="button"
-              onClick={() => reset()}
-              className="mr-4 px-6 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 transition"
-            >
-              Reset
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-md hover:from-teal-700 hover:to-teal-600 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-70"
-            >
-              {isSubmitting ? "Generating Barcode..." : "Add Barcode"}
-            </button>
           </div>
         </form>
       </div>

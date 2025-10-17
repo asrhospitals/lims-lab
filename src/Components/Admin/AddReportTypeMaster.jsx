@@ -35,14 +35,15 @@ const AddReportTypeMaster = () => {
       const authToken = localStorage.getItem("authToken");
 
       await axios.post(
-        "https://asrlabs.asrhospitalindia.in/api/lims/master/report-types",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+  "https://asrlabs.asrhospitalindia.in/lims/master/add-report",
+  payload,
+  {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  }
+);
+
 
       toast.success("Report Type added successfully!", { position: "top-right", autoClose: 2500 });
       reset();

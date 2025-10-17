@@ -26,17 +26,15 @@ const AddUser = () => {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      createddate: today, // Set default value here
-      isactive: "true",   // ✅ Default Active = Yes
+      createddate: today,
+      isactive: "true",
     },
   });
 
   const createdby = localStorage.getItem("userid");
-
   const mobileNumberValue = watch("mobileNumber");
   const whatsappSame = watch("whatsappSame");
 
-  // If checkbox is checked, set WhatsApp number same as mobile
   useEffect(() => {
     if (whatsappSame) {
       setValue("whatsappNumber", mobileNumberValue);
@@ -46,11 +44,11 @@ const AddUser = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      let uploadedImageName = "profile.jpg"; // default image
+      let uploadedImageName = "profile.jpg";
 
       if (selectedFile) {
         const formData = new FormData();
-        formData.append("profile", selectedFile); // 'profile' as key
+        formData.append("profile", selectedFile);
 
         const authToken = localStorage.getItem("authToken");
 
@@ -68,7 +66,7 @@ const AddUser = () => {
         if (uploadResponse.ok) {
           const uploadResult = await uploadResponse.json();
           uploadedImageName = uploadResult.fileUrl || uploadedImageName;
-          toast.success("Image uploaded successfully!");
+          toast.success("Image uploaded successfully!", { autoClose: 1500 });
         } else {
           const err = await uploadResponse.json();
           toast.error("Image upload failed: " + (err.message || "Unknown error"));
@@ -80,8 +78,8 @@ const AddUser = () => {
         first_name: data.firstName,
         last_name: data.lastName,
         mobile_number: data.mobileNumber,
-        wattsapp_number: data.whatsappNumber,
-        alternate_number: data.alternateNumber,
+        wattsapp_number: data.whatsappNumber || data.mobileNumber,
+        alternate_number: data.alternateNumber || null,
         email: data.email,
         dob: data.dob,
         gender: data.gender,
@@ -91,9 +89,9 @@ const AddUser = () => {
         pincode: data.pincode,
         username: data.loginId,
         password: data.password,
-        created_by: createdby,
+        created_by: Number(createdby),
         module: [data.selectedmodule],
-        isactive: data.isactive === "true", // ✅ Ensure true/false boolean
+        isactive: data.isactive === "true",
         image: uploadedImageName,
       };
 
@@ -109,11 +107,22 @@ const AddUser = () => {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success("User created successfully!");
+        toast.success("✅ User created successfully!", {
+          position: "top-center",
+          autoClose: 2500,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+
         reset();
         setImagePreview(null);
         setSelectedFile(null);
-        navigate("/view-user-list");
+
+        setTimeout(() => {
+          navigate("/view-user-list");
+        }, 2700);
       } else {
         toast.error("User creation failed: " + (result.message || "Unknown error"));
         console.error("User creation error:", result);
@@ -137,149 +146,24 @@ const AddUser = () => {
   };
 
   const fields = [
-    {
-      name: "firstName",
-      label: "First Name",
-      placeholder: "Enter First Name",
-      validation: {
-        required: "First name is required",
-        pattern: lettersOnlyPattern,
-      },
-    },
-    {
-      name: "lastName",
-      label: "Last Name",
-      placeholder: "Enter Last Name",
-      validation: {
-        required: "Last name is required",
-        pattern: lettersOnlyPattern,
-      },
-    },
-    {
-      name: "mobileNumber",
-      label: "Mobile Number",
-      placeholder: "Enter Mobile Number",
-      validation: {
-        required: "Mobile number is required",
-        pattern: /^\d{10}$/,
-      },
-    },
-    {
-      name: "whatsappNumber",
-      label: "WhatsApp Number",
-      placeholder: "10-digit number",
-      validation: {
-        required: "WhatsApp number is required",
-        pattern: /^\d{10}$/,
-      },
-    },
-    {
-      name: "whatsappSame",
-      label: "Same as Mobile Number?",
-      type: "checkbox",
-    },
-    {
-      name: "alternateNumber",
-      label: "Alternative Number",
-      placeholder: "Enter Alternative Number",
-      validation: {
-        pattern: /^\d{10}$/,
-      },
-    },
-    {
-      name: "email",
-      label: "Email ID",
-      placeholder: "Enter Email",
-      validation: {
-        required: "Email is required",
-        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-      },
-    },
-    {
-      name: "dob",
-      label: "Date of Birth",
-      type: "date",
-      validation: { required: "Date of birth is required" },
-      max: today,
-    },
-    {
-      name: "gender",
-      label: "Gender",
-      type: "radio",
-      options: [
-        { value: "Male", label: "Male" },
-        { value: "Female", label: "Female" },
-        { value: "Other", label: "Other" },
-      ],
-      validation: { required: "Gender is required" },
-    },
-    {
-      name: "address",
-      label: "Address",
-      placeholder: "Enter Address",
-      type: "textarea",
-      validation: { required: "Address is required", pattern: alphaNumPattern },
-    },
-    {
-      name: "city",
-      label: "City",
-      placeholder: "Enter City",
-      validation: { required: "City is required", pattern: lettersOnlyPattern },
-    },
-    {
-      name: "state",
-      label: "State",
-      placeholder: "Enter State",
-      validation: { required: "State is required", pattern: lettersOnlyPattern },
-    },
-    {
-      name: "pincode",
-      label: "PIN Code",
-      placeholder: "Enter PIN Code",
-      validation: {
-        required: "PIN Code is required",
-        pattern: /^\d{6}$/,
-      },
-    },
-    {
-      name: "loginId",
-      label: "Login ID",
-      placeholder: "Enter Login ID",
-      validation: { required: "Login ID is required" },
-    },
-    {
-      name: "password",
-      label: "Password",
-      placeholder: "Enter Password",
-      validation: { required: "Password is required" },
-    },
-    {
-      name: "selectedmodule",
-      label: "Module",
-      type: "select",
-      options: [
-        { value: "admin", label: "Admin" },
-        { value: "user", label: "User" },
-      ],
-      validation: { required: "Module is required" },
-    },
-    {
-      name: "createdDate",
-      label: "Created Date",
-      type: "date",
-      validation: { required: "" },
-      max: today,
-    },
-    {
-      name: "isActive",
-      label: "Is Active?",
-      type: "radio",
-      options: [
-        { value: "true", label: "Yes" },
-        { value: "false", label: "No" },
-      ],
-      validation: { required: "Status is required." },
-    },
+    { name: "firstName", label: "First Name", placeholder: "Enter First Name", validation: { required: "First name is required", pattern: lettersOnlyPattern } },
+    { name: "lastName", label: "Last Name", placeholder: "Enter Last Name", validation: { required: "Last name is required", pattern: lettersOnlyPattern } },
+    { name: "mobileNumber", label: "Mobile Number", placeholder: "Enter Mobile Number", validation: { required: "Mobile number is required", pattern: /^\d{10}$/ } },
+    { name: "whatsappNumber", label: "WhatsApp Number", placeholder: "10-digit number", validation: { required: "WhatsApp number is required", pattern: /^\d{10}$/ } },
+    { name: "whatsappSame", label: "Same as Mobile Number?", type: "checkbox" },
+    { name: "alternateNumber", label: "Alternative Number", placeholder: "Enter Alternative Number", validation: { pattern: /^\d{10}$/ } },
+    { name: "email", label: "Email ID", placeholder: "Enter Email", validation: { required: "Email is required", pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ } },
+    { name: "dob", label: "Date of Birth", type: "date", validation: { required: "Date of birth is required" }, max: today },
+    { name: "gender", label: "Gender", type: "radio", options: [{ value: "Male", label: "Male" }, { value: "Female", label: "Female" }, { value: "Other", label: "Other" }], validation: { required: "Gender is required" } },
+    { name: "address", label: "Address", placeholder: "Enter Address", type: "textarea", validation: { required: "Address is required", pattern: alphaNumPattern } },
+    { name: "city", label: "City", placeholder: "Enter City", validation: { required: "City is required", pattern: lettersOnlyPattern } },
+    { name: "state", label: "State", placeholder: "Enter State", validation: { required: "State is required", pattern: lettersOnlyPattern } },
+    { name: "pincode", label: "PIN Code", placeholder: "Enter PIN Code", validation: { required: "PIN Code is required", pattern: /^\d{6}$/ } },
+    { name: "loginId", label: "Login ID", placeholder: "Enter Login ID", validation: { required: "Login ID is required" } },
+    { name: "password", label: "Password", placeholder: "Enter Password", validation: { required: "Password is required" } },
+    { name: "selectedmodule", label: "Module", type: "select", options: [{ value: "admin", label: "Admin" }, { value: "user", label: "User" }, { value: "phelobomist", label: "Phelobomist" },{ value: "reception", label: "Reception" },{ value: "biochemistry", label: "Biochemistry" },{ value: "microbiology", label: "Microbiology" },{ value: "pathology", label: "Pathology" }], validation: { required: "Module is required" } },
+    { name: "createdDate", label: "Created Date", type: "date", validation: { required: "" }, max: today },
+    { name: "isActive", label: "Is Active?", type: "radio", options: [{ value: "true", label: "Yes" }, { value: "false", label: "No" }], validation: { required: "Status is required." } },
   ];
 
   const handleFileChange = (e) => {
@@ -299,27 +183,17 @@ const AddUser = () => {
 
   return (
     <>
-      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <nav
-          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
-          aria-label="Breadcrumb"
-        >
+        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
-              <Link
-                to="/"
-                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
-              >
+              <Link to="/" className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors">
                 🏠︎ Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <Link
-                to="/view-user-list"
-                className="text-gray-700 hover:text-teal-600 transition-colors"
-              >
+              <Link to="/view-user-list" className="text-gray-700 hover:text-teal-600 transition-colors">
                 User Details
               </Link>
             </li>
@@ -333,121 +207,81 @@ const AddUser = () => {
 
       <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <ToastContainer />
-        {fetchError && (
-          <p className="text-red-500 text-sm mb-4">{fetchError}</p>
-        )}
+        {fetchError && <p className="text-red-500 text-sm mb-4">{fetchError}</p>}
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="font-semibold text-white">Add User</h4>
           </div>
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {fields.map(
-                ({
-                  name,
-                  label,
-                  placeholder,
-                  type = "text",
-                  options,
-                  validation,
-                  max,
-                }) => (
-                  <div key={name} className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      {label}{" "}
-                      {validation?.required && (
-                        <span className="text-red-500">*</span>
-                      )}
-                    </label>
+              {fields.map(({ name, label, placeholder, type = "text", options, validation, max }) => (
+                <div key={name} className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {label}{" "}
+                    {validation?.required && <span className="text-red-500">*</span>}
+                  </label>
 
-                    {type === "select" ? (
-                      <select
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name]
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:ring-teal-500"
-                        } focus:ring-2 transition`}
-                      >
-                        <option value="">Select {label}</option>
-                        {options.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : type === "radio" ? (
-                      <div className="flex space-x-4 pt-2">
-                        {options.map((opt) => (
-                          <label
-                            key={opt.value}
-                            className="inline-flex items-center"
-                          >
-                            <input
-                              type="radio"
-                              {...register(name, validation)}
-                              value={opt.value}
-                              defaultChecked={opt.value === "true"} // ✅ Default Yes for Is Active
-                              className="h-4 w-4 text-teal-600"
-                            />
-                            <span className="ml-2">{opt.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : type === "textarea" ? (
-                      <textarea
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        placeholder={placeholder}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name]
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:ring-teal-500"
-                        } focus:ring-2 transition`}
-                      />
-                    ) : type === "checkbox" ? (
-                      <input
-                        type="checkbox"
-                        {...register(name)}
-                        className="h-4 w-4 text-teal-600"
-                      />
-                    ) : type === "date" && name === "createdDate" ? (
-                      <input
-                        type="date"
-                        {...register(name, validation)}
-                        value={today}
-                        readOnly
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-teal-500 focus:ring-2 transition bg-gray-100"
-                      />
-                    ) : (
-                      <input
-                        type={type}
-                        {...register(name, validation)}
-                        onBlur={() => trigger(name)}
-                        placeholder={placeholder}
-                        max={max}
-                        className={`w-full px-4 py-2 rounded-lg border ${
-                          errors[name]
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:ring-teal-500"
-                        } focus:ring-2 transition`}
-                      />
-                    )}
+                  {type === "select" ? (
+                    <select
+                      {...register(name, validation)}
+                      onBlur={() => trigger(name)}
+                      className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"} focus:ring-2 transition`}
+                    >
+                      <option value="">Select {label}</option>
+                      {options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : type === "radio" ? (
+                    <div className="flex space-x-4 pt-2">
+                      {options.map((opt) => (
+                        <label key={opt.value} className="inline-flex items-center">
+                          <input
+                            type="radio"
+                            {...register(name, validation)}
+                            value={opt.value}
+                            defaultChecked={opt.value === "true"}
+                            className="h-4 w-4 text-teal-600"
+                          />
+                          <span className="ml-2">{opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : type === "textarea" ? (
+                    <textarea
+                      {...register(name, validation)}
+                      onBlur={() => trigger(name)}
+                      placeholder={placeholder}
+                      className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"} focus:ring-2 transition`}
+                    />
+                  ) : type === "checkbox" ? (
+                    <input type="checkbox" {...register(name)} className="h-4 w-4 text-teal-600" />
+                  ) : type === "date" && name === "createdDate" ? (
+                    <input
+                      type="date"
+                      {...register(name, validation)}
+                      value={today}
+                      readOnly
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-teal-500 focus:ring-2 transition bg-gray-100"
+                    />
+                  ) : (
+                    <input
+                      type={type}
+                      {...register(name, validation)}
+                      onBlur={() => trigger(name)}
+                      placeholder={placeholder}
+                      max={max}
+                      className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"} focus:ring-2 transition`}
+                    />
+                  )}
 
-                    {errors[name] && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors[name]?.message}
-                      </p>
-                    )}
-                  </div>
-                )
-              )}
+                  {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]?.message}</p>}
+                </div>
+              ))}
             </div>
 
             <div className="bg-white border rounded-lg p-4 mt-4">

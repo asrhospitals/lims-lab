@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import {
   updateSubDepartment,
-  viewDepartments,
+  viewAllDepartmentDetails,
   viewSubDepartment,
   viewSubDepartments,
 } from "../../services/apiService";
@@ -34,7 +34,6 @@ const UpdateSubDpt = () => {
     },
   });
 
-  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
@@ -47,13 +46,26 @@ const UpdateSubDpt = () => {
       try {
         const [departmentsResponse, subDeptResponse, subDeptsResponse] =
           await Promise.all([
-            viewDepartments(),
+            viewAllDepartmentDetails(),
             viewSubDepartment(id),
             viewSubDepartments(),
           ]);
 
-        setDepartments(departmentsResponse.data || []);
-        setAllSubDepartments(subDeptsResponse.data || []);
+        // Normalize departments for dropdown
+        const deptList = Array.isArray(departmentsResponse?.data)
+          ? departmentsResponse.data
+          : Array.isArray(departmentsResponse)
+          ? departmentsResponse
+          : [];
+        setDepartments(deptList);
+
+        const allSubs = Array.isArray(subDeptsResponse?.data)
+          ? subDeptsResponse.data
+          : Array.isArray(subDeptsResponse)
+          ? subDeptsResponse
+          : [];
+        setAllSubDepartments(allSubs);
+
         setSubDptToUpdate(subDeptResponse);
 
         reset({
@@ -87,8 +99,14 @@ const UpdateSubDpt = () => {
         isactive: data.isactive === "true",
       });
 
-      toast.success("✅ Sub-department updated successfully!");
-      navigate("/view-subDpt");
+      toast.success("✅ Sub-department updated successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        navigate("/view-subDpt");
+      }, 1000);
     } catch (error) {
       console.error(error);
       toast.error(
@@ -157,7 +175,6 @@ const UpdateSubDpt = () => {
           </div>
 
           <div className="p-6 space-y-6">
-            {/* All Fields in One Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Department Dropdown */}
               <div>

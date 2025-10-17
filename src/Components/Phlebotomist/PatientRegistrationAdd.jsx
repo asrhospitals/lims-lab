@@ -37,7 +37,7 @@ const PatientRegistrationAdd = () => {
   // Format today's date as YYYY-MM-DD
   const today = new Date();
   const formattedDate = today.toISOString().split("T")[0];
-
+  const todaysdate = new Date().toISOString().split("T")[0];
   const [billingItems, setBillingItems] = useState([]);
   const [billingData, setBillingData] = useState([]);
   const [tests, setTests] = useState([]);
@@ -656,7 +656,7 @@ const PatientRegistrationAdd = () => {
 
   const email = watch("email");
   const emailAlerts = watch("emailAlerts");
-  
+
   const sendEmail = (email) => {
     console.log("📧 Sending email to:", email);
     // Example: fetch("/api/send-email", { method: "POST", body: JSON.stringify({ email }) });
@@ -667,7 +667,6 @@ const PatientRegistrationAdd = () => {
       sendEmail(email);
     }
   }, [emailAlerts, email, errors]);
-
 
   return (
     <>
@@ -1044,14 +1043,14 @@ const PatientRegistrationAdd = () => {
                 {...register("p_regdate", {
                   required: "Date is required",
                   validate: (value) => {
-                    const selectedDate = new Date(value);
                     return (
-                      selectedDate <= today || "Date cannot be in the future"
+                      value === todaysdate || "Only today's date is allowed"
                     );
                   },
                 })}
-                defaultValue={formattedDate}
-                max={formattedDate}
+                defaultValue={todaysdate}
+                min={todaysdate}
+                max={todaysdate}
                 className="w-full border px-3 py-2 rounded"
               />
               {errors.p_regdate && (
@@ -1088,33 +1087,31 @@ const PatientRegistrationAdd = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Age<span className="text-red-500">*</span>
+                Age / DOB<span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
+                type="text"
                 {...register("p_age", {
                   required: true,
-                  min: 0,
-                  max: 100,
                 })}
-                value={age}
+                value={watchedDob || ""}
                 readOnly
                 className="w-full border px-3 py-2 rounded bg-gray-100"
-                placeholder="Auto-calculated"
+                placeholder="Auto-filled as YYYY-MM-DD"
               />
-              {errors.age && (
+              {errors.p_age && (
                 <p className="text-red-600 text-xs mt-1">
-                  Age must be between 0-100
+                  Age / DOB is required
                 </p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Blood Group<span className="text-red-500">*</span>
+                Blood Group
               </label>
               <select
-                {...register("bloodGroup", { required: true })}
+                {...register("bloodGroup", { required: false })}
                 className="w-full border px-3 py-2 rounded"
               >
                 <option value="">Select Blood Group</option>
@@ -1127,18 +1124,13 @@ const PatientRegistrationAdd = () => {
                 <option value="AB+">AB+</option>
                 <option value="AB-">AB-</option>
               </select>
-              {errors.bloodGroup && (
-                <p className="text-red-600 text-xs mt-1">
-                  Blood group is required
-                </p>
-              )}
             </div>
           </div>
 
           {/* ID Proof Details */}
           <div className="px-6 pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-0">
-              ID Proof Details<span className="text-red-500">*</span>
+              ID Proof Details
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
@@ -1146,7 +1138,7 @@ const PatientRegistrationAdd = () => {
             {/* ID Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                ID Type <span className="text-red-500">*</span>
+                ID Type
               </label>
               <select
                 {...register("idType", {
@@ -1158,17 +1150,12 @@ const PatientRegistrationAdd = () => {
                 <option value="Aadhaar">Aadhaar</option>
                 <option value="PAN">PAN</option>
               </select>
-              {errors.idType && (
-                <p className="text-red-600 text-xs mt-1">
-                  {errors.idType.message}
-                </p>
-              )}
             </div>
 
             {/* ID Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                ID Number <span className="text-red-500">*</span>
+                ID Number
               </label>
               <input
                 {...register("idNumber", {
@@ -1193,11 +1180,6 @@ const PatientRegistrationAdd = () => {
                 className="w-full border px-3 py-2 rounded"
                 placeholder="Enter ID Number"
               />
-              {errors.idNumber && (
-                <p className="text-red-600 text-xs mt-1">
-                  {errors.idNumber.message}
-                </p>
-              )}
             </div>
 
             {/* Email */}
@@ -1258,7 +1240,7 @@ const PatientRegistrationAdd = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Photo Capture<span className="text-red-500">*</span>
+                Photo Capture
               </label>
 
               <div className="border mt-2 p-2 w-full rounded flex items-center space-x-2">
@@ -1900,7 +1882,7 @@ const PatientRegistrationAdd = () => {
                 <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Number Type<span className="text-red-500">*</span>
+                      Select OP/IP <span className="text-red-500">*</span>
                     </label>
                     <select
                       id="numberType"
@@ -1908,8 +1890,8 @@ const PatientRegistrationAdd = () => {
                       value={numberType}
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="OP">OP Number</option>
-                      <option value="IP">IP Number</option>
+                      <option value="OP">OP</option>
+                      <option value="IP">IP</option>
                     </select>
                   </div>
 
@@ -1992,11 +1974,27 @@ const PatientRegistrationAdd = () => {
                       Barcode No<span className="text-red-500">*</span>
                     </label>
                     <input
-                      {...register("barcodeNo")}
+                      {...register("barcodeNo", {
+                        required: "Barcode number is required",
+                        minLength: {
+                          value: 8,
+                          message: "Barcode must be 8 characters",
+                        },
+                        maxLength: {
+                          value: 8,
+                          message: "Barcode must be 8 characters",
+                        },
+                      })}
                       type="text"
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    {errors.barcodeNo && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.barcodeNo.message}
+                      </p>
+                    )}
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       TRF Number<span className="text-red-500">*</span>
@@ -2159,6 +2157,9 @@ const PatientRegistrationAdd = () => {
                                     Short Code
                                   </th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Department
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Amount
                                   </th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -2179,7 +2180,9 @@ const PatientRegistrationAdd = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                       {test.shortcode}
                                     </td>
-
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.department.dptname}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                       ₹{test.normalprice}
                                     </td>

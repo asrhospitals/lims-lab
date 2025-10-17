@@ -10,25 +10,39 @@ const ViewSpecimenType = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
 
-  // Fetch data
+  // Fetch data with server-side pagination
   useEffect(() => {
     const fetchSpecimenTypes = async () => {
+      setLoading(true);
       const token = localStorage.getItem("authToken");
 
       try {
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const queryString = new URLSearchParams(params).toString();
+        const url = `https://asrlabs.asrhospitalindia.in/lims/master/get-specimen?${queryString}`;
+
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         const data = response.data.data || [];
+        const meta = response.data.meta || { totalItems: data.length, totalPages: 1 };
+
         setSpecimenTypes(data);
         setFilteredSpecimenTypes(data);
+        setTotalItems(meta.totalItems);
+        setTotalPages(meta.totalPages);
       } catch (err) {
         console.error("Error fetching specimen types:", err);
         setError("Failed to fetch specimen types.");
@@ -38,9 +52,9 @@ const ViewSpecimenType = () => {
     };
 
     fetchSpecimenTypes();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
-  // Search filter
+  // Client-side search filter
   useEffect(() => {
     if (!search.trim()) {
       setFilteredSpecimenTypes(specimenTypes);
@@ -57,6 +71,15 @@ const ViewSpecimenType = () => {
 
   const handleUpdate = (specimenType) => {
     navigate(`/update-specimen-type/${specimenType.id}`);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
   };
 
   const columns = [
@@ -81,19 +104,13 @@ const ViewSpecimenType = () => {
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
-              <Link
-                to="/admin-dashboard"
-                className="text-gray-700 hover:text-teal-600"
-              >
+              <Link to="/admin-dashboard" className="text-gray-700 hover:text-teal-600">
                 🏠︎ Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <Link
-                to="/view-specimenType"
-                className="text-gray-700 hover:text-teal-600"
-              >
+              <Link to="/view-specimenType" className="text-gray-700 hover:text-teal-600">
                 Specimen Types
               </Link>
             </li>
@@ -107,9 +124,7 @@ const ViewSpecimenType = () => {
         <div className="bg-white rounded-lg shadow p-4 space-y-4">
           {/* Header + Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-xl font-bold text-gray-800">
-              Specimen Type List
-            </h2>
+            <h2 className="text-xl font-bold text-gray-800">Specimen Type List</h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
                 <input
@@ -148,14 +163,19 @@ const ViewSpecimenType = () => {
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
           ) : mappedItems.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              No Specimen Types found.
-            </div>
+            <div className="text-center py-6 text-gray-500">No Specimen Types found.</div>
           ) : (
             <DataTable
+              key={mappedItems.length} // force re-render on items change
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

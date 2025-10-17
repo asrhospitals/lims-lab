@@ -72,8 +72,6 @@ const AddPatientDetails = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBillingCompleted, setIsBillingCompleted] = useState(false);
 
-
-
   // Handle payment mode changes
   useEffect(() => {
     if (paymentModeType === "single" && payments.length > 1) {
@@ -275,9 +273,9 @@ const AddPatientDetails = () => {
   const fetchPatientData = async (phone) => {
     setLoading(true);
     setApiError("");
-    try { 
+    try {
       const authToken = localStorage.getItem("authToken");
-  
+
       const response = await axios.get(
         `https://asrphleb.asrhospitalindia.in/api/v2/phleb/get-data-mobile?phone=${phone}`,
         {
@@ -286,7 +284,7 @@ const AddPatientDetails = () => {
           },
         }
       );
-  
+
       setPatientList(response.data || []);
     } catch (err) {
       console.error(err); // Optional: log the real error
@@ -296,7 +294,6 @@ const AddPatientDetails = () => {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     if (mobileNumber && /^[0-9]{10}$/.test(mobileNumber)) {
@@ -458,27 +455,26 @@ const AddPatientDetails = () => {
       );
       return;
     }
-  
+
     setBillingError("");
-  
+
     const opbillPayload = payments.map((p) => ({
-      ptotal: receivable.toFixed(2),              // ✅ Total Amount
-      pdisc: discountValue.toFixed(2),            // ✅ Discount
-      pamt: totalPaid.toFixed(2),                 // ✅ Total Paid
-      pamtrcv: receivable.toFixed(2),             // ✅ Receivable
+      ptotal: receivable.toFixed(2), // ✅ Total Amount
+      pdisc: discountValue.toFixed(2), // ✅ Discount
+      pamt: totalPaid.toFixed(2), // ✅ Total Paid
+      pamtrcv: receivable.toFixed(2), // ✅ Receivable
       pamtdue: (receivable - totalPaid).toFixed(2), // ✅ Due Amount
       pamtmode: payments.length > 1 ? "Multiple" : "Single",
       pamtmthd: p.method || "UPI",
       pnote: p.note || "Payment received in full.",
       billstatus: receivable - totalPaid <= 0 ? "Paid" : "Pending",
     }));
-  
+
     console.log("opbillPayload ===", opbillPayload);
-  
+
     setIsBillingCompleted(true);
     setBillingData(opbillPayload);
   };
-  
 
   const onSubmit = async (data) => {
     if (!isBillingCompleted) {
@@ -1095,65 +1091,70 @@ const AddPatientDetails = () => {
               )}
             </div>
             {/* First Name */}
-<div>
-  <label className="block text-sm font-medium text-gray-700">
-    First Name <span className="text-red-500">*</span>
-  </label>
-  <input
-    {...register("p_name", {
-      required: "First name is required",
-      pattern: {
-        value: /^[A-Za-z\s.-]+$/,
-        message: "Only alphabets, spaces, periods, and hyphens allowed"
-      },
-      minLength: {
-        value: 2,
-        message: "First name must be at least 2 characters"
-      },
-      maxLength: {
-        value: 50,
-        message: "First name cannot exceed 50 characters"
-      },
-      setValueAs: (v) => v.trim() // remove extra spaces
-    })}
-    className="w-full border px-3 py-2 rounded"
-    placeholder="Enter first name"
-  />
-  {errors.p_name && (
-    <p className="text-red-600 text-xs mt-1">{errors.p_name.message}</p>
-  )}
-</div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register("p_name", {
+                  required: "First name is required",
+                  pattern: {
+                    value: /^[A-Za-z\s.-]+$/,
+                    message:
+                      "Only alphabets, spaces, periods, and hyphens allowed",
+                  },
+                  minLength: {
+                    value: 2,
+                    message: "First name must be at least 2 characters",
+                  },
+                  maxLength: {
+                    value: 50,
+                    message: "First name cannot exceed 50 characters",
+                  },
+                  setValueAs: (v) => v.trim(), // remove extra spaces
+                })}
+                className="w-full border px-3 py-2 rounded"
+                placeholder="Enter first name"
+              />
+              {errors.p_name && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.p_name.message}
+                </p>
+              )}
+            </div>
 
-{/* Last Name */}
-<div>
-  <label className="block text-sm font-medium text-gray-700">
-    Last Name <span className="text-red-500">*</span>
-  </label>
-  <input
-    {...register("lastName", {
-      required: "Last name is required",
-      pattern: {
-        value: /^[A-Za-z\s.-]+$/,
-        message: "Only alphabets, spaces, periods, and hyphens allowed"
-      },
-      minLength: {
-        value: 2,
-        message: "Last name must be at least 2 characters"
-      },
-      maxLength: {
-        value: 50,
-        message: "Last name cannot exceed 50 characters"
-      },
-      setValueAs: (v) => v.trim()
-    })}
-    className="w-full border px-3 py-2 rounded"
-    placeholder="Enter last name"
-  />
-  {errors.lastName && (
-    <p className="text-red-600 text-xs mt-1">{errors.lastName.message}</p>
-  )}
-</div>
-
+            {/* Last Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Last Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register("lastName", {
+                  required: "Last name is required",
+                  pattern: {
+                    value: /^[A-Za-z\s.-]+$/,
+                    message:
+                      "Only alphabets, spaces, periods, and hyphens allowed",
+                  },
+                  minLength: {
+                    value: 2,
+                    message: "Last name must be at least 2 characters",
+                  },
+                  maxLength: {
+                    value: 50,
+                    message: "Last name cannot exceed 50 characters",
+                  },
+                  setValueAs: (v) => v.trim(),
+                })}
+                className="w-full border px-3 py-2 rounded"
+                placeholder="Enter last name"
+              />
+              {errors.lastName && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.lastName.message}
+                </p>
+              )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -1225,7 +1226,7 @@ const AddPatientDetails = () => {
               )}
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700">
                 Age<span className="text-red-500">*</span>
               </label>
@@ -1246,14 +1247,34 @@ const AddPatientDetails = () => {
                   Age must be between 0-100
                 </p>
               )}
+            </div> */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Age / DOB<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                {...register("p_age", {
+                  required: true,
+                })}
+                value={watchedDob || ""}
+                readOnly
+                className="w-full border px-3 py-2 rounded bg-gray-100"
+                placeholder="Auto-filled as YYYY-MM-DD"
+              />
+              {errors.p_age && (
+                <p className="text-red-600 text-xs mt-1">
+                  Age / DOB is required
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Blood Group<span className="text-red-500">*</span>
+                Blood Group
               </label>
               <select
-                {...register("bloodGroup", { required: true })}
+                {...register("bloodGroup", { required: false })}
                 className="w-full border px-3 py-2 rounded"
               >
                 <option value="">Select Blood Group</option>
@@ -1266,90 +1287,97 @@ const AddPatientDetails = () => {
                 <option value="AB+">AB+</option>
                 <option value="AB-">AB-</option>
               </select>
-              {errors.bloodGroup && (
-                <p className="text-red-600 text-xs mt-1">
-                  Blood group is required
-                </p>
-              )}
             </div>
           </div>
 
           {/* ID Proof Details */}
           <div className="px-6 pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-0">
-              ID Proof Details<span className="text-red-500">*</span>
+              ID Proof Details
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
-  {/* ID Type */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700">
-      ID Type <span className="text-red-500">*</span>
-    </label>
-    <select
-      {...register("idType", {
-        required: "ID Type is required",
-      })}
-      className="w-full border px-3 py-2 rounded"
-    >
-      <option value="">Select ID Type</option>
-      <option value="Aadhaar">Aadhaar</option>
-      <option value="PAN">PAN</option>
-    </select>
-    {errors.idType && (
-      <p className="text-red-600 text-xs mt-1">{errors.idType.message}</p>
-    )}
-  </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+            {/* ID Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                ID Type 
+              </label>
+              <select
+                {...register("idType", {
+                  required: "ID Type is required",
+                })}
+                className="w-full border px-3 py-2 rounded"
+              >
+                <option value="">Select ID Type</option>
+                <option value="Aadhaar">Aadhaar</option>
+                <option value="PAN">PAN</option>
+              </select>
+              {errors.idType && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.idType.message}
+                </p>
+              )}
+            </div>
 
-  {/* ID Number */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700">
-      ID Number <span className="text-red-500">*</span>
-    </label>
-    <input
-      {...register("idNumber", {
-        required: "ID Number is required",
-        validate: (value, formValues) => {
-          if (formValues.idType === "Aadhaar") {
-            return /^[0-9]{12}$/.test(value) || "Aadhaar must be exactly 12 digits";
-          } else if (formValues.idType === "PAN") {
-            return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.toUpperCase()) || "PAN must be 10 characters (e.g., ABCDE1234F)";
-          }
-          return true;
-        },
-        setValueAs: (v) => v.trim().toUpperCase(), // uppercase for PAN
-      })}
-      className="w-full border px-3 py-2 rounded"
-      placeholder="Enter ID Number"
-    />
-    {errors.idNumber && (
-      <p className="text-red-600 text-xs mt-1">{errors.idNumber.message}</p>
-    )}
-  </div>
+            {/* ID Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                ID Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register("idNumber", {
+                  required: "ID Number is required",
+                  validate: (value, formValues) => {
+                    if (formValues.idType === "Aadhaar") {
+                      return (
+                        /^[0-9]{12}$/.test(value) ||
+                        "Aadhaar must be exactly 12 digits"
+                      );
+                    } else if (formValues.idType === "PAN") {
+                      return (
+                        /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(
+                          value.toUpperCase()
+                        ) || "PAN must be 10 characters (e.g., ABCDE1234F)"
+                      );
+                    }
+                    return true;
+                  },
+                  setValueAs: (v) => v.trim().toUpperCase(), // uppercase for PAN
+                })}
+                className="w-full border px-3 py-2 rounded"
+                placeholder="Enter ID Number"
+              />
+              {errors.idNumber && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.idNumber.message}
+                </p>
+              )}
+            </div>
 
-  {/* Email */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700">
-      Email <span className="text-red-500">*</span>
-    </label>
-    <input
-      {...register("email", {
-        required: "Email is required",
-        pattern: {
-          value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-          message: "Invalid email format",
-        },
-      })}
-      className="w-full border px-3 py-2 rounded"
-      placeholder="Enter email"
-    />
-    {errors.email && (
-      <p className="text-red-600 text-xs mt-1">{errors.email.message}</p>
-    )}
-  </div>
-</div>
-
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                    message: "Invalid email format",
+                  },
+                })}
+                className="w-full border px-3 py-2 rounded"
+                placeholder="Enter email"
+              />
+              {errors.email && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+          </div>
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             <div>
@@ -1627,53 +1655,57 @@ const AddPatientDetails = () => {
             </div>
 
             <div>
-  <label className="block text-sm font-medium text-gray-700">
-    Landmark
-  </label>
-  <input
-    {...register("landmark", {
-      maxLength: {
-        value: 100,
-        message: "Landmark cannot exceed 100 characters",
-      },
-      pattern: {
-        value: /^[A-Za-z0-9\s.,'-]*$/,
-        message: "Invalid characters in Landmark",
-      },
-      setValueAs: (v) => v.trim(),
-    })}
-    className="w-full border px-3 py-2 rounded"
-    placeholder="Enter landmark"
-  />
-  {errors.landmark && (
-    <p className="text-red-600 text-xs mt-1">{errors.landmark.message}</p>
-  )}
-</div>
+              <label className="block text-sm font-medium text-gray-700">
+                Landmark
+              </label>
+              <input
+                {...register("landmark", {
+                  maxLength: {
+                    value: 100,
+                    message: "Landmark cannot exceed 100 characters",
+                  },
+                  pattern: {
+                    value: /^[A-Za-z0-9\s.,'-]*$/,
+                    message: "Invalid characters in Landmark",
+                  },
+                  setValueAs: (v) => v.trim(),
+                })}
+                className="w-full border px-3 py-2 rounded"
+                placeholder="Enter landmark"
+              />
+              {errors.landmark && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.landmark.message}
+                </p>
+              )}
+            </div>
 
-<div>
-  <label className="block text-sm font-medium text-gray-700">
-    City <span className="text-red-500">*</span>
-  </label>
-  <input
-    {...register("city", {
-      required: "City is required",
-      maxLength: {
-        value: 50,
-        message: "City cannot exceed 50 characters",
-      },
-      pattern: {
-        value: /^[A-Za-z\s]+$/,
-        message: "City must contain only letters and spaces",
-      },
-      setValueAs: (v) => v.trim(),
-    })}
-    className="w-full border px-3 py-2 rounded"
-    placeholder="Enter city"
-  />
-  {errors.city && (
-    <p className="text-red-600 text-xs mt-1">{errors.city.message}</p>
-  )}
-</div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                City <span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register("city", {
+                  required: "City is required",
+                  maxLength: {
+                    value: 50,
+                    message: "City cannot exceed 50 characters",
+                  },
+                  pattern: {
+                    value: /^[A-Za-z\s]+$/,
+                    message: "City must contain only letters and spaces",
+                  },
+                  setValueAs: (v) => v.trim(),
+                })}
+                className="w-full border px-3 py-2 rounded"
+                placeholder="Enter city"
+              />
+              {errors.city && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.city.message}
+                </p>
+              )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -1820,42 +1852,43 @@ const AddPatientDetails = () => {
               </select>
             </div>
 
-           <div>
-  <label className="block text-sm font-medium text-gray-700">
-    Barcode Number<span className="text-red-500">*</span>
-  </label>
-  <input
-    {...register("barcodeNumber", {
-      required: "Barcode Number is required",
-      pattern: {
-        value: /^[0-9]+$/,
-        message: "Barcode must contain only digits",
-      },
-      minLength: {
-        value: 6,
-        message: "Barcode must be at least 6 digits",
-      },
-      maxLength: {
-        value: 20,
-        message: "Barcode cannot exceed 20 digits",
-      },
-      validate: (value) => {
-        // Replace with your actual list of existing barcodes
-        const existingBarcodes = ["123456", "987654", "555555"];
-        if (existingBarcodes.includes(value)) {
-          return "❌ Barcode already exists";
-        }
-        return true;
-      },
-    })}
-    className="w-full border px-3 py-2 rounded"
-    placeholder="Enter barcode number"
-  />
-  {errors.barcodeNumber && (
-    <p className="text-red-600 text-xs mt-1">{errors.barcodeNumber.message}</p>
-  )}
-</div>
-
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Barcode Number<span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register("barcodeNumber", {
+                  required: "Barcode Number is required",
+                  pattern: {
+                    value: /^[0-9]+$/,
+                    message: "Barcode must contain only digits",
+                  },
+                  minLength: {
+                    value: 6,
+                    message: "Barcode must be at least 6 digits",
+                  },
+                  maxLength: {
+                    value: 20,
+                    message: "Barcode cannot exceed 20 digits",
+                  },
+                  validate: (value) => {
+                    // Replace with your actual list of existing barcodes
+                    const existingBarcodes = ["123456", "987654", "555555"];
+                    if (existingBarcodes.includes(value)) {
+                      return "❌ Barcode already exists";
+                    }
+                    return true;
+                  },
+                })}
+                className="w-full border px-3 py-2 rounded"
+                placeholder="Enter barcode number"
+              />
+              {errors.barcodeNumber && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.barcodeNumber.message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Barcode Generatin  */}
@@ -2024,7 +2057,8 @@ const AddPatientDetails = () => {
               <TabPanel value="react">
                 <div className="px-6 pt-6">
                   <h3 className=" text-lg font-medium text-gray-900 mb-0">
-                    Hospital / Scheme Information<span className="text-red-500">*</span>
+                    Hospital / Scheme Information
+                    <span className="text-red-500">*</span>
                   </h3>
                   <div className="mt-1 border-b border-gray-100"></div>
                 </div>
@@ -2045,33 +2079,39 @@ const AddPatientDetails = () => {
                   </div>
 
                   <div>
-  <label className="block text-sm font-medium text-gray-700">
-    OP/IP Number<span className="text-red-500">*</span>
-  </label>
-  <input
-    {...register("opNumber", {
-      required: "OP/IP Number is required",
-      pattern: {
-        value: /^[A-Za-z0-9-]+$/,
-        message: "Only letters, numbers, and hyphens are allowed",
-      },
-      validate: (value) => {
-        // Replace this array with your actual existing OP/IP numbers
-        const existingOPNumbers = ["OP-123", "IP-456", "OP-789"];
-        if (existingOPNumbers.includes(value)) {
-          return "❌ This OP/IP Number already exists";
-        }
-        return true;
-      },
-    })}
-    className="w-full border px-3 py-2 rounded"
-    placeholder="Enter OP/IP Number"
-  />
-  {errors.opNumber && (
-    <p className="text-red-600 text-xs mt-1">{errors.opNumber.message}</p>
-  )}
-</div>
-
+                    <label className="block text-sm font-medium text-gray-700">
+                      OP/IP Number<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      {...register("opNumber", {
+                        required: "OP/IP Number is required",
+                        pattern: {
+                          value: /^[A-Za-z0-9-]+$/,
+                          message:
+                            "Only letters, numbers, and hyphens are allowed",
+                        },
+                        validate: (value) => {
+                          // Replace this array with your actual existing OP/IP numbers
+                          const existingOPNumbers = [
+                            "OP-123",
+                            "IP-456",
+                            "OP-789",
+                          ];
+                          if (existingOPNumbers.includes(value)) {
+                            return "❌ This OP/IP Number already exists";
+                          }
+                          return true;
+                        },
+                      })}
+                      className="w-full border px-3 py-2 rounded"
+                      placeholder="Enter OP/IP Number"
+                    />
+                    {errors.opNumber && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.opNumber.message}
+                      </p>
+                    )}
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -2099,7 +2139,8 @@ const AddPatientDetails = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Referral Doctor Name<span className="text-red-500">*</span>
+                      Referral Doctor Name
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       {...register("referralDoctorName")}
@@ -2117,35 +2158,41 @@ const AddPatientDetails = () => {
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                 <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    TRF Number<span className="text-red-500">*</span>
-  </label>
-  <input
-    {...register("trfNumber", {
-      required: "TRF Number is required",
-      pattern: {
-        value: /^[A-Za-z0-9-]+$/,
-        message: "Only letters, numbers, and hyphens are allowed",
-      },
-      validate: (value) => {
-        // Replace this array with your existing TRF numbers
-        const existingTRFNumbers = ["TRF-001", "TRF-002", "TRF-003"];
-        if (existingTRFNumbers.includes(value)) {
-          return "❌ This TRF Number already exists";
-        }
-        return true;
-      },
-    })}
-    type="text"
-    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    placeholder="Enter TRF Number"
-  />
-  {errors.trfNumber && (
-    <p className="text-red-600 text-xs mt-1">{errors.trfNumber.message}</p>
-  )}
-</div>
-
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      TRF Number<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      {...register("trfNumber", {
+                        required: "TRF Number is required",
+                        pattern: {
+                          value: /^[A-Za-z0-9-]+$/,
+                          message:
+                            "Only letters, numbers, and hyphens are allowed",
+                        },
+                        validate: (value) => {
+                          // Replace this array with your existing TRF numbers
+                          const existingTRFNumbers = [
+                            "TRF-001",
+                            "TRF-002",
+                            "TRF-003",
+                          ];
+                          if (existingTRFNumbers.includes(value)) {
+                            return "❌ This TRF Number already exists";
+                          }
+                          return true;
+                        },
+                      })}
+                      type="text"
+                      className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter TRF Number"
+                    />
+                    {errors.trfNumber && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.trfNumber.message}
+                      </p>
+                    )}
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2208,7 +2255,8 @@ const AddPatientDetails = () => {
                         <div className="bg-gray-50 p-4 rounded-lg border">
                           <div className="flex justify-between items-center">
                             <h3 className="text-lg font-medium text-gray-800">
-                              Add Tests by Code<span className="text-red-500">*</span>
+                              Add Tests by Code
+                              <span className="text-red-500">*</span>
                             </h3>
 
                             <button
@@ -2310,6 +2358,9 @@ const AddPatientDetails = () => {
                                   </th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Short Code
+                                  </th>{" "}
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Department
                                   </th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Amount
@@ -2332,7 +2383,9 @@ const AddPatientDetails = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                       {test.shortcode}
                                     </td>
-
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.department.dptname}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                       ₹{test.normalprice}
                                     </td>
@@ -2506,7 +2559,8 @@ const AddPatientDetails = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Discount Type<span className="text-red-500">*</span>
+                              Discount Type
+                              <span className="text-red-500">*</span>
                             </label>
                             <select
                               value={pdisc.type}
@@ -2521,7 +2575,8 @@ const AddPatientDetails = () => {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Discount Value<span className="text-red-500">*</span>
+                              Discount Value
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
                               type="number"
@@ -2706,7 +2761,8 @@ const AddPatientDetails = () => {
                         {/* File Upload */}
                         <div className="bg-white border rounded-lg p-4">
                           <h3 className="text-lg font-medium text-gray-800 mb-3">
-                            Prescription / TRF - Upload<span className="text-red-500">*</span>
+                            Prescription / TRF - Upload
+                            <span className="text-red-500">*</span>
                           </h3>
                           <div className="space-y-4">
                             <label className="block text-sm font-medium text-gray-700 mb-1">

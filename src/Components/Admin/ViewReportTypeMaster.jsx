@@ -1,4 +1,4 @@
-      import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
@@ -12,71 +12,68 @@ const ViewReportTypeMaster = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const [totalItems, setTotalItems] = useState(0);
-const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-
-  const { setTechnicianToUpdate } = useContext(AdminContext); // optional
+  const { setTechnicianToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchReportTypes = async () => {
-  try {
-    const authToken = localStorage.getItem("authToken");
-    const response = await axios.get(
-      "https://asrlabs.asrhospitalindia.in/api/lims/master/report-types",
-      {
-        params: { page: currentPage, limit: itemsPerPage },
-        headers: { Authorization: `Bearer ${authToken}` },
+      setLoading(true);
+      try {
+        const authToken = localStorage.getItem("authToken");
+
+        const res = await axios.get(
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-report",
+          {
+            headers: { Authorization: `Bearer ${authToken}` },
+            params: { page: currentPage, limit: itemsPerPage },
+          }
+        );
+
+        const data = (res.data?.data || []).sort(
+          (a, b) => Number(a.id) - Number(b.id)
+        );
+
+        setReportTypes(data);
+        setFilteredReportTypes(data);
+        setTotalPages(res?.data?.meta?.totalPages || 1);
+        setTotalItems(res?.data?.meta?.totalItems || data.length);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to fetch Report Types.");
+      } finally {
+        setLoading(false);
       }
-    );
-
-    const data = (response.data?.data || []).sort(
-      (a, b) => Number(a.id) - Number(b.id)
-    );
-
-    setReportTypes(data);
-    setFilteredReportTypes(data);
-    setTotalPages(response?.meta?.totalPages || 1);
-    setTotalItems(response?.meta?.totalItems || data.length);
-  } catch (err) {
-    setError(err.response?.data?.message || "Failed to fetch Report Types.");
-  } finally {
-    setLoading(false);
-  }
-};
+    };
 
     fetchReportTypes();
-  }, []);
-  
+  }, [currentPage, itemsPerPage]);
 
+  // search filter
   useEffect(() => {
-  if (!search.trim()) {
-    setFilteredReportTypes(reportTypes);
-  } else {
-    const lower = search.toLowerCase();
-    const filtered = reportTypes.filter(
-      (r) =>
-        (r.reporttype || "").toLowerCase().includes(lower) ||
-        (r.reportdescription || "").toLowerCase().includes(lower)
-    );
-    setFilteredReportTypes(filtered);
-  }
-}, [search, reportTypes]);
-const handlePageChange = (page) => {
-  setCurrentPage(page);
-};
+    if (!search.trim()) {
+      setFilteredReportTypes(reportTypes);
+    } else {
+      const lower = search.toLowerCase();
+      const filtered = reportTypes.filter(
+        (r) =>
+          (r.reporttype || "").toLowerCase().includes(lower) ||
+          (r.reportdescription || "").toLowerCase().includes(lower)
+      );
+      setFilteredReportTypes(filtered);
+    }
+  }, [search, reportTypes]);
 
-const handlePageSizeChange = (newSize) => {
-  setItemsPerPage(newSize);
-  setCurrentPage(1);
-};
-
-
+  const handlePageChange = (page) => setCurrentPage(page);
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
+  };
 
   const handleUpdate = (reportType) => {
-    setTechnicianToUpdate(reportType); // reuse context if needed
+    setTechnicianToUpdate(reportType);
     localStorage.setItem("reportTypeToUpdate", JSON.stringify(reportType));
     navigate("/update-report-type-master");
   };
@@ -88,21 +85,18 @@ const handlePageSizeChange = (newSize) => {
     { key: "entrytype", label: "Entry Type" },
     { key: "entryvalues", label: "Entry Values" },
     { key: "status", label: "Status" },
-
-
-    // { key: "createdAt", label: "Created At" },
-    // { key: "updatedAt", label: "Updated At" },
   ];
 
-  const mappedItems = reportTypes.map(rt => ({
+  const mappedItems = filteredReportTypes.map((rt) => ({
     id: rt.id,
     reporttype: rt.reporttype,
     reportdescription: rt.reportdescription,
     entrytype: rt.entrytype,
-    entryvalues: rt.entryvalues.join(", "),  // Convert array to string
-    status: rt.isactive ? "Active" : "Inactive"
+    entryvalues: Array.isArray(rt.entryvalues)
+      ? rt.entryvalues.join(", ")
+      : "",
+    status: rt.isactive ? "Active" : "Inactive",
   }));
-  
 
   return (
     <>
@@ -138,7 +132,7 @@ const handlePageSizeChange = (newSize) => {
         </nav>
       </div>
 
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -157,6 +151,15 @@ const handlePageSizeChange = (newSize) => {
                 <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
               </div>
             </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
           </div>
 
           {/* Add New */}
@@ -180,14 +183,18 @@ const handlePageSizeChange = (newSize) => {
             </div>
           ) : (
             <DataTable
-  items={mappedItems}
-  columns={columns}
-  itemsPerPage={10}
-  showDetailsButtons={false}
-  onUpdate={handleUpdate}
-/>
-
-          
+              items={mappedItems}
+              columns={columns}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              showDetailsButtons={false}
+              onUpdate={handleUpdate}
+            />
           )}
         </div>
       </div>

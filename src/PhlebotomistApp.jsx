@@ -20,6 +20,7 @@ import RegistrationDetails from "./Components/Phlebotomist/Details/RegistrationD
 import TestDetails from "./Components/Phlebotomist/Details/TestDetails";
 import RejectedSampleCollections from "./Components/Phlebotomist/RejectedSampleCollections";
 import EditReportEntryData from "./Components/Phlebotomist/Report/EditReportEntryData";
+import UpdatePatientDetails from "./Components/Phlebotomist/UpdatePatientDetails";
 
 
 // Manual JWT decoder without jwt-decode
@@ -85,6 +86,10 @@ function PhlebotomistApp() {
           path: "/patient-registration-add",
           element: <PatientRegistrationAdd />,
         },
+        {
+            path: "update-patient-details/:id",
+            element:<UpdatePatientDetails />,
+          },
         {
           path: "/patient-report-entry",
           element: <PatientReportEntry />,

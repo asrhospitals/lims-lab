@@ -82,6 +82,7 @@ import DoctorRegistration from "./Components/Admin/DoctorRegistration";
 // Profile & Investigation Management
 import AddProfileMaster from "./Components/Admin/AddProfileMaster";
 import ViewProfileMaster from "./Components/Admin/ViewProfileMaster";
+import UpdateProfileMaster from "./Components/Admin/UpdateProfileMaster";
 import AddProfileEntryMaster from "./Components/Admin/AddProfileEntryMaster";
 import ViewProfileEntryMaster from "./Components/Admin/ViewProfileEntryMaster";
 import UpdateProfileEntryMaster from "./Components/Admin/UpdateProfileEntryMaster";
@@ -117,6 +118,8 @@ import AddAccessionMaster from "./Components/Admin/AddAccessionMaster";
 import ViewAccessionMaster from "./Components/Admin/ViewAccessionMaster";
 import UpdateAccessionMaster from "./Components/Admin/UpdateAccessionMaster";
 import UpdateUserDetails from "./Components/Admin/UpdateUserDetails";
+import UpdatePatientDetails from "./Components/Admin/UpdatePatientDetails";
+import ViewDoctorRegistration from "./Components/Admin/ViewDoctorRegistration";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -272,6 +275,17 @@ function App() {
                 <Navigate to="/" />
               ),
           },
+{
+            path: "view-doctor-registration-details",
+            element:
+              userRole === "admin" ? (
+                <ViewDoctorRegistration />
+              ) : (
+                <Navigate to="/" />
+              ),
+          },
+   
+
           {
             path: "update-hospital/:id",
             element:
@@ -465,6 +479,10 @@ function App() {
             element: requireRole("admin", <ViewProfileMaster />),
           },
           {
+            path: "update-profile-master/:id",
+            element: requireRole("admin", <UpdateProfileMaster />),
+          },
+          {
             path: "add-investigation",
             element: requireRole("admin", <AddInvestigation />),
           },
@@ -554,6 +572,10 @@ function App() {
           {
             path: "admin-view-patient-details",
             element: requireRole("admin", <ViewPatientDetails />),
+          },
+          {
+            path: "admin-update-patient-details/:id",
+            element: requireRole("admin", <UpdatePatientDetails />),
           },
           // Fallback route
           {

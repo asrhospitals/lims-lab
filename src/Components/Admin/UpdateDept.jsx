@@ -80,17 +80,21 @@ const UpdateDept = () => {
 
       // Call your API function
       const response = await updateDepartment(id, payload);
-      // Success feedback
+
+      // ✅ Show toast first, then navigate after 1 second
       toast.success("Department updated successfully!", {
         position: "top-right",
         autoClose: 2000,
       });
 
-      // Clear the form state
-      setDepartmentToUpdate(null);
+      setTimeout(() => {
+        // Clear the form state
+        setDepartmentToUpdate(null);
 
-      // Navigate back to department list
-      navigate("/view-departments");
+        // Navigate back to department list
+        navigate("/view-departments");
+      }, 1000);
+
     } catch (error) {
       console.error("Update Department Error:", error);
 

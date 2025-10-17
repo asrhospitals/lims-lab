@@ -316,6 +316,7 @@ const App = () => {
         const data = await response.json();
         if (Array.isArray(data)) {
           setDepartments(data.map(dept => dept.dptname)); // Changed from dptName to dptname
+          
         }
       } catch (error) {
         console.error('Error fetching departments:', error);
@@ -479,7 +480,7 @@ const App = () => {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="p-6 sm:p-8">
             <div className="text-center mb-8">
@@ -569,14 +570,7 @@ const App = () => {
                     <label htmlFor="parentDepartment" className="block text-sm font-medium text-gray-700 mb-1">
                       Parent Department
                     </label>
-                    <CustomDropdown
-                      options={departments.map(dept => ({ value: dept, label: dept }))}
-                      value={formData.parentDepartment}
-                      onChange={(value) => setFormData({ ...formData, parentDepartment: value })}
-                      placeholder={isLoading ? 'Loading...' : 'Select department'}
-                      disabled={isLoading || departments.length === 0}
-                      className="mb-1"
-                    />
+                    <CustomDropdown options={[ { value: 'Cardiology', label: 'Cardiology' }, { value: 'Neurology', label: 'Neurology' }, { value: 'Orthopedics', label: 'Orthopedics' } ]} value={formData.parentDepartment} onChange={(value) => setFormData({ ...formData, parentDepartment: value })} placeholder="Select department" />
                     {errors.parentDepartment && <p className="mt-1 text-sm text-red-600">{errors.parentDepartment}</p>}
                   </div>
                   <div>

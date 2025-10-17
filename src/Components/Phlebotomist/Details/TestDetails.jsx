@@ -6,6 +6,10 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+
+
 
 const TestDetails = () => {
   const [reportDoctors, setReportDoctors] = useState([]);
@@ -17,6 +21,9 @@ const TestDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const doc = new jsPDF();
+  const hospitalName = localStorage.getItem("hospital_name");
+  const [selectedRows, setSelectedRows] = useState([]);
+
   // Fetch API data on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -57,9 +64,11 @@ const TestDetails = () => {
         patientCode: item.patientPPModes?.[0]?.popno || "",
         opType: item.patientPPModes?.[0]?.pop || "",
         opNo: item.patientPPModes?.[0]?.popno || "",
-        patientDetails: `${item.p_name} / Age: ${item.p_age} / Gender: ${item.p_gender} / Tests: ${
-          item.patientTests.map((t) => t.investigation?.testname).join(", ")
-        }`,
+        patientDetails: `${item.p_name} / Age: ${item.p_age} / Gender: ${
+          item.p_gender
+        } / Tests: ${item.patientTests
+          .map((t) => t.investigation?.testname)
+          .join(", ")}`,
         mobile: item.p_mobile || "",
         barcode: item.patientPPModes?.[0]?.pbarcode || "",
         hospitalName: item.hospital?.hospitalname || "",
@@ -111,15 +120,56 @@ const TestDetails = () => {
     // navigate("/update-report-doctor"); // Uncomment if using navigation
   };
 
+const sendtesttoreceiption = async (ids) => {
 
-  
+  if (!ids || ids.length === 0) {
+    toast.error("No valid patient IDs to send");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("authToken");
+
+    const payload = {
+      patient_ids: ids, // dynamic list of IDs
+    };
+
+    const response = await axios.put(
+      "https://asrphleb.asrhospitalindia.in/api/v1/phleb/send-tests",
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // only if API uses auth
+        },
+      }
+    );
+
+    console.log("✅ Response:", response.data);
+
+    // ✅ Show success toast
+    toast.success("Tests sent successfully!");
+  } catch (error) {
+    console.error(
+      "❌ Error sending tests:",
+      error.response?.data || error.message
+    );
+    // ✅ Show error toast
+    toast.error(
+      `Error sending tests: ${
+        error.response?.data?.message || error.message
+      }`
+    );
+  }
+};
+
   // inside TestDetails component
   const handleExportExcel = () => {
     if (!mappedItems || mappedItems.length === 0) {
       alert("No data to export");
       return;
     }
-  
+
     // Prepare data for Excel
     const exportData = mappedItems.map((item) => ({
       ID: item.id,
@@ -133,18 +183,20 @@ const TestDetails = () => {
       "Registered By": item.registeredBy,
       "Date of Registration": item.dateOfRegistration,
     }));
-  
+
     // Create a new workbook and worksheet
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Patient Tests");
-  
+
     // Write workbook and trigger download
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(blob, "PatientTestData.xlsx");
   };
-  
 
   const handleExportPDF = () => {
     console.log("Exporting to PDF...");
@@ -193,7 +245,9 @@ const TestDetails = () => {
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Test Details</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+              Test Details
+            </h2>
 
             {/* Action Buttons */}
             <div className="flex flex-row gap-3">
@@ -201,7 +255,11 @@ const TestDetails = () => {
                 onClick={handleExportExcel}
                 className="bg-green-100 rounded-lg p-2 cursor-pointer hover:bg-green-200 transition flex items-center justify-center"
               >
-                <img src="./excel.png" alt="Export to Excel" className="w-7 h-7" />
+                <img
+                  src="./excel.png"
+                  alt="Export to Excel"
+                  className="w-7 h-7"
+                />
               </div>
 
               <div
@@ -225,16 +283,41 @@ const TestDetails = () => {
           </div>
 
           {/* Table */}
-          {mappedItems.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">No report entry found.</div>
-          ) : (
-            <DataTableWithoutAction
-              items={mappedItems}
-              columns={columns}
-              itemsPerPage={10}
-              showDetailsButtons={false}
-            />
-          )}
+          <>
+            {mappedItems.length === 0 ? (
+              <div className="text-center py-6 text-gray-500">
+                No report entry found.
+              </div>
+            ) : (
+              <>
+                <DataTableWithoutAction
+                  items={mappedItems}
+                  columns={columns}
+                  itemsPerPage={10}
+                  showDetailsButtons={false}
+                  onRowSelect={setSelectedRows}
+                />
+
+                <div className="mt-4 flex justify-end">
+                  <button
+                    type="button"
+                    disabled={selectedRows.length === 0}
+                    className={`px-6 py-3 rounded text-white ${
+                      selectedRows.length === 0
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-teal-600 hover:bg-teal-700"
+                    }`}
+                    onClick={() => {
+                      console.log("Sending patient IDs:", selectedRows);
+                      sendtesttoreceiption(selectedRows); // send IDs to API
+                    }}
+                  >
+                    Send to {hospitalName}
+                  </button>
+                </div>
+              </>
+            )}
+          </>
         </div>
       </div>
     </>

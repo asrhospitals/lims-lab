@@ -50,8 +50,8 @@ const UpdateNodalHospital = () => {
           viewNodalHospital(id),
         ]);
 
-        const nodalData = nodalRes.data || [];
-        const hospitalData = hospitalRes.data || [];
+        const nodalData = nodalRes?.data || [];
+        const hospitalData = hospitalRes?.data || [];
         const nodalHospitalData = nodalHospitalRes || null;
 
         setNodalList(nodalData);
@@ -106,8 +106,15 @@ const UpdateNodalHospital = () => {
 
       await updateNodalHospital(id, payload);
 
-      toast.success("✅ Nodal Hospital updated successfully!");
-      navigate("/view-nodal-hospitals");
+      // ✅ Show toast and delay navigation slightly so message appears
+      toast.success("✅ Nodal Hospital updated successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        navigate("/view-nodal-hospitals");
+      }, 2100);
     } catch (error) {
       console.error("Error updating nodal hospital:", error);
       toast.error(
@@ -159,7 +166,7 @@ const UpdateNodalHospital = () => {
               </Link>
             </li>
             <li className="text-gray-400">/</li>
-            <li className="text-gray-500">Update</li>
+            <li className="text-gray-500">Update NodalHospital</li>
           </ol>
         </nav>
       </div>
@@ -284,7 +291,7 @@ const UpdateNodalHospital = () => {
                   isSubmitting ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                {isSubmitting ? "Updating..." : "Update"}
+                {isSubmitting ? "Updating..." : "Update Nodal Hospital"}
               </button>
             </div>
           </div>

@@ -10,11 +10,11 @@ import AddInvestigationResult from "./AddInvestigationResult";
 import AccrediationDetails from "./AccrediationDetails";
 import {
   addInvestigation,
-  viewDepartments,
-  viewSubDepartments,
+  viewAllDepartmentDetails,
+  viewAllSubDepartmentDetails,
   viewRoles,
-  viewSpecimenTypes,
-  viewInstruments,
+  viewAllSpecimenType,
+  viewAllInstrument,
 } from "../../services/apiService";
 import AddReflexTests from "./AddReflexTests";
 
@@ -73,9 +73,9 @@ const AddInvestigation = () => {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const deptResponse = await viewDepartments();
-        console.log("Departments:", deptResponse?.data || []);
-        setDepartments(deptResponse?.data || []);
+        const deptResponse = await viewAllDepartmentDetails();
+        console.log("Departments:", deptResponse || []);
+        setDepartments(deptResponse || []);
       } catch (err) {
         console.error("Departments API failed:", err);
         toast.error("❌ Failed to load Departments");
@@ -84,36 +84,52 @@ const AddInvestigation = () => {
     fetchDepartments();
   }, []);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   const fetchSpecimens = async () => {
+  //     try {
+  //   const token = localStorage.getItem("authToken");
+
+
+  //       const res = await axios.get(
+  //         "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",   {
+  //           headers: { Authorization: `Bearer ${token}` },
+  //         }
+  //       );
+
+  //       console.log("Specimens API Response:", res.data);
+
+  //       setSpecimens(res.data.data || []);
+  //     } catch (err) {
+  //       console.error("Failed to fetch specimens:", err);
+  //     }
+  //   };
+
+  //   fetchSpecimens();
+  // }, []);
+
+ useEffect(() => {
     const fetchSpecimens = async () => {
       try {
-    const token = localStorage.getItem("authToken");
-
-
-        const res = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",   {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        console.log("Specimens API Response:", res.data);
-
-        setSpecimens(res.data.data || []); // <-- Important!
+        const res = await viewAllSpecimenType();
+        console.log("viewAllSpecimenType:", res || []);
+        setSpecimens(res || []);
       } catch (err) {
-        console.error("Failed to fetch specimens:", err);
+        console.error("Specimens API failed:", err);
+        toast.error("❌ Failed to load Specimens");
       }
     };
-
     fetchSpecimens();
   }, []);
+
+
 
   // Fetch SubDepartments
   useEffect(() => {
     const fetchSubDepartments = async () => {
       try {
-        const subDeptResponse = await viewSubDepartments();
-        console.log("SubDepartments:", subDeptResponse?.data || []);
-        setSubDepartments(subDeptResponse?.data || []);
+        const subDeptResponse = await viewAllSubDepartmentDetails();
+        console.log("SubDepartments:", subDeptResponse || []);
+        setSubDepartments(subDeptResponse || []);
       } catch (err) {
         console.error("SubDepartments API failed:", err);
         toast.error("❌ Failed to load SubDepartments");
@@ -145,9 +161,9 @@ const AddInvestigation = () => {
   useEffect(() => {
     const fetchInstruments = async () => {
       try {
-        const instrumentResponse = await viewInstruments();
-        console.log("Instruments:", instrumentResponse?.data || []);
-        setInstruments(instrumentResponse?.data || []);
+        const instrumentResponse = await viewAllInstrument();
+        console.log("Instruments:", instrumentResponse || []);
+        setInstruments(instrumentResponse || []);
       } catch (err) {
         console.error("Instruments API failed:", err);
         toast.error("❌ Failed to load Instruments");

@@ -12,7 +12,13 @@ const UpdateInstrument = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors }, reset, trigger } = useForm({ mode: "onBlur" });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    trigger,
+  } = useForm({ mode: "onChange" });
 
   useEffect(() => {
     const fetchInstrumentData = async () => {
@@ -59,13 +65,22 @@ const UpdateInstrument = () => {
       };
 
       await updateInstrument(id, payload);
-      toast.success("✅ Instrument updated successfully!");
-      navigate("/view-instruments");
+
+      // ✅ Toast will show for 2 seconds before redirect
+      toast.success("✅ Instrument updated successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        navigate("/view-instruments");
+      }, 2100);
     } catch (error) {
       console.error("Error updating instrument:", error);
       toast.error(
         error?.response?.data?.message ||
-        "❌ Failed to update instrument. Please try again."
+          "❌ Failed to update instrument. Please try again.",
+        { position: "top-right", autoClose: 3000 }
       );
     } finally {
       setIsSubmitting(false);
@@ -78,6 +93,7 @@ const UpdateInstrument = () => {
       label: "Instrument Name",
       validation: {
         required: "Instrument name is required",
+        minLength: { value: 2, message: "Minimum 2 characters" },
         pattern: {
           value: /^[a-zA-Z0-9\s-]+$/,
           message: "Only letters, numbers, spaces, and hyphen allowed",
@@ -87,11 +103,13 @@ const UpdateInstrument = () => {
     {
       name: "make",
       label: "Make",
+      placeholder: "Enter Make",
       validation: {
         required: "Make is required",
+        minLength: { value: 2, message: "Minimum 2 characters" },
         pattern: {
-          value: /^[a-zA-Z\s]+$/,
-          message: "Only letters and spaces allowed",
+          value: /^[a-zA-Z0-9\s-]+$/,
+          message: "Only letters, numbers, spaces, and hyphen allowed",
         },
       },
     },
@@ -130,19 +148,48 @@ const UpdateInstrument = () => {
     },
   ];
 
-  if (loading) return <div className="text-center py-10 text-gray-500">⏳ Loading instrument details...</div>;
-  if (!instrumentData) return <div className="text-center py-10 text-gray-500">Instrument not found.</div>;
+  if (loading)
+    return (
+      <div className="text-center py-10 text-gray-500">
+        ⏳ Loading instrument details...
+      </div>
+    );
+
+  if (!instrumentData)
+    return (
+      <div className="text-center py-10 text-gray-500">
+        Instrument not found.
+      </div>
+    );
 
   return (
     <>
+      {/* ✅ Toast container must exist */}
       <ToastContainer />
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg" aria-label="Breadcrumb">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
+          aria-label="Breadcrumb"
+        >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-            <li><Link to="/admin-dashboard" className="text-gray-700 hover:text-teal-600">🏠 Home</Link></li>
+            <li>
+              <Link
+                to="/admin-dashboard"
+                className="text-gray-700 hover:text-teal-600"
+              >
+                🏠 Home
+              </Link>
+            </li>
             <li className="text-gray-400">/</li>
-            <li><Link to="/view-instruments" className="text-gray-700 hover:text-teal-600">Instruments</Link></li>
+            <li>
+              <Link
+                to="/view-instruments"
+                className="text-gray-700 hover:text-teal-600"
+              >
+                Instruments
+              </Link>
+            </li>
             <li className="text-gray-400">/</li>
             <li className="text-gray-500">Update Instrument</li>
           </ol>
@@ -150,7 +197,10 @@ const UpdateInstrument = () => {
       </div>
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl border border-gray-200">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white shadow-lg rounded-xl border border-gray-200"
+        >
           <div className="px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
             <h4 className="text-white font-semibold">Update Instrument</h4>
           </div>
@@ -160,14 +210,25 @@ const UpdateInstrument = () => {
               {fields.map(({ name, label, type = "text", options, validation }) => (
                 <div key={name}>
                   <label className="block text-sm font-medium text-gray-700">
-                    {label} {validation?.required && <span className="text-red-500">*</span>}
+                    {label}{" "}
+                    {validation?.required && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </label>
 
                   {type === "radio" ? (
                     <div className="flex space-x-4 pt-2">
                       {options.map((opt) => (
-                        <label key={opt.value} className="inline-flex items-center">
-                          <input type="radio" {...register(name, validation)} value={opt.value} className="h-4 w-4 text-teal-600" />
+                        <label
+                          key={opt.value}
+                          className="inline-flex items-center"
+                        >
+                          <input
+                            type="radio"
+                            {...register(name, validation)}
+                            value={opt.value}
+                            className="h-4 w-4 text-teal-600"
+                          />
                           <span className="ml-2">{opt.label}</span>
                         </label>
                       ))}
@@ -178,19 +239,42 @@ const UpdateInstrument = () => {
                       {...register(name, validation)}
                       onBlur={() => trigger(name)}
                       placeholder={label}
-                      className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-teal-500`}
-                      max={type === "date" ? new Date().toISOString().split("T")[0] : undefined}
+                      className={`w-full px-4 py-2 rounded-lg border ${
+                        errors[name] ? "border-red-500" : "border-gray-300"
+                      } focus:ring-2 focus:ring-teal-500`}
+                      max={
+                        type === "date"
+                          ? new Date().toISOString().split("T")[0]
+                          : undefined
+                      }
                     />
                   )}
 
-                  {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name].message}</p>}
+                  {errors[name] && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors[name].message}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
 
             <div className="flex justify-end space-x-4">
-              <button type="button" onClick={() => { reset(); navigate("/view-instruments"); }} className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100">Cancel</button>
-              <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 disabled:opacity-50">
+              <button
+                type="button"
+                onClick={() => {
+                  reset();
+                  navigate("/view-instruments");
+                }}
+                className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 disabled:opacity-50"
+              >
                 {isSubmitting ? "Updating..." : "Update Instrument"}
               </button>
             </div>

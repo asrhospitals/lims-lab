@@ -116,7 +116,7 @@ const ViewSubDpt = () => {
             </li>
             <li className="text-gray-400">/</li>
             <li className="text-gray-500" aria-current="page">
-              Add Sub Department
+              View Sub Department
             </li>
           </ol>
         </nav>

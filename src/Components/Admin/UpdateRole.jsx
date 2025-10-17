@@ -64,15 +64,24 @@ const UpdateRole = () => {
 
       await updateRole(roleToUpdate.id, payload);
 
-      navigate("/view-roles");
-      toast.success("✅ Role updated successfully!");
-      setRoleToUpdate(null);
-      localStorage.removeItem("roleToUpdate");
+      // ✅ Success toast first
+      toast.success("✅ Role updated successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      // ✅ Delay navigation so user can see toast
+      setTimeout(() => {
+        navigate("/view-roles");
+        setRoleToUpdate(null);
+        localStorage.removeItem("roleToUpdate");
+      }, 2000);
     } catch (error) {
       console.error(error);
       toast.error(
         error?.response?.data?.message ||
-          "❌ Failed to update role. Please try again."
+          "❌ Failed to update role. Please try again.",
+        { position: "top-right", autoClose: 3000 }
       );
     } finally {
       setIsSubmitting(false);

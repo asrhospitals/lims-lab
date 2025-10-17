@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-const PatientRegistration = () => {
+const PatientRegistration = () => { 
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [search, setSearch] = useState("");
@@ -314,7 +313,7 @@ const PatientRegistration = () => {
                 itemsPerPage={10}
                 showDetailsButtons={false}
                 onUpdate={(patient) =>
-                  navigate(`/update-patient/${patient.id}`)
+               navigate(`/update-patient-details/${patient.id}`)
                 }
               />
             )}

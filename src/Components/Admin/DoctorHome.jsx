@@ -151,7 +151,7 @@ const sections = [
   {
     title: "Investigation",
     icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
-    inProgress: true,
+    // inProgress: true,
 
     buttons: [
       { label: "Add Investigation", route: "/add-investigation" },
@@ -190,8 +190,6 @@ const sections = [
   {
     title: "Patient Registration",
     icon: <RiFileSearchLine  className="text-3xl text-[#238781]" />,
-    inProgress: true,
-
     buttons: [
       { label: "Add Patient Details", route: "/admin-add-patient-details" },
       { label: "View Patient Details", route: "/admin-view-patient-details" },
@@ -229,6 +227,14 @@ const sections = [
       { label: "View Color Master", route: "/view-color" },
     ],
   },
+    {
+    title: "Referal Doctor",
+    icon: <FaUserDoctor  className="text-3xl text-[#238781]" />,
+    buttons: [
+      { label: "Referal Doctor Registration", route: "/add-referal-doctor" },
+     
+    ],
+  },
   {
     title: "Doctor Registration",
     icon: <FaUserDoctor  className="text-3xl text-[#238781]" />,
@@ -236,6 +242,7 @@ const sections = [
 
     buttons: [
       { label: "Doctor Registration", route: "/doctor-registration" },
+      { label: "View Doctor Details", route: "/view-doctor-registration-details" },
      
     ],
   },

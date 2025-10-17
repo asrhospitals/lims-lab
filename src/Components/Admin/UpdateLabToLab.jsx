@@ -95,7 +95,9 @@ const UpdateLabToLab = () => {
       await updateLabToLab(id, payload);
 
       toast.success("✅ Lab updated successfully!");
-      navigate("/view-labtolab");
+      setTimeout(() => {
+        navigate("/view-labtolab");
+      }, 2000); // wait 2 seconds so toast is visible
     } catch (error) {
       console.error(error);
       toast.error(
@@ -139,7 +141,8 @@ const UpdateLabToLab = () => {
         maxLength: { value: 100, message: "Maximum 100 characters" },
         pattern: {
           value: alphanumericRegex,
-          message: "Only letters, numbers, spaces, comma, dot, and hyphen allowed",
+          message:
+            "Only letters, numbers, spaces, comma, dot, and hyphen allowed",
         },
       },
     },
@@ -283,13 +286,18 @@ const UpdateLabToLab = () => {
                 <div key={name}>
                   <label className="block text-sm font-medium text-gray-700">
                     {label}
-                    {validation?.required && <span className="text-red-500">*</span>}
+                    {validation?.required && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </label>
 
                   {type === "radio" ? (
                     <div className="flex space-x-4 pt-2">
                       {options.map((option) => (
-                        <label key={option.value} className="inline-flex items-center">
+                        <label
+                          key={option.value}
+                          className="inline-flex items-center"
+                        >
                           <input
                             type="radio"
                             {...register(name, validation)}
@@ -313,7 +321,9 @@ const UpdateLabToLab = () => {
                   )}
 
                   {errors[name] && (
-                    <p className="text-red-500 text-xs mt-1">{errors[name].message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors[name].message}
+                    </p>
                   )}
                 </div>
               ))}

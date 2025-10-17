@@ -1,54 +1,76 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
+import api from "../../services/axiosService";
 
 const ViewUserDetails = () => {
   const [users, setUsers] = useState([]);
-  const [search, setSearch] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   const navigate = useNavigate();
 
   // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const token = localStorage.getItem("authToken");
-        const res = await fetch(
-          "https://asrlabs.asrhospitalindia.in/lims/authentication/get-all-users",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-  
-        console.log("res ==", res);
-  
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        setUsers(data || []);
+        const res = await api.get("/authentication/get-all-users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const sortedData = (res.data || []).sort((a, b) => a.user_id - b.user_id);
+
+        setUsers(sortedData);
+        setFilteredUsers(sortedData);
+        setTotalItems(sortedData.length);
+        setTotalPages(Math.ceil(sortedData.length / itemsPerPage));
       } catch (err) {
-        console.error("Failed to fetch users", err);
+        console.error(err);
         setError("Failed to fetch users.");
       } finally {
         setLoading(false);
       }
     };
-  
-    fetchUsers();
-  }, []);
-  
 
-  // Columns for DataTable
+    fetchUsers();
+  }, [itemsPerPage]);
+
+  // Client-side search filtering
+  useEffect(() => {
+    if (!search.trim()) {
+      setFilteredUsers(users);
+    } else {
+      const lowerSearch = search.toLowerCase();
+      const filtered = users.filter(
+        (user) =>
+          user.first_name?.toLowerCase().includes(lowerSearch) ||
+          user.last_name?.toLowerCase().includes(lowerSearch) ||
+          user.email?.toLowerCase().includes(lowerSearch)
+      );
+      setFilteredUsers(filtered);
+    }
+    setCurrentPage(1);
+  }, [search, users]);
+
+  const handlePageChange = (page) => setCurrentPage(page);
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
+  };
+
+  // Actions function for DataTable
+  const handleActions = (user) =>
+    navigate(`/update-user-details/${user.user_id}`, { state: { user } });
+
   const columns = [
     { key: "user_id", label: "ID" },
     { key: "first_name", label: "First Name" },
@@ -59,63 +81,42 @@ const ViewUserDetails = () => {
     { key: "gender", label: "Gender" },
     { key: "dob", label: "DOB" },
     { key: "username", label: "Username" },
-    { key: "role", label: "Role" },
     { key: "isactive", label: "Active" },
     { key: "updatedAt", label: "Updated At" },
   ];
 
-  // Filtered users based on search
-  const filteredUsers = users.filter(
-    (user) =>
-      user.first_name?.toLowerCase().includes(search.toLowerCase()) ||
-      user.last_name?.toLowerCase().includes(search.toLowerCase()) ||
-      user.email?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  
 
-  const mappedItems = useMemo(() => 
-    paginatedUsers.map((user) => ({
-      ...user,
-      dob: user.dob ? new Date(user.dob).toLocaleDateString("en-IN") : "-",
-      created_date: user.created_date
-        ? new Date(user.created_date).toLocaleDateString("en-IN")
-        : "-",
-      createdAt: user.createdAt
-        ? new Date(user.createdAt).toLocaleString("en-IN")
-        : "-",
-      updatedAt: user.updatedAt
-        ? new Date(user.updatedAt).toLocaleString("en-IN")
-        : "-",
-      isactive: user.isactive ? "Active" : "Inactive",
-    })), 
-    [paginatedUsers]
-  );
-  
-  
-
-  const handleUpdate = (user) => navigate(`/update-user-list/${user.user_id}`);
-  const handlePageChange = (page) => setCurrentPage(page);
+  const mappedItems = paginatedUsers.map((user) => ({
+    ...user,
+    dob: user.dob ? new Date(user.dob).toLocaleDateString("en-IN") : "-",
+    created_date: user.created_date
+      ? new Date(user.created_date).toLocaleDateString("en-IN")
+      : "-",
+    createdAt: user.createdAt
+      ? new Date(user.createdAt).toLocaleString("en-IN")
+      : "-",
+    updatedAt: user.updatedAt
+      ? new Date(user.updatedAt).toLocaleString("en-IN")
+      : "-",
+    isactive: user.isactive ? "Active" : "Inactive",
+  }));
 
   return (
     <>
-      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
               <Link
                 to="/admin-dashboard"
-                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600"
               >
                 🏠︎ Home
               </Link>
@@ -130,43 +131,29 @@ const ViewUserDetails = () => {
 
       <div className="w-full mt-12 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-          {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-              User List
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-64">
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
-                  placeholder="Search User..."
-                />
-                <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
-              </div>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">User List</h2>
+            <div className="relative w-full sm:w-56">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
+                placeholder="Search User..."
+              />
+              <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
             </div>
           </div>
 
-          {/* Add button & stats */}
-          <div className="flex flex-wrap items-center justify-between mb-4 text-sm text-gray-600 gap-2">
+          <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => navigate("/add-user")}
               className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
             </button>
-            <div className="flex flex-wrap gap-2">
-              <span>Total: {filteredUsers.length} items</span>
-              <span>•</span>
-              <span>
-                Page {currentPage} of {totalPages || 1}
-              </span>
-            </div>
           </div>
 
-          {/* Data Table */}
           {loading ? (
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (
@@ -177,29 +164,18 @@ const ViewUserDetails = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              serverSidePagination={false}
-              showDetailsButtons={false}
-              onUpdate={handleUpdate}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onUpdate={handleActions} // ✅ Actions work
+              showDetailsButtons={true}
+              tableContainerClass="overflow-x-auto max-h-[65vh]"
+              stickyActionColumn={true}
             />
-          )}
-
-          {/* Simple Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-4 flex justify-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1 rounded ${
-                    currentPage === i + 1
-                      ? "bg-teal-600 text-white"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
           )}
         </div>
       </div>

@@ -73,7 +73,7 @@ const ViewProfileMaster = () => {
   const handleUpdate = (entry) => {
     setProfileMasterToUpdate(entry);
     localStorage.setItem("profileMasterToUpdate", JSON.stringify(entry));
-    navigate("/update-profile-master"); // ✅ fixed route
+    navigate(`/update-profile-master/${entry.id}`); // ✅ fixed route with ID
   };
 
   // Table columns

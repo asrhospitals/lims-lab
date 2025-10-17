@@ -24,7 +24,7 @@ const UpdateHospitalType = () => {
     defaultValues: {
       hsptltype: "",
       hsptldsc: "",
-      isactive: true,
+      isactive: "true", // ✅ default value True
     },
   });
 
@@ -43,7 +43,7 @@ const UpdateHospitalType = () => {
         reset({
           hsptltype: hospitalTypeData.hsptltype || "",
           hsptldsc: hospitalTypeData.hsptldsc || "",
-          isactive: String(hospitalTypeData.isactive),
+          isactive: hospitalTypeData.isactive ? "true" : "false", // ✅ convert to string
         });
       } catch (error) {
         console.error("Failed to fetch hospital type data:", error);
@@ -71,9 +71,13 @@ const UpdateHospitalType = () => {
         isactive: data.isactive === "true",
       });
 
-      toast.success("✅ Hospital type updated successfully!");
-      setHospitalTypeToUpdate(null);
-      navigate("/view-hospitaltype");
+      // ✅ Show toast first, then navigate after 1 second
+      toast.success("Hospital type updated successfully!");
+      setTimeout(() => {
+        setHospitalTypeToUpdate(null);
+        navigate("/view-hospitaltype");
+      }, 1000);
+
     } catch (error) {
       console.error(error);
       toast.error(
@@ -85,41 +89,39 @@ const UpdateHospitalType = () => {
     }
   };
 
- const fields = [
-  {
-    name: "hsptltype",
-    label: "Hospital Type Code",
-    placeholder: "Enter Hospital Type Code (e.g., DH)",
-    validation: {
-      required: "Hospital type code is required",
-      pattern: {
-        value: /^[A-Za-z\s]+$/, // ✅ only letters and spaces
-        message: "Only letters and spaces are allowed (no numbers or special characters)",
-      },
-      validate: {
-        noDuplicate: (value) => {
-          const existing = ["DH", "CH", "RH"]; // replace with real list from API or state
-          return !existing.includes(value) || "Duplicate hospital type code is not allowed";
+  const fields = [
+    {
+      name: "hsptltype",
+      label: "Hospital Type Code",
+      placeholder: "Enter Hospital Type Code (e.g., DH)",
+      validation: {
+        required: "Hospital type code is required",
+        pattern: {
+          value: /^[A-Za-z\s]+$/, // ✅ only letters and spaces
+          message: "Only letters and spaces are allowed (no numbers or special characters)",
+        },
+        validate: {
+          noDuplicate: (value) => {
+            const existing = ["DH", "CH", "RH"]; // replace with real list from API or state
+            return !existing.includes(value) || "Duplicate hospital type code is not allowed";
+          },
         },
       },
     },
-  },
-
-
     {
-  name: "hsptldsc",
-  label: "Hospital Type Description",
-  placeholder: "Enter Hospital Type Description",
-  validation: {
-    required: "Description is required",
-    minLength: { value: 2, message: "Minimum 2 characters" },
-    maxLength: { value: 100, message: "Maximum 100 characters" },
-    pattern: {
-      value: /^[A-Za-z\s]+$/, 
-      message: "Only letters and spaces are allowed (no numbers or special characters)",
+      name: "hsptldsc",
+      label: "Hospital Type Description",
+      placeholder: "Enter Hospital Type Description",
+      validation: {
+        required: "Description is required",
+        minLength: { value: 2, message: "Minimum 2 characters" },
+        maxLength: { value: 100, message: "Maximum 100 characters" },
+        pattern: {
+          value: /^[A-Za-z\s]+$/,
+          message: "Only letters and spaces are allowed (no numbers or special characters)",
+        },
+      },
     },
-  },
-},
     {
       name: "isactive",
       label: "Is Active?",

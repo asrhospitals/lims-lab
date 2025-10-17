@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { FaSortUp, FaSortDown, FaSort } from "react-icons/fa";
 
-// Badge color utility
+// ✅ Badge color utility (optional, if you use status badges)
 const getBadgeColor = (status) => {
   return (
     {
@@ -26,9 +26,9 @@ const DataTableWithoutAction = ({
   itemsPerPage = 5,
   defaultSorter = { column: "status", state: "asc" },
   showDetailsButtons = true,
+  onRowSelect, // ✅ Callback to parent
   onUpdate,
-  onView, // New prop for view action
-  // Server-side pagination props
+  onView,
   serverSidePagination = false,
   currentPage = 1,
   totalPages = 1,
@@ -37,20 +37,20 @@ const DataTableWithoutAction = ({
   onPageSizeChange,
 }) => {
   const [expandedRows, setExpandedRows] = useState([]);
-  const [selectedRow, setSelectedRow] = useState(null);
-
   const [sorting, setSorting] = useState([
     { id: defaultSorter.column, desc: defaultSorter.state === "desc" },
   ]);
 
-  // Use server-side pagination state or local state
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  // ✅ Pagination setup
   const [pagination, setPagination] = useState({
     pageIndex: serverSidePagination ? currentPage - 1 : 0,
     pageSize: itemsPerPage,
   });
 
-  // Update local pagination state when server-side props change
-  React.useEffect(() => {
+  // ✅ Sync pagination with server props
+  useEffect(() => {
     if (serverSidePagination) {
       setPagination((prev) => ({
         ...prev,
@@ -59,15 +59,36 @@ const DataTableWithoutAction = ({
     }
   }, [currentPage, serverSidePagination]);
 
+  // ✅ Transform columns
   const transformedColumns = useMemo(() => {
     return columns.map((col) => ({
       id: col.key,
       accessorKey: col.key,
       header: col.label,
       cell: (info) => info.getValue(),
-      size: col.size || 90, // default fixed width if not specified
+      size: col.size || 90,
     }));
   }, [columns]);
+
+  // ✅ Checkbox handlers
+  const handleSelectRow = (id) => {
+    setSelectedRows((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      const allIds = items.map((item) => item.id);
+      setSelectedRows(allIds);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  useEffect(() => {
+    if (onRowSelect) onRowSelect(selectedRows);
+  }, [selectedRows]);
 
   const toggleDetails = (id) => {
     setExpandedRows((prev) =>
@@ -75,31 +96,28 @@ const DataTableWithoutAction = ({
     );
   };
 
+  // ✅ Add checkbox column before other columns
   const baseColumns = useMemo(
     () => [
+      {
+        id: "select",
+        header: (
+          <input
+            type="checkbox"
+            onChange={(e) => handleSelectAll(e.target.checked)}
+            checked={selectedRows.length === items.length && items.length > 0}
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={selectedRows.includes(row.original.id)}
+            onChange={() => handleSelectRow(row.original.id)}
+          />
+        ),
+        size: 50,
+      },
       ...transformedColumns,
-     //  {
-     //    id: "actions",
-     //    header: "Actions",
-     //    cell: ({ row }) => (
-     //      <div className="flex space-x-2">
-     //        <button
-     //          className="text-sm text-white bg-teal-600 hover:bg-teal-700 px-2 py-1 rounded"
-     //          onClick={() => onUpdate && onUpdate(row.original)}
-     //        >
-     //          Update
-     //        </button>
-     //        {onView && ( // Conditionally render the View button
-     //          <button
-     //            className="text-sm text-white bg-teal-600 hover:bg-teal-700 px-2 py-1 rounded"
-     //            onClick={() => onView(row.original)} // View button
-     //          >
-     //            View
-     //          </button>
-     //        )}
-     //      </div>
-     //    ),
-     //  },
       ...(showDetailsButtons
         ? [
             {
@@ -117,7 +135,7 @@ const DataTableWithoutAction = ({
           ]
         : []),
     ],
-    [transformedColumns, expandedRows, onUpdate, onView, showDetailsButtons]
+    [transformedColumns, expandedRows, selectedRows, items]
   );
 
   const table = useReactTable({
@@ -131,7 +149,6 @@ const DataTableWithoutAction = ({
     getPaginationRowModel: serverSidePagination
       ? undefined
       : getPaginationRowModel(),
-    // Server-side pagination config
     manualPagination: serverSidePagination,
     pageCount: serverSidePagination ? totalPages : undefined,
   });
@@ -140,46 +157,61 @@ const DataTableWithoutAction = ({
     <div className="w-full overflow-x-auto border rounded-lg">
       <div className="inline-block min-w-full align-middle">
         <table className="min-w-full table-fixed divide-y divide-gray-300 text-sm text-left">
-        <thead className="bg-gray-100">
-  {table.getHeaderGroups().map((headerGroup) => (
-    <tr key={headerGroup.id}>
-      {headerGroup.headers.map((header) => (
-        <th
-          key={header.id}
-          onClick={header.column.getToggleSortingHandler()}
-          className="px-2 sm:px-4 py-2 font-bold text-gray-600 cursor-pointer select-none text-left break-words"
-          style={{
-            minWidth: "100px",
-            maxWidth: "250px",
-          }}
-        >
-          {flexRender(header.column.columnDef.header, header.getContext())}
-        </th>
-      ))}
-    </tr>
-  ))}
-</thead>
+          <thead className="bg-gray-100">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="px-2 sm:px-4 py-2 font-bold text-gray-600 cursor-pointer select-none text-left break-words"
+                    style={{
+                      minWidth: "100px",
+                      maxWidth: "250px",
+                    }}
+                  >
+                    <div className="flex items-center">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {header.column.getCanSort() && (
+                        <span className="ml-1 text-gray-400">
+                          {header.column.getIsSorted() === "asc" ? (
+                            <FaSortUp />
+                          ) : header.column.getIsSorted() === "desc" ? (
+                            <FaSortDown />
+                          ) : (
+                            <FaSort />
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
 
-<tbody className="divide-y divide-gray-200">
-  {table.getRowModel().rows.map((row) => (
-    <tr key={row.original.id} className="hover:bg-blue-50 cursor-pointer">
-      {row.getVisibleCells().map((cell) => (
-        <td
-          key={cell.id}
-          className="px-2 sm:px-4 py-2 break-words"
-          style={{ maxWidth: "250px" }}
-        >
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </td>
-      ))}
-    </tr>
-  ))}
-</tbody>
-
+          <tbody className="divide-y divide-gray-200">
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.original.id} className="hover:bg-blue-50">
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className="px-2 sm:px-4 py-2 break-words"
+                    style={{ maxWidth: "250px" }}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
+      {/* ✅ Pagination */}
       <div className="flex flex-col sm:flex-row flex-wrap justify-between items-center gap-4 p-4">
         {/* Page Size */}
         <div className="flex items-center gap-2 flex-wrap">
