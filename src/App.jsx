@@ -120,6 +120,7 @@ import UpdateAccessionMaster from "./Components/Admin/UpdateAccessionMaster";
 import UpdateUserDetails from "./Components/Admin/UpdateUserDetails";
 import UpdatePatientDetails from "./Components/Admin/UpdatePatientDetails";
 import ViewDoctorRegistration from "./Components/Admin/ViewDoctorRegistration";
+import UpdateDoctorRegistration from "./Components/Admin/UpdateDoctorRegistration";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -285,6 +286,11 @@ function App() {
               ),
           },
    
+          {
+            path: "update-doctor-registration/:id",
+            element:
+              userRole === "admin" ? <UpdateDoctorRegistration /> : <Navigate to="/" />,
+          },
 
           {
             path: "update-hospital/:id",

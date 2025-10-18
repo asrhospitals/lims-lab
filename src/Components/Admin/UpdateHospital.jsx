@@ -28,6 +28,37 @@ const UpdateHospital = () => {
     formState: { errors },
   } = useForm({ mode: "onChange" });
 
+
+
+
+    useEffect(() => {
+    const fetchDoctor = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(
+          `https://asrlabs.asrhospitalindia.in/lims/master/get-doctor/${doctorId}`
+        );
+        if (!res.ok) {
+          toast.error("Doctor not found or invalid ID");
+          setIsLoading(false);
+          return;
+        }
+        const data = await res.json();
+        setDoctorData(data);
+        console.log("Doctor data:", data);
+      } catch (err) {
+        toast.error("Failed to load doctor details");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDoctor();
+  }, [doctorId]);
+
+
+  
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {

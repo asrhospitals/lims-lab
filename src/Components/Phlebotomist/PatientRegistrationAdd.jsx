@@ -70,6 +70,8 @@ const PatientRegistrationAdd = () => {
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBillingCompleted, setIsBillingCompleted] = useState(false);
+  const [pBarcode, setPBarcode] = useState("");
+  const [barcodeStatus, setBarcodeStatus] = useState(null); // null | "duplicate" | "unique"
 
   // Handle payment mode changes
   useEffect(() => {
@@ -190,27 +192,90 @@ const PatientRegistrationAdd = () => {
     setValue,
   } = useForm({ mode: "onBlur" });
 
-  const watchedDob = watch("dob");
-
   // Auto-calculate age when DOB changes
-  useEffect(() => {
-    if (watchedDob) {
-      const today = new Date();
-      const birthDate = new Date(watchedDob);
-      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < birthDate.getDate())
-      ) {
-        calculatedAge--;
-      }
-      if (calculatedAge >= 0 && calculatedAge <= 100) {
-        setAge(calculatedAge);
-        setValue("age", calculatedAge);
-      }
+  // useEffect(() => {
+  //   if (watchedDob) {
+  //     const today = new Date();
+  //     const birthDate = new Date(watchedDob);
+  //     let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+  //     const monthDiff = today.getMonth() - birthDate.getMonth();
+  //     if (
+  //       monthDiff < 0 ||
+  //       (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  //     ) {
+  //       calculatedAge--;
+  //     }
+  //     if (calculatedAge >= 0 && calculatedAge <= 100) {
+  //       setAge(calculatedAge);
+  //       setValue("age", calculatedAge);
+  //     }
+  //   }
+  // }, [watchedDob, setValue]);
+const watchedDob = watch("dob");
+const watchedYear = watch("dobYear");
+const watchedMonth = watch("dobMonth");
+const watchedDay = watch("dobDay");
+const [ageDisplay, setAgeDisplay] = useState("");
+
+useEffect(() => {
+  let date;
+
+  // Priority 1: Use YYYY/MM/DD if all filled
+  if (watchedYear && watchedMonth && watchedDay) {
+    const y = parseInt(watchedYear, 10);
+    const m = parseInt(watchedMonth, 10) - 1;
+    const d = parseInt(watchedDay, 10);
+    date = new Date(y, m, d);
+    // Update DOB field only if different
+    const iso = date.toISOString().split("T")[0];
+    if (watchedDob !== iso) {
+      setValue("dob", iso, { shouldValidate: true });
     }
-  }, [watchedDob, setValue]);
+  } 
+  // Priority 2: Use date picker if filled
+  else if (watchedDob) {
+    date = new Date(watchedDob);
+    // Update YYYY/MM/DD fields only if different
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    if (
+      watchedYear != year ||
+      watchedMonth != month ||
+      watchedDay != day
+    ) {
+      setValue("dobYear", year, { shouldValidate: true });
+      setValue("dobMonth", month, { shouldValidate: true });
+      setValue("dobDay", day, { shouldValidate: true });
+    }
+  }
+
+  if (date) calculateAge(date);
+}, [watchedDob, watchedYear, watchedMonth, watchedDay, setValue]);
+
+function calculateAge(birthDate) {
+  const today = new Date();
+  let years = today.getFullYear() - birthDate.getFullYear();
+  let months = today.getMonth() - birthDate.getMonth();
+  let days = today.getDate() - birthDate.getDate();
+
+  if (days < 0) {
+    months--;
+    days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  setAgeDisplay(`${years} Years ${months} Months ${days} Days`);
+console.log("setAgeDisplay==", setAgeDisplay);
+console.log("ageDisplay==", ageDisplay);
+
+
+}
+
 
   // Fetch hospitaldetails
 
@@ -264,6 +329,68 @@ const PatientRegistrationAdd = () => {
       setApiError("No patient found or API error.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkBarcode = async (barcode) => {
+    if (!barcode || barcode.length !== 8) return;
+
+    console.log("inside checkBarcode with:", barcode);
+
+    try {
+      setLoading(true);
+      const authToken = localStorage.getItem("authToken");
+
+      const response = await fetch(
+        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?barcodeNo=${barcode}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        // ✅ Check all patientPPModes for a matching barcode
+        const duplicateFound = data.some(
+          (patient) =>
+            Array.isArray(patient.patientPPModes) &&
+            patient.patientPPModes.some(
+              (pp) => pp.pbarcode?.toString() === barcode.toString()
+            )
+        );
+
+        if (duplicateFound) {
+          console.log("Duplicate barcode found!");
+          setBarcodeStatus("duplicate");
+        } else {
+          console.log("Barcode is unique!");
+          setBarcodeStatus("unique");
+        }
+      } else {
+        // API returned no data
+        console.log("No patient data found, barcode is unique!");
+        setBarcodeStatus("unique");
+      }
+    } catch (err) {
+      console.error("Error checking barcode:", err);
+      setBarcodeStatus(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    console.log("inside handleKeyDown, key:", e.key);
+    if (e.key === "Enter" || e.key === "NumpadEnter") {
+      e.preventDefault();
+      const currentBarcode = e.target.value;
+      console.log("Calling checkBarcode with:", currentBarcode);
+      checkBarcode(currentBarcode);
     }
   };
 
@@ -437,8 +564,6 @@ const PatientRegistrationAdd = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log("inside");
-
     if (!isBillingCompleted) {
       toast.error("Please fill the billing information before submitting");
       return;
@@ -499,10 +624,6 @@ const PatientRegistrationAdd = () => {
         },
       ];
 
-      console.log("pptestPayload==", pptestPayload);
-
-      console.log("pptestPayload==", pptestPayload);
-
       let abhaPayload = [];
 
       if (abhaMode === "mobile") {
@@ -541,7 +662,14 @@ const PatientRegistrationAdd = () => {
 
       const shortcodesToSend = addedTests.map((t) => Number(t.id));
 
-      console.log("shortcodesToSend ", shortcodesToSend);
+let dobValue = "";
+if (watchedYear && watchedMonth && watchedDay) {
+  const y = watchedYear.toString().padStart(4, "0");
+  const m = watchedMonth.toString().padStart(2, "0");
+  const d = watchedDay.toString().padStart(2, "0");
+  dobValue = `${y}-${m}-${d}`;
+}
+
 
       const payload = {
         p_title: data.p_title,
@@ -549,7 +677,7 @@ const PatientRegistrationAdd = () => {
         city: data.city,
         state: data.state,
         p_name: data.p_name,
-        p_age: data.p_age,
+        p_age: dobValue,
         p_gender: data.p_gender,
         p_regdate: data.p_regdate,
         p_mobile: data.p_mobile,
@@ -585,7 +713,7 @@ const PatientRegistrationAdd = () => {
         "❌ Error response:",
         error.response?.data || error.message
       );
-      toast.error("Failed to register patient");
+      toast.error(error.response?.data || error.message);
     } finally {
       setIsSubmitting(false); // Reset submitting state
     }
@@ -852,7 +980,6 @@ const PatientRegistrationAdd = () => {
                 {...register("patientSourceType", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Source Type</option>
                 <option value="walk-in">Walk-in</option>
                 <option value="in-house">In-house</option>
                 <option value="b2b">B2B</option>
@@ -939,7 +1066,6 @@ const PatientRegistrationAdd = () => {
                 {...register("p_title", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Title</option>
                 <option value="Mr">Mr</option>
                 <option value="Mrs">Mrs</option>
                 <option value="Dr">Dr</option>
@@ -1023,7 +1149,6 @@ const PatientRegistrationAdd = () => {
                 {...register("p_gender", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="TS">TS</option>
@@ -1085,6 +1210,82 @@ const PatientRegistrationAdd = () => {
               )}
             </div>
 
+            <div className="space-y-3">
+              <div>
+                {/* Age Display */}
+                <div className="flex items-center gap-2">
+                  <label className="w-24 text-sm font-medium text-gray-700">
+                    Age
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={ageDisplay}
+                    className="flex-1  text-right focus:outline-none"
+                    placeholder="Auto-calculated"
+                  />
+                </div>
+
+                {/* DOB Inputs */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    maxLength="4"
+                    {...register("dobYear", { required: true })}
+                    placeholder="YYYY"
+                    className="w-full border border-gray-300 rounded px-2 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    maxLength="2"
+                    {...register("dobMonth", { required: true })}
+                    placeholder="MM"
+                    className="w-full border border-gray-300 rounded px-2 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    maxLength="2"
+                    {...register("dobDay", { required: true })}
+                    placeholder="DD"
+                    className="w-full border border-gray-300 rounded px-2 py-2 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Validation */}
+                {(errors.dobYear || errors.dobMonth || errors.dobDay) && (
+                  <p className="text-red-600 text-xs mt-1">
+                    Complete DOB is required
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Date of Birth<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                {...register("dob", {
+                  required: true,
+                  validate: (value) => {
+                    const selectedDate = new Date(value);
+                    const today = new Date();
+                    return (
+                      selectedDate <= today || "Date cannot be in the future"
+                    );
+                  },
+                })}
+                className="w-full border px-3 py-2 rounded"
+              />
+              {errors.dob && (
+                <p className="text-red-600 text-xs mt-1">
+                  {errors.dob.message || "Date of Birth is required"}
+                </p>
+              )}
+            </div> */}
+
+            {/* 
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Age / DOB<span className="text-red-500">*</span>
@@ -1092,19 +1293,18 @@ const PatientRegistrationAdd = () => {
               <input
                 type="text"
                 {...register("p_age", {
-                  required: true,
+                  required: false,
                 })}
-                value={watchedDob || ""}
-                readOnly
+                value={age}
                 className="w-full border px-3 py-2 rounded bg-gray-100"
-                placeholder="Auto-filled as YYYY-MM-DD"
+                placeholder="Auto-filled"
               />
               {errors.p_age && (
                 <p className="text-red-600 text-xs mt-1">
                   Age / DOB is required
                 </p>
               )}
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -1968,7 +2168,7 @@ const PatientRegistrationAdd = () => {
                       className="w-full border px-3 py-2 rounded"
                     />
                   </div>
-
+                  {/* 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Barcode No<span className="text-red-500">*</span>
@@ -1985,12 +2185,70 @@ const PatientRegistrationAdd = () => {
                           message: "Barcode must be 8 characters",
                         },
                       })}
+                      onChange={(e) => setPBarcode(e.target.value)}
                       type="text"
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {errors.barcodeNo && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.barcodeNo.message}
+                      </p>
+                    )}
+                  </div> */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Barcode No<span className="text-red-500">*</span>
+                    </label>
+
+                    <input
+                      {...register("barcodeNo", {
+                        required: "Barcode number is required",
+                        minLength: {
+                          value: 8,
+                          message: "Barcode must be 8 characters",
+                        },
+                        maxLength: {
+                          value: 8,
+                          message: "Barcode must be 8 characters",
+                        },
+                      })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPBarcode(value);
+                        setBarcodeStatus(null);
+
+                        // ✅ Automatically check once 8 digits are typed
+                        if (value.length === 8) {
+                          checkBarcode(value);
+                        }
+                      }}
+                      type="text"
+                      className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+
+                    {/* Validation Error */}
+                    {errors.barcodeNo && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.barcodeNo.message}
+                      </p>
+                    )}
+
+                    {/* API Status */}
+                    {loading && (
+                      <p className="text-blue-500 text-sm mt-1">
+                        Checking barcode...
+                      </p>
+                    )}
+
+                    {barcodeStatus === "duplicate" && (
+                      <p className="text-red-600 text-sm mt-1">
+                        This barcode already exists!
+                      </p>
+                    )}
+
+                    {barcodeStatus === "unique" && (
+                      <p className="text-green-600 text-sm mt-1">
+                        ✅ This barcode is available
                       </p>
                     )}
                   </div>
@@ -2543,7 +2801,7 @@ const PatientRegistrationAdd = () => {
                         {/* Notes */}
                         <div className="bg-white border rounded-lg p-4">
                           <h3 className="text-lg font-medium text-gray-800 mb-3">
-                            Notes<span className="text-red-500">*</span>
+                            Bill Status<span className="text-red-500">*</span>
                           </h3>
                           <textarea
                             rows="4"

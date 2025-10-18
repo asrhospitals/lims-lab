@@ -66,9 +66,7 @@ const TestDetails = () => {
         opNo: item.patientPPModes?.[0]?.popno || "",
         patientDetails: `${item.p_name} / Age: ${item.p_age} / Gender: ${
           item.p_gender
-        } / Tests: ${item.patientTests
-          .map((t) => t.investigation?.testname)
-          .join(", ")}`,
+        } `,
         mobile: item.p_mobile || "",
         barcode: item.patientPPModes?.[0]?.pbarcode || "",
         hospitalName: item.hospital?.hospitalname || "",

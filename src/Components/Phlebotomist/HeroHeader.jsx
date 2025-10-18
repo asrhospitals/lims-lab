@@ -1,5 +1,5 @@
 import React from "react";
-import { RiHome3Line, RiCalendar2Line } from "react-icons/ri";
+import { RiHome3Line } from "react-icons/ri";
 
 const HeroHeader = ({ sidebarWidth }) => {
   return (

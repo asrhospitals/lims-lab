@@ -6,7 +6,7 @@ import Navbar from "./Navbar";
 import AdminContextProvider from "../../context/AdminContextProvider";
 
 const DashboardTechnician = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const sidebarWidth = isCollapsed ? 74 : 256;
 

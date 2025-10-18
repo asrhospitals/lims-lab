@@ -81,7 +81,7 @@ const ViewDoctorRegistration = () => {
     setCurrentPage(1);
   };
   const handleUpdate = (doctor) => {
-    navigate(`/update-doctor/${doctor.id}`);
+    navigate(`/update-doctor-registration/${doctor.id}`);
   };
 
   const columns = [

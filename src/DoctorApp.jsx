@@ -7,7 +7,7 @@ import DoctorNavbar from './Components/Doctor/DoctorNavbar';
 import AdminContextProvider from './context/AdminContextProvider';
 
 function DoctorLayout() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
   const sidebarExpanded = !isCollapsed || isHovered;

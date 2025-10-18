@@ -7,7 +7,9 @@ import Navbar from "./Navbar";
 import AdminContextProvider from "../../context/AdminContextProvider";
 
 const Dashboard = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+
 
   const sidebarWidth = isCollapsed ? 74 : 256;
 
@@ -18,6 +20,8 @@ const Dashboard = () => {
         <Sidebar
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
+          // isHovered={isHovered}
+          // setIsHovered={setIsHovered}
         />
 
         {/* Main Section */}
@@ -37,6 +41,9 @@ const Dashboard = () => {
               isCollapsed={isCollapsed}
               sidebarWidth={sidebarWidth}
               setIsCollapsed={setIsCollapsed}
+              isHovered={isHovered}
+          setIsHovered={setIsHovered}
+
             />
             {/* <DocHeroHeader sidebarWidth={sidebarWidth} /> */}
           </div>

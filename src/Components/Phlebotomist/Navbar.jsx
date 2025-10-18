@@ -19,10 +19,16 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Navbar({ isCollapsed, isHovered, sidebarWidth, setIsCollapsed }) {
+export default function Navbar({
+  isCollapsed,
+  isHovered,
+  setIsHovered,
+  sidebarWidth,
+  setIsCollapsed,
+}) {
   const [showDropdown, setShowDropdown] = useState(null);
   const navigate = useNavigate();
- const storedHospitalName = localStorage.getItem('hospital_name')
+  const storedHospitalName = localStorage.getItem("hospital_name");
 
   useEffect(() => {
     console.log(`Sidebar is now ${isCollapsed ? "collapsed" : "expanded"}`);
@@ -58,23 +64,30 @@ export default function Navbar({ isCollapsed, isHovered, sidebarWidth, setIsColl
           <div className="flex items-center gap-3 flex-1">
             {/* Sidebar toggle */}
             <DisclosureButton
-              onClick={toggleSidebar}
+              onClick={() => setIsCollapsed(!isCollapsed)}
               className="sm:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-blue-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-300"
             >
-              <Bars3Icon className="block size-5" />
-              <XMarkIcon className="hidden size-5" />
+              <Bars3Icon
+                className={`size-5 ${!isCollapsed ? "hidden" : "block"}`}
+              />
+              <XMarkIcon
+                className={`size-5 ${isCollapsed ? "hidden" : "block"}`}
+              />
             </DisclosureButton>
 
             <button
               onClick={toggleSidebar}
               className="hidden sm:flex p-2 rounded-md hover:bg-blue-100 text-gray-700 transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
-              <Bars3Icon className={`size-5 ${isCollapsed ? "rotate-90" : "rotate-0"} transition-transform`} />
+              <Bars3Icon
+                className={`size-5 ${
+                  isCollapsed ? "rotate-90" : "rotate-0"
+                } transition-transform`}
+              />
             </button>
 
             {/* Search bar */}
             <div className="hidden sm:flex relative w-full max-w-md justify-center items-center">
-       
               {/* <input
                 type="text"
                 placeholder="Search..."
@@ -86,10 +99,17 @@ export default function Navbar({ isCollapsed, isHovered, sidebarWidth, setIsColl
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            <h3>       <h4>{storedHospitalName}</h4></h3>
+            <h3>
+              {" "}
+              <h4>{storedHospitalName}</h4>
+            </h3>
             {/* Notification button */}
             <button
-              onClick={() => setShowDropdown(showDropdown === "notifications" ? null : "notifications")}
+              onClick={() =>
+                setShowDropdown(
+                  showDropdown === "notifications" ? null : "notifications"
+                )
+              }
               className="relative p-2 rounded-full text-gray-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <BellIcon className="w-5 h-5" />
@@ -97,14 +117,18 @@ export default function Navbar({ isCollapsed, isHovered, sidebarWidth, setIsColl
 
             {showDropdown === "notifications" && (
               <div className="absolute top-16 right-4 bg-white shadow-xl rounded-xl w-72 max-h-80 overflow-auto p-4 z-20">
-                <h5 className="text-blue-600 font-semibold text-sm mb-2">Notifications</h5>
+                <h5 className="text-blue-600 font-semibold text-sm mb-2">
+                  Notifications
+                </h5>
                 <ul className="space-y-3 text-sm">
                   <li className="border-b pb-1.5">
-                    <strong className="text-gray-800">New Message:</strong> Document #23
+                    <strong className="text-gray-800">New Message:</strong>{" "}
+                    Document #23
                     <p className="text-xs text-gray-500">10:20 AM Today</p>
                   </li>
                   <li className="border-b pb-1.5">
-                    <strong className="text-gray-800">New Message:</strong> Document #28
+                    <strong className="text-gray-800">New Message:</strong>{" "}
+                    Document #28
                     <p className="text-xs text-gray-500">04:30 PM Today</p>
                   </li>
                 </ul>
@@ -131,13 +155,17 @@ export default function Navbar({ isCollapsed, isHovered, sidebarWidth, setIsColl
               <MenuItems className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg ring-1 ring-black/5 z-20 focus:outline-none">
                 <div className="px-3 py-2">
                   <p className="text-sm text-gray-600 font-medium">Admin</p>
-                  <h6 className="text-base font-semibold text-gray-800">Dr. Reddy</h6>
+                  <h6 className="text-base font-semibold text-gray-800">
+                    Dr. Reddy
+                  </h6>
                 </div>
                 <MenuItem>
                   {({ active }) => (
                     <a
                       href="#"
-                      className={`block px-3 py-1.5 text-sm ${active ? "bg-blue-100" : "text-gray-700"}`}
+                      className={`block px-3 py-1.5 text-sm ${
+                        active ? "bg-blue-100" : "text-gray-700"
+                      }`}
                     >
                       Your Profile
                     </a>
@@ -147,7 +175,9 @@ export default function Navbar({ isCollapsed, isHovered, sidebarWidth, setIsColl
                   {({ active }) => (
                     <a
                       href="#"
-                      className={`block px-3 py-1.5 text-sm ${active ? "bg-blue-100" : "text-gray-700"}`}
+                      className={`block px-3 py-1.5 text-sm ${
+                        active ? "bg-blue-100" : "text-gray-700"
+                      }`}
                     >
                       Settings
                     </a>
