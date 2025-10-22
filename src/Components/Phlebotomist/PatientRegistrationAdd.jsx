@@ -852,7 +852,6 @@ const PatientRegistrationAdd = () => {
                 {...register("patientSourceType", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Source Type</option>
                 <option value="walk-in">Walk-in</option>
                 <option value="in-house">In-house</option>
                 <option value="b2b">B2B</option>
@@ -939,7 +938,6 @@ const PatientRegistrationAdd = () => {
                 {...register("p_title", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Title</option>
                 <option value="Mr">Mr</option>
                 <option value="Mrs">Mrs</option>
                 <option value="Dr">Dr</option>
@@ -1023,7 +1021,6 @@ const PatientRegistrationAdd = () => {
                 {...register("p_gender", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="TS">TS</option>
