@@ -31,7 +31,7 @@ const PatientRegistrationAdd = () => {
 
   const [showCamera, setShowCamera] = useState(false);
   const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(false);
-  const [age, setAge] = useState("");
+  const [age, setAge] = useState({ years: "", months: "", days: "" });
 
   const [numberType, setNumberType] = useState("OP");
   // Format today's date as YYYY-MM-DD
@@ -163,7 +163,21 @@ const PatientRegistrationAdd = () => {
     return sum + Number(test.normalprice || 0);
   }, 0);
 
-  // console.log("ptotal==", ptotal);
+
+  const handleDiscountValueChange = (val) => {
+    let value = Number(val);
+
+    if (pdisc.type === "%" && value > 20) {
+      setError("Maximum discount allowed is 20%");
+    } else if (value < 0) {
+      setError("Discount cannot be negative");
+    } else {
+      setError("");
+      setDiscount({ ...pdisc, value });
+    }
+  };
+
+
 
   const discountValue =
     pdisc.type === "%" ? (ptotal * pdisc.value) / 100 : pdisc.value;
@@ -192,25 +206,32 @@ const PatientRegistrationAdd = () => {
 
   const watchedDob = watch("dob");
 
+
   // Auto-calculate age when DOB changes
+
   useEffect(() => {
     if (watchedDob) {
       const today = new Date();
       const birthDate = new Date(watchedDob);
-      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < birthDate.getDate())
-      ) {
-        calculatedAge--;
+
+      let years = today.getFullYear() - birthDate.getFullYear();
+      let months = today.getMonth() - birthDate.getMonth();
+      let days = today.getDate() - birthDate.getDate();
+
+      if (days < 0) {
+        months -= 1;
+        days += new Date(today.getFullYear(), today.getMonth(), 0).getDate(); // days in prev month
       }
-      if (calculatedAge >= 0 && calculatedAge <= 100) {
-        setAge(calculatedAge);
-        setValue("age", calculatedAge);
+      if (months < 0) {
+        years -= 1;
+        months += 12;
       }
+
+      setAge({ years, months, days });
+    } else {
+      setAge({ years: "", months: "", days: "" });
     }
-  }, [watchedDob, setValue]);
+  }, [watchedDob]);
 
   // Fetch hospitaldetails
 
@@ -749,8 +770,8 @@ const PatientRegistrationAdd = () => {
                 {abhaMode === "mobile"
                   ? "Mobile Number:"
                   : abhaMode === "abha"
-                  ? "ABHA ID:"
-                  : "Aadhaar Number:"}{" "}
+                    ? "ABHA ID:"
+                    : "Aadhaar Number:"}{" "}
                 <span className="text-red-500">*</span>
               </label>
               <input
@@ -761,8 +782,8 @@ const PatientRegistrationAdd = () => {
                   abhaMode === "mobile"
                     ? "Enter the ABHA Mobile Number"
                     : abhaMode === "abha"
-                    ? "Enter ABHA ID"
-                    : "Enter Aadhaar Number"
+                      ? "Enter ABHA ID"
+                      : "Enter Aadhaar Number"
                 }
                 className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
@@ -1082,26 +1103,39 @@ const PatientRegistrationAdd = () => {
               )}
             </div>
 
-            <div>
+            <div className="">
               <label className="block text-sm font-medium text-gray-700">
-                Age / DOB<span className="text-red-500">*</span>
+                Age <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                {...register("p_age", {
-                  required: true,
-                })}
-                value={watchedDob || ""}
-                readOnly
-                className="w-full border px-3 py-2 rounded bg-gray-100"
-                placeholder="Auto-filled as YYYY-MM-DD"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={age.years !== "" ? `${age.years} years` : ""}
+                  placeholder="YYYY"
+                  className="w-1/3 border px-3 py-2 rounded bg-gray-100 text-center"
+                />
+                <input
+                  type="text"
+                  readOnly
+                  value={age.months !== "" ? `${age.months} months` : ""}
+                  placeholder="MM"
+                  className="w-1/3 border px-3 py-2 rounded bg-gray-100 text-center"
+                />
+                <input
+                  type="text"
+                  readOnly
+                  value={age.days !== "" ? `${age.days} days` : ""}
+                  placeholder="DD"
+                  className="w-1/3 border px-3 py-2 rounded bg-gray-100 text-center"
+                />
+              </div>
               {errors.p_age && (
-                <p className="text-red-600 text-xs mt-1">
-                  Age / DOB is required
-                </p>
+                <p className="text-red-600 text-xs mt-1">Age / DOB is required</p>
               )}
             </div>
+
+
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -1380,80 +1414,88 @@ const PatientRegistrationAdd = () => {
 
           {/* Guardian Information */}
 
-          <div className="px-6 pt-6">
-            <h3 className=" text-lg font-medium text-gray-900 mb-0">
-              Guardian Information<span className="text-red-500">*</span>
-              <span className="ml-2 text-sm font-normal text-gray-400">
-                (required if patient is minor or elderly)
-              </span>
-            </h3>
-            <div className="mt-1 border-b border-gray-100"></div>
-          </div>
+          {(age.years < 18 || age.years > 65) && (
 
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Name<span className="text-red-500">*</span>
-              </label>
-              <input
-                {...register("guardianName", {
-                  required: true,
-                  pattern: /^[A-Za-z\s]+$/,
-                })}
-                className="w-full border px-3 py-2 rounded"
-                placeholder="Enter Guardian Name"
-              />
-              {errors.guardianName && (
-                <p className="text-red-600 text-xs mt-1">
-                  Name must contain alphabets only
-                </p>
-              )}
-            </div>
+            <>
+              <div className="px-6 pt-6">
+                <h3 className=" text-lg font-medium text-gray-900 mb-0">
+                  Guardian Information<span className="text-red-500">*</span>
+                  <span className="ml-2 text-sm font-normal text-gray-400">
+                    (required if patient is minor or elderly)
+                  </span>
+                </h3>
+                <div className="mt-1 border-b border-gray-100"></div>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Mobile<span className="text-red-500">*</span>
-              </label>
-              <input
-                {...register("guardianMobile", {
-                  required: true,
-                  pattern: /^[0-9]{10}$/,
-                })}
-                className="w-full border px-3 py-2 rounded"
-                placeholder="Enter 10-digit Mobile Number"
-              />
-              {errors.guardianMobile && (
-                <p className="text-red-600 text-xs mt-1">Must be 10 digits</p>
-              )}
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Address (Optional)
-              </label>
-              <input
-                {...register("street")}
-                className="w-full border px-3 py-2 rounded"
-                placeholder="Enter Address"
-              />
-            </div>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Name<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    {...register("guardianName", {
+                      required: true,
+                      pattern: /^[A-Za-z\s]+$/,
+                    })}
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="Enter Guardian Name"
+                  />
+                  {errors.guardianName && (
+                    <p className="text-red-600 text-xs mt-1">
+                      Name must contain alphabets only
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Relation
-              </label>
-              <select
-                {...register("relation")}
-                className="w-full border px-3 py-2 rounded"
-              >
-                <option value="">Select Relation</option>
-                <option value="Parent">Parent</option>
-                <option value="Guardian">Guardian</option>
-                <option value="Relative">Relative</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Mobile<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    {...register("guardianMobile", {
+                      required: true,
+                      pattern: /^[0-9]{10}$/,
+                    })}
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="Enter 10-digit Mobile Number"
+                  />
+                  {errors.guardianMobile && (
+                    <p className="text-red-600 text-xs mt-1">Must be 10 digits</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Address (Optional)
+                  </label>
+                  <input
+                    {...register("street")}
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="Enter Address"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Relation
+                  </label>
+                  <select
+                    {...register("relation")}
+                    className="w-full border px-3 py-2 rounded"
+                  >
+                    <option value="">Select Relation</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Guardian">Guardian</option>
+                    <option value="Relative">Relative</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
+
+
 
           <div className="px-6 pt-6">
             <h3 className=" text-lg font-medium text-gray-900 mb-0">
@@ -2065,11 +2107,10 @@ const PatientRegistrationAdd = () => {
                   {/* Tabs Navigation */}
                   <div className="flex border-b">
                     <button
-                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${
-                        activeTab === "investigation"
-                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                      }`}
+                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${activeTab === "investigation"
+                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveTab("investigation");
@@ -2078,11 +2119,10 @@ const PatientRegistrationAdd = () => {
                       Add Test
                     </button>
                     <button
-                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${
-                        activeTab === "billing"
-                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                      }`}
+                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${activeTab === "billing"
+                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveTab("billing");
@@ -2336,9 +2376,8 @@ const PatientRegistrationAdd = () => {
                             Due Amount
                           </h3>
                           <p
-                            className={`text-xl font-bold ${
-                              dueAmount > 0 ? "text-red-600" : "text-green-600"
-                            }`}
+                            className={`text-xl font-bold ${dueAmount > 0 ? "text-red-600" : "text-green-600"
+                              }`}
                           >
                             ₹{dueAmount}
                           </p>
@@ -2376,16 +2415,20 @@ const PatientRegistrationAdd = () => {
                               type="number"
                               min="0"
                               value={pdisc.value}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setDiscount({
-                                  ...pdisc,
-                                  value: value === "" ? "" : Number(value),
-                                });
-                              }}
-                              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              // onChange={(e) => {
+                              //   const value = e.target.value;
+                              //   setDiscount({
+                              //     ...pdisc,
+                              //     value: value === "" ? "" : Number(value),
+                              //   });
+                              // }}
+                              onChange={(e) => handleDiscountValueChange(e.target.value)}
+                              className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"
+                                }`}
                             />
+                            {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
                           </div>
+
                           <div className="flex items-end">
                             <button
                               onClick={(e) => {

@@ -44,9 +44,10 @@ const PatientReportEntry = () => {
     const fetchReportEntry = async () => {
       try {
         const authToken = localStorage.getItem("authToken");
+        const hospital_id = localStorage.getItem("hospital_id");
 
         const response = await axios.get(
-          "https://asrphleb.asrhospitalindia.in/api/v1/phleb/report/get-center-test/2",
+          `https://asrphleb.asrhospitalindia.in/api/v1/phleb/report/get-center-test/${hospital_id}`,
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
 
