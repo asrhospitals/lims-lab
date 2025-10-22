@@ -1,9 +1,8 @@
-import { useContext, useEffect, useState, useMemo } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../../context/adminContext";
-import PrintSectionDataTable from "../../utils/PrintSectionDataTable";
-import { fetchPatientReportData } from "../../../services/apiService";
+import PhlebotomistDataTable from "../../utils/PhlebotomistDataTable";
 
 const PatientReportPrintSection = () => {
   const [reportDoctors, setReportDoctors] = useState([]);
@@ -13,68 +12,47 @@ const PatientReportPrintSection = () => {
   const [searchInvestigation, setSearchInvestigation] = useState("");
   const { setReportDoctorToUpdate } = useContext(AdminContext);
   const [searchBarcode, setSearchBarcode] = useState("");
-  const [patientFetchData, setPatientFetchData] = useState([]);
-  const [endDate, setEndDate] = useState(""); // To store the "To" date
-  const [isLoading, setIsLoading] = useState(false); // Loading state for API
-
   // Hardcoded data
   useEffect(() => {
-    const fetchPatientData = async () => {
-      try {
-        const id = localStorage.getItem("hospital_id");
-        const response = await fetchPatientReportData(id);
+    const data = [
+      {
+        id: 1,
+        patientcode: "Mahukaram",
+        patientname: "Cardiology",
+        barcode: "MRN001",
+        dateofregistration: "9876543210",
+        hospitalname: "john@example.com",
+        investigationregistrerd: "Mumbai",
+        reportready: "Maharashtra",
+        reportpending: "Maharashtra",
+      },
+      {
+        id: 2,
+        patientcode: "Smitha",
+        patientname: "Neurology",
+        barcode: "MRN002",
+        dateofregistration: "9876543211",
+        hospitalname: "jane@example.com",
+        investigationregistrerd: "Delhi",
+        reportready: "Delhi",
+        reportpending: "Delhi",
+      },
+      {
+        id: 3,
+        patientcode: "Aparna",
+        patientname: "Orthopedics",
+        barcode: "MRN003",
+        dateofregistration: "9876543212",
+        hospitalname: "alice@example.com",
+        investigationregistrerd: "Bangalore",
+        reportready: "Karnataka",
+        reportpending: "Karnataka",
+      },
+    ];
 
-        if (response?.data && Array.isArray(response.data)) {
-          setPatientFetchData(response.data);
-        } else {
-          setPatientFetchData([]);
-        }
-      } catch (error) {
-        console.error("Error fetching patient data:", error);
-        setPatientFetchData([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPatientData();
+    setReportDoctors(data);
+    setFilteredDoctors(data);
   }, []);
-
-
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "patientcode", label: "Patient Code" },
-    { key: "patientname", label: "Patient Name" },
-    { key: "barcode", label: "Barcode" },
-    { key: "dateofregistration", label: "Date of Registration" },
-    { key: "hospitalname", label: "Hospital Name" },
-    { key: "investigationregistrerd", label: "Investigation Registered" },
-    { key: "reportready", label: "Report Ready" },
-    { key: "reportpending", label: "Report Pending" },
-  ];
-
-  const mapped = useMemo(() => {
-    return patientFetchData.map((item, index) => ({
-      id: index + 1,
-      patientcode: item.patientPPModes?.[0]?.popno || "N/A",
-      patientname: item.p_name || "N/A",
-      barcode: item.patientPPModes?.[0]?.pbarcode || "N/A",
-      dateofregistration: item.p_regdate || "N/A",
-      hospitalname: item.hospital?.hospitalname || "N/A",
-      investigationregistrerd: item.patientPPModes?.length || 0,
-      reportready: item.patientBills?.[0]?.billstatus === "Paid" ? "Yes" : "No",
-      reportpending:
-        item.patientBills?.[0]?.billstatus !== "Paid" ? "Yes" : "No",
-    }));
-  }, [patientFetchData]);
-
-
-  const handleUpdate = (item) => {
-    setReportDoctorToUpdate(item);
-    // navigate("/update-report-doctor"); // Optional if using navigation
-  };
-
-
 
   // Search filter
   useEffect(() => {
@@ -97,239 +75,65 @@ const PatientReportPrintSection = () => {
     }
   }, [search, reportDoctors]);
 
-  const handleSearch = async () => {
-    if (!startDate || !endDate) {
-      alert("Please select both start and end dates.");
-      return;
-    }
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "patientcode", label: "Patient Code" },
+    { key: "patientname", label: "Patient Name" },
+    { key: "barcode", label: "Barcode" },
+    { key: "dateofregistration", label: "Date of Registration" },
+    { key: "hospitalname", label: "Hospital Name" },
+    { key: "investigationregistrerd", label: "Investigation Registered" },
+    { key: "reportready", label: "Report Ready" },
+    { key: "reportpending", label: "Report Pending" },
+  ];
 
-    setIsLoading(true);
+  const mappedItems = filteredDoctors.map((doc) => ({
+    ...doc,
+    status: doc.isactive ? "Active" : "Inactive",
+  }));
 
-    try {
-      const hospitalId = localStorage.getItem("hospital_id");
-      const token = localStorage.getItem("authToken"); // Replace 'token' with your actual key
+  const handleUpdate = (item) => {
+    setReportDoctorToUpdate(item);
+    // navigate("/update-report-doctor"); // Optional if using navigation
+  };
 
-      const query = `startDate=${startDate}&endDate=${endDate}&hospitalId=${
-        hospitalId || ""
-      }`;
+  const handleSearch = () => {
+    let filtered = reportDoctors;
 
-      const response = await fetch(
-        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?${query}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // important for 401
-          },
-        }
+    if (searchInvestigation.trim()) {
+      const lower = searchInvestigation.toLowerCase();
+      filtered = filtered.filter(
+        (doc) =>
+          (doc.doctorName || "").toLowerCase().includes(lower) ||
+          (doc.department || "").toLowerCase().includes(lower)
       );
-
-      if (response.status === 401) {
-        alert("Unauthorized! Please login again.");
-        setIsLoading(false);
-        return;
-      }
-
-      const data = await response.json();
-      setPatientFetchData(data);
-    } catch (error) {
-      console.error("Error fetching search results:", error);
-      setPatientFetchData([]);
-    } finally {
-      setIsLoading(false);
     }
+
+    if (searchBarcode.trim()) {
+      const lower = searchBarcode.toLowerCase();
+      filtered = filtered.filter((doc) =>
+        (doc.medicalRegNo || "").toLowerCase().includes(lower)
+      );
+    }
+
+    if (searchDate) {
+      filtered = filtered.filter(
+        (doc) => doc.dateOfRegistration === searchDate
+      );
+    }
+
+    setFilteredDoctors(filtered);
   };
 
   const handleExportExcel = () => {
-    if (!mapped || mapped.length === 0) {
-      alert("No data available to export!");
-      return;
-    }
-
-    // Format headers using column labels
-    const formattedData = mapped.map((row) => {
-      const formattedRow = {};
-      columns.forEach((col) => {
-        formattedRow[col.label] = row[col.key];
-      });
-      return formattedRow;
-    });
-
-    // Create worksheet and workbook
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Patient Report");
-
-    // Generate Excel buffer
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    // Download file
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(
-      blob,
-      `Daily_Patient_Registration_${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`
-    );
+    console.log("Exporting to Excel...");
+    // TODO: add logic (xlsx or SheetJS)
   };
 
-
-
-const handlePrintInvoice = (patient) => {
-  // ✅ Get hospital name from localStorage (with fallback)
-  const hospitalName = localStorage.getItem("hospital_name") || "ASR Hospitals";
-
-  const invoiceWindow = window.open("", "_blank", "width=900,height=1000");
-
-  if (!invoiceWindow) {
-    alert("Please allow pop-ups to view the invoice.");
-    return;
-  }
-
-  const invoiceHTML = `
-    <html>
-      <head>
-        <title>Invoice - ${patient.patientname}</title>
-        <style>
-          body {
-            font-family: "Poppins", Arial, sans-serif;
-            background-color: #f9f8ff;
-            margin: 0;
-            padding: 30px;
-            color: #333;
-          }
-
-          .invoice-container {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(120, 81, 169, 0.1);
-            padding: 30px 40px;
-            border-top: 5px solid #6b21a8;
-          }
-
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-          }
-
-          .header h1 {
-            margin: 0;
-            color: #6b21a8;
-            font-size: 28px;
-            letter-spacing: 0.5px;
-          }
-
-          .header h3 {
-            margin: 4px 0;
-            color: #7e22ce;
-            font-weight: 500;
-          }
-
-          .divider {
-            border-top: 2px solid #a855f7;
-            margin: 20px 0;
-          }
-
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-          }
-
-          th, td {
-            text-align: left;
-            padding: 10px 12px;
-            border-bottom: 1px solid #e5e7eb;
-          }
-
-          th {
-            background-color: #f3e8ff;
-            color: #5b21b6;
-            font-weight: 600;
-            border-bottom: 2px solid #c084fc;
-          }
-
-          tr:hover {
-            background-color: #faf5ff;
-          }
-
-          .highlight {
-            background: #f3e8ff;
-            border-left: 4px solid #a855f7;
-            padding: 12px;
-            margin-top: 20px;
-            border-radius: 8px;
-          }
-
-          .footer {
-            text-align: center;
-            color: #6b7280;
-            font-size: 12px;
-            margin-top: 40px;
-          }
-
-          .footer p {
-            margin: 3px 0;
-          }
-
-          .print-btn {
-            display: inline-block;
-            background-color: #7e22ce;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 20px;
-            transition: 0.3s;
-          }
-
-          .print-btn:hover {
-            background-color: #6b21a8;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="invoice-container">
-          <div class="header">
-            <h1>${hospitalName}</h1>
-            <h3>Patient Invoice</h3>
-          </div>
-
-          <div class="divider"></div>
-
-          <table>
-            <tr><th>Patient Code</th><td>${patient.patientcode}</td></tr>
-            <tr><th>Patient Name</th><td>${patient.patientname}</td></tr>
-            <tr><th>Barcode</th><td>${patient.barcode}</td></tr>
-            <tr><th>Date of Registration</th><td>${patient.dateofregistration}</td></tr>
-            <tr><th>Hospital Name</th><td>${patient.hospitalname}</td></tr>
-            <tr><th>Investigation Registered</th><td>${patient.investigationregistrerd}</td></tr>
-            <tr><th>Report Ready</th><td>${patient.reportready}</td></tr>
-            <tr><th>Report Pending</th><td>${patient.reportpending}</td></tr>
-          </table>
-
-          <div class="highlight">
-            <strong>Note:</strong> Please carry this invoice during your next visit. For billing queries, contact ${hospitalName} billing desk.
-          </div>
-
-          <div class="footer">
-            <p>Generated on ${new Date().toLocaleString()}</p>
-            <p>© ${new Date().getFullYear()} ${hospitalName}. All Rights Reserved.</p>
-            <button class="print-btn" onclick="window.print()">🖨️ Print Invoice</button>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-
-  invoiceWindow.document.write(invoiceHTML);
-  invoiceWindow.document.close();
-};
-
+  const handleExportPDF = () => {
+    console.log("Exporting to PDF...");
+    // TODO: add logic (jspdf or pdfmake)
+  };
 
   return (
     <>
@@ -386,6 +190,13 @@ const handlePrintInvoice = (patient) => {
                   className="w-7 h-7"
                 />
               </div>
+
+              <div
+                onClick={handleExportPDF}
+                className="bg-red-100 rounded-lg p-2 cursor-pointer hover:bg-red-200 transition flex items-center justify-center"
+              >
+                <img src="./pdf.png" alt="Export to PDF" className="w-7 h-7" />
+              </div>
             </div>
           </div>
 
@@ -434,18 +245,17 @@ const handlePrintInvoice = (patient) => {
           </div>
 
           {/* Table */}
-          {patientFetchData.length === 0 ? (
+          {mappedItems.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
               No report entry found.
             </div>
           ) : (
-            <PrintSectionDataTable
-              items={mapped}
+            <PhlebotomistDataTable
+              items={mappedItems}
               columns={columns}
               itemsPerPage={10}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
-                onPrint={handlePrintInvoice}
             />
           )}
         </div>

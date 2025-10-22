@@ -13,14 +13,14 @@ const ViewReferalDoctor = () => {
 
   const navigate = useNavigate();
 
-  // Get token from localStorage
+  // ✅ Get token from localStorage
   const token = localStorage.getItem("authToken");
 
-  // ✅ Function to get axios headers in backend-required format
+  // ✅ Correct header format for backend
   const getAuthHeaders = () => ({
-    AUTHORIZATION: token?.startsWith("Bearer Token ")
+    Authorization: token?.startsWith("Bearer ")
       ? token
-      : `Bearer Token ${token}`,
+      : `Bearer ${token}`,
   });
 
   // ✅ Fetch referal doctors
@@ -28,15 +28,16 @@ const ViewReferalDoctor = () => {
     const fetchReferalDoctors = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3001/lims/master/get-refdoc",
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc",
           {
             headers: getAuthHeaders(),
           }
         );
 
-        const data = (response.data || []).sort(
-          (a, b) => Number(a.id) - Number(b.id)
-        );
+       const data = (response.data?.data || []).sort(
+  (a, b) => Number(a.id) - Number(b.id)
+);
+
         setReferalDoctors(data);
         setFilteredDoctors(data);
       } catch (err) {
@@ -79,7 +80,7 @@ const ViewReferalDoctor = () => {
   const handleUpdate = async (doctor) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/lims/master/get-refdoc/${doctor.id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc/${doctor.id}`,
         {
           headers: getAuthHeaders(),
         }
@@ -90,7 +91,8 @@ const ViewReferalDoctor = () => {
         JSON.stringify(response.data)
       );
 
-      navigate("/update-referal-doctor");
+      navigate(`/update-referal-doctor/${doctor.id}`);
+
     } catch (err) {
       console.error("Update fetch failed:", err);
       alert("Failed to fetch Referral Doctor details. Please try again.");
@@ -106,31 +108,31 @@ const ViewReferalDoctor = () => {
     { key: "ref_by", label: "Referred By" },
     { key: "isactive", label: "Status" },
     { key: "incentive_plan_name", label: "Incentive Plan" },
-    { key: "visit_type", label: "Visit Type" },
-    { key: "incentive_amount_type", label: "Incentive Amount Type" },
-    { key: "street", label: "Street" },
-    { key: "company", label: "Company" },
-    { key: "area", label: "Area" },
-    { key: "city", label: "City" },
-    { key: "state", label: "State" },
-    { key: "pincode", label: "Pincode" },
-    { key: "email", label: "Email" },
-    { key: "marketing_source", label: "Marketing Source" },
-    { key: "other_agents", label: "Other Agents" },
-    { key: "other_details", label: "Other Details" },
-    { key: "include_in_referred_by", label: "Include in Referred By" },
-    { key: "is_external", label: "Is External" },
-    {
-      key: "consultant_incentive_rate_plan",
-      label: "Consultant Incentive Rate Plan",
-    },
-    {
-      key: "referral_incentive_rate_plan",
-      label: "Referral Incentive Rate Plan",
-    },
+    // { key: "visit_type", label: "Visit Type" },
+    // { key: "incentive_amount_type", label: "Incentive Amount Type" },
+    // { key: "street", label: "Street" },
+    // { key: "company", label: "Company" },
+    // { key: "area", label: "Area" },
+    // { key: "city", label: "City" },
+    // { key: "state", label: "State" },
+    // { key: "pincode", label: "Pincode" },
+    // { key: "email", label: "Email" },
+    // { key: "marketing_source", label: "Marketing Source" },
+    // { key: "other_agents", label: "Other Agents" },
+    // { key: "other_details", label: "Other Details" },
+    // { key: "include_in_referred_by", label: "Include in Referred By" },
+    // { key: "is_external", label: "Is External" },
+    // {
+    //   key: "consultant_incentive_rate_plan",
+    //   label: "Consultant Incentive Rate Plan",
+    // },
+    // {
+    //   key: "referral_incentive_rate_plan",
+    //   label: "Referral Incentive Rate Plan",
+    // },
     { key: "pharmacy_incentive_percentage", label: "Pharmacy Incentive %" },
     { key: "include_discount", label: "Include Discount" },
-    { key: "include_full_discount", label: "Include Full Discount" },
+    // { key: "include_full_discount", label: "Include Full Discount" },
   ];
 
   const mappedItems = filteredDoctors.map((doc) => ({
@@ -161,7 +163,7 @@ const ViewReferalDoctor = () => {
                 to="/view-refdoc"
                 className="text-gray-700 hover:text-teal-600"
               >
-                Referral Doctors
+                Referal Doctors
               </Link>
             </li>
             <li className="text-gray-400">/</li>
@@ -178,7 +180,7 @@ const ViewReferalDoctor = () => {
           {/* Header & Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-              Referral Doctor List
+              Referal Doctor List
             </h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
@@ -211,14 +213,14 @@ const ViewReferalDoctor = () => {
             <div className="text-center py-6 text-red-500">{error}</div>
           ) : filteredDoctors.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
-              No referral doctors found.
+              No referal doctors found.
             </div>
           ) : (
             <DataTable
               items={mappedItems}
               columns={columns}
               itemsPerPage={10}
-              showDetailsButtons={true}
+              showDetailsButtons={false}
               onUpdate={handleUpdate}
             />
           )}

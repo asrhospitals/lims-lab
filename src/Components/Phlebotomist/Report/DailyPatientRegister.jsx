@@ -1,15 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-<<<<<<< HEAD
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
-=======
 import { RiSearchLine } from "react-icons/ri";
->>>>>>> updated code
 
 import axios from "axios";
 import { useForm } from "react-hook-form";
-import { fetchPatientReportData } from "../../../services/apiService";
+import { fetchPhebotomistPatientData } from "../../../services/apiService";
 import PhlebotomistDataTable from "../../utils/PhlebotomistDataTable";
 
 const DailyPatientRegister = () => {
@@ -21,11 +16,7 @@ const DailyPatientRegister = () => {
   const [patientFetchData, setPatientFetchData] = useState([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState(""); // Add this for end date
-<<<<<<< HEAD
-  const [searchbybarcode, setSearchByBarcode] = useState(""); // Add this for end date
-=======
 
->>>>>>> updated code
   const {
     register,
     formState: { errors },
@@ -49,32 +40,19 @@ const DailyPatientRegister = () => {
   }, [search, reportDoctors]);
 
   // ------------------ Fetch Patient Data ------------------
-
   useEffect(() => {
     const fetchPatientData = async () => {
       try {
         const id = localStorage.getItem("hospital_id");
-        const response = await fetchPatientReportData(id);
+        const response = await fetchPhebotomistPatientData(id);
 
-<<<<<<< HEAD
-=======
         console.log("response ==", response.data);
 
         // response.data should be the array
->>>>>>> updated code
         if (response?.data && Array.isArray(response.data)) {
-          // Get today's date in YYYY-MM-DD format
-          const today = new Date();
-          const todayStr = today.toISOString().split("T")[0];
-
-          // Filter patients registered today
-          const todaysPatients = response.data.filter(
-            (patient) => patient.p_regdate === todayStr
-          );
-
-          setPatientFetchData(todaysPatients);
+          setPatientFetchData(response.data);
         } else {
-          setPatientFetchData([]);
+          setPatientFetchData([]); // fallback empty array
         }
       } catch (error) {
         console.error("Error fetching patient data:", error);
@@ -119,76 +97,6 @@ const DailyPatientRegister = () => {
     setReportDoctorToUpdate(item);
   };
 
-<<<<<<< HEAD
-  const handleSearch = async () => {
-    if (!startDate || !endDate) {
-      alert("Please select both start and end dates.");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const hospitalId = localStorage.getItem("hospital_id");
-      const token = localStorage.getItem("authToken"); // Replace 'token' with your actual key
-
-      const query = `startDate=${startDate}&endDate=${endDate}&hospitalId=${
-        hospitalId || ""
-      }`;
-
-      const response = await fetch(
-        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?${query}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // important for 401
-          },
-        }
-      );
-
-      if (response.status === 401) {
-        alert("Unauthorized! Please login again.");
-        setIsLoading(false);
-        return;
-      }
-
-      const data = await response.json();
-      setPatientFetchData(data);
-    } catch (error) {
-      console.error("Error fetching search results:", error);
-      setPatientFetchData([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleExportExcel = () => {
-    if (!mapped || mapped.length === 0) {
-      alert("No data to export!");
-      return;
-    }
-
-    // Convert data to worksheet
-    const worksheet = XLSX.utils.json_to_sheet(mapped);
-
-    // Create a new workbook and append the worksheet
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Patients");
-
-    // Generate buffer
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    // Create blob and save file
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(
-      data,
-      `Daily_Patient_Report_${new Date().toISOString().split("T")[0]}.xlsx`
-    );
-  };
-=======
 const handleSearch = async () => {
   if (!startDate) {
     alert("Please select a start date");
@@ -231,7 +139,6 @@ const handleSearch = async () => {
 
   const handleExportExcel = () => console.log("Exporting to Excel...");
   const handleExportPDF = () => console.log("Exporting to PDF...");
->>>>>>> updated code
 
   return (
     <>
@@ -280,41 +187,16 @@ const handleSearch = async () => {
                   className="w-7 h-7"
                 />
               </div>
+              <div
+                onClick={handleExportPDF}
+                className="bg-red-100 rounded-lg p-2 cursor-pointer hover:bg-red-200 transition flex items-center justify-center"
+              >
+                <img src="./pdf.png" alt="Export to PDF" className="w-7 h-7" />
+              </div>
             </div>
           </div>
 
           {/* Search + Filter Section */}
-<<<<<<< HEAD
-          <div className="flex items-end gap-2 mb-4 flex-wrap">
-            {/* From Date */}
-            <div className="w-[150px]">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
-              />
-            </div>
-
-            {/* To Date */}
-            <div className="w-[150px]">
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
-              />
-            </div>
-
-            {/* Search Button */}
-            <div>
-              <button
-                onClick={handleSearch}
-                className="px-3 py-1 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105 text-sm"
-              >
-                {isLoading ? "Searching..." : "Search"}
-              </button>
-=======
           <div className="flex flex-col sm:flex-row items-end gap-4 mb-4 flex-wrap">
             <div className="flex flex-col sm:flex-row gap-2 items-end">
               {/* Start Date */}
@@ -342,7 +224,6 @@ const handleSearch = async () => {
                   Search
                 </button>
               </div>
->>>>>>> updated code
             </div>
           </div>
 

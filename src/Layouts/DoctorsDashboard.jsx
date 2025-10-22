@@ -7,7 +7,7 @@ import DocNavbar from "../Components/Admin/DocNavbar";
 import AdminContextProvider from "../context/AdminContextProvider";
 
 const DoctorsDashboard = () => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const sidebarWidth = isCollapsed ? 74 : 256;
 

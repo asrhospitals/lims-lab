@@ -18,28 +18,49 @@ const ViewColor = () => {
 
   const navigate = useNavigate();
 
+  // Mapping for status to emoji
+  const statusMap = {
+    done: { emoji: "🟢", color: "00FF00" },
+    pending: { emoji: "🟡", color: "FFFF00" },
+    accept: { emoji: "🔴", color: "FF0000" },
+    reject: { emoji: "⚫", color: "A9A9A9" },
+  };
+
+  // Fetch colors from API
+  const fetchColors = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+
+      // ✅ [ADDED LINE] Build pagination query params
+      const params = { page: currentPage, limit: itemsPerPage };
+
+      const response = await axios.get(
+        "https://asrlabs.asrhospitalindia.in/lims/master/get-color",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params, // ✅ [ADDED LINE] Send pagination params to API
+        }
+      );
+
+      const data = response.data.data || [];
+
+      // ✅ [ADDED LINE] Debug API response
+      console.log("Fetched colors:", data, "Meta:", response.data.meta);
+
+      setColors(data);
+      setFilteredColors(data);
+      setTotalPages(response.data.meta?.totalPages || 1);
+      setTotalItems(response.data.meta?.totalItems || data.length);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch colors.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ [ADDED LINE] Fetch on mount & whenever page/itemsPerPage changes
   useEffect(() => {
-    const fetchColors = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-color",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        const data = response.data.data || [];
-        setColors(data);
-        setFilteredColors(data);
-        setTotalPages(response.data.meta?.totalPages || 1);
-        setTotalItems(response.data.meta?.totalItems || data.length);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch colors.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchColors();
   }, [currentPage, itemsPerPage]);
 
@@ -50,11 +71,16 @@ const ViewColor = () => {
     } else {
       const lower = search.toLowerCase();
       const filtered = colors.filter((c) => {
-        const colorHex = c.colorcode?.hex || "";
-        const colorName = c.status_of_color || "";
+        const hex =
+          typeof c.colorcode === "string"
+            ? c.colorcode.replace("#", "")
+            : "";
+        const status = c.status_of_color || "";
+        const statusEmoji = statusMap[status.toLowerCase()]?.emoji || "";
         return (
-          colorHex.toLowerCase().includes(lower) ||
-          colorName.toLowerCase().includes(lower)
+          hex.toLowerCase().includes(lower) ||
+          status.toLowerCase().includes(lower) ||
+          statusEmoji.includes(lower)
         );
       });
       setFilteredColors(filtered);
@@ -71,7 +97,6 @@ const ViewColor = () => {
     navigate(`/update-color/${color.id}`);
   };
 
-  // ✅ Show Preview Modal
   const handlePreview = (color) => {
     setSelectedColor(color);
   };
@@ -80,12 +105,13 @@ const ViewColor = () => {
     setSelectedColor(null);
   };
 
+  // Columns for DataTable
   const columns = [
     { key: "id", label: "S. No" },
-    { key: "color_name", label: "Color Name" },
+    { key: "status", label: "Status" },
     {
       key: "color_hex",
-      label: "Color Code",
+      label: "Color",
       render: (item) => (
         <div className="flex items-center gap-2">
           <span>{item.color_hex}</span>
@@ -93,7 +119,7 @@ const ViewColor = () => {
             style={{
               width: "16px",
               height: "16px",
-              backgroundColor: item.color_hex,
+              backgroundColor: `#${item.color_hex}`,
               borderRadius: "50%",
               border: "1px solid #ccc",
             }}
@@ -101,25 +127,39 @@ const ViewColor = () => {
         </div>
       ),
     },
-    {
-      key: "preview",
-      label: "Preview",
-      render: (item) => (
-        <button
-          onClick={() => handlePreview(item)}
-          className="text-teal-600 hover:text-teal-800 flex items-center gap-1"
-        >
-          <RiEyeLine /> View
-        </button>
-      ),
-    },
+    // {
+    //   key: "preview",
+    //   label: "Preview",
+    //   render: (item) => (
+    //     <button
+    //       onClick={() => handlePreview(item)}
+    //       className="text-teal-600 hover:text-teal-800 flex items-center gap-1"
+    //     >
+    //       <RiEyeLine /> View
+    //     </button>
+    //   ),
+    // },
   ];
 
-  const mappedItems = filteredColors.map((c, index) => ({
-    id: c.id ?? index + 1,
-    color_name: c.status_of_color || "Unknown",
-    color_hex: c.colorcode?.hex || "#ffffff",
-  }));
+  const mappedItems = filteredColors.map((c, index) => {
+    const statusKey = (c.status_of_color || "reject").toLowerCase();
+    const statusInfo = statusMap[statusKey] || statusMap.reject;
+
+    const hex =
+      typeof c.colorcode === "string"
+        ? c.colorcode.replace("#", "")
+        : statusInfo.color;
+
+    // Absolute sequence number considering pagination
+    const absoluteIndex = (currentPage - 1) * itemsPerPage + index + 1;
+
+    return {
+      id: absoluteIndex, // this will be sequential
+      status: statusInfo.emoji,
+      color_hex: hex,
+      color_name: c.status_of_color || "Unknown",
+    };
+  });
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -224,7 +264,7 @@ const ViewColor = () => {
         </div>
       </div>
 
-      {/* ✅ Color Preview Modal */}
+      {/* Color Preview Modal */}
       {selectedColor && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50">
           <div className="bg-white rounded-xl shadow-lg p-6 w-80 text-center relative">
@@ -239,12 +279,12 @@ const ViewColor = () => {
             </h3>
             <div
               className="w-32 h-32 rounded-full mx-auto border-2 border-gray-300 shadow"
-              style={{ backgroundColor: selectedColor.color_hex }}
+              style={{ backgroundColor: `#${selectedColor.color_hex}` }}
             />
             <p className="mt-4 font-medium text-gray-600">
               Hex Code:{" "}
               <span className="text-teal-600 font-bold">
-                {selectedColor.color_hex}
+                #{selectedColor.color_hex}
               </span>
             </p>
           </div>

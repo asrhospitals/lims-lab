@@ -14,9 +14,6 @@ const PatientRegistration = () => {
   const [toDate, setToDate] = useState("");
   const [pBarcode, setPBarcode] = useState("");
   const navigate = useNavigate();
-const [searchValue, setSearchValue] = useState("");
-
-
 
   // 🔹 Initial Fetch Patients
   useEffect(() => {
@@ -50,10 +47,7 @@ const [searchValue, setSearchValue] = useState("");
           p_mobile: item.p_mobile,
           hospital_name: item.hospital?.hospitalname ?? "-",
           p_regdate: item.p_regdate,
-          reg_by: item.reg_by,
           registration_status: item.registration_status ?? "-",
-  billstatus: item.patientBills?.[0]?.billstatus ?? "-",
-
         }));
 
         setPatients(formattedData);
@@ -84,90 +78,66 @@ const [searchValue, setSearchValue] = useState("");
   }, [search, patients]);
 
   // 🔹 Fetch by Date / Barcode
-const fetchPatientsBySearch = async () => {
-  if (!searchValue && !fromDate && !toDate) {
-    alert("Please enter a search value or date range.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-    setError("");
-    const authToken = localStorage.getItem("authToken");
-    const hospitalId = localStorage.getItem("hospital_id") || 2;
-
-    const buildUrl = (param, value) => {
-      const query = [];
-      if (fromDate) query.push(`startDate=${fromDate}`);
-      if (toDate) query.push(`endDate=${toDate}`);
-      if (value) query.push(`${param}=${encodeURIComponent(value)}`);
-      return `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient/${hospitalId}?${query.join("&")}`;
-    };
-
-    let patientsArray = [];
-
-    // Sequential search params
-    const searchParams = ["pbarcode", "p_mobile", "p_name", "refdoc", "department"];
-    const validBillStatus = ["Paid", "Pending", "Partial"];
-
-    // Loop through search params
-    for (const param of searchParams) {
-      const url = buildUrl(param, searchValue);
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        patientsArray = result.data || [];
-        if (patientsArray.length > 0) break; // stop if found
-      }
+  const fetchPatientsByDate = async () => {
+    if ((!fromDate || !toDate) && !pBarcode) {
+      alert("Please enter a date range or a patient barcode to search.");
+      return;
     }
 
-    // Try billstatus last if still no data
-    if (patientsArray.length === 0 && validBillStatus.includes(searchValue)) {
-      const url = buildUrl("billstatus", searchValue);
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },
-      });
-      if (response.ok) {
-        const result = await response.json();
-        patientsArray = result.data || [];
+    try {
+      setLoading(true);
+      const authToken = localStorage.getItem("authToken");
+
+      let query = [];
+      if (fromDate && toDate)
+        query.push(`startDate=${fromDate}&endDate=${toDate}`);
+      if (pBarcode) query.push(`pbarcode=${pBarcode}`);
+
+      const response = await fetch(
+        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?${query.join(
+          "&"
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch by date");
+
+      const result = await response.json();
+      const patientsArray = Array.isArray(result) ? result : result.data || [];
+
+      const formattedData = patientsArray.map((item, idx) => ({
+        id: item.id || idx + 1,
+        p_name: item.p_name,
+        pbarcode: item.patientPPModes?.[0]?.pbarcode ?? "-",
+        p_age: item.p_age,
+        p_gender: item.p_gender,
+        p_mobile: item.p_mobile ?? "-",
+        hospital_name: item.hospital?.hospitalname ?? "-",
+        p_regdate: item.p_regdate,
+        registration_status: item.registration_status ?? "-",
+      }));
+
+      setPatients(formattedData);
+      setFilteredPatients(formattedData);
+
+      if (formattedData.length === 0) {
+        setError("No patients found for this date range.");
+      } else {
+        setError("");
       }
+    } catch (err) {
+      console.error("Error fetching patients by date:", err);
+      setError("Failed to fetch patients by date.");
+    } finally {
+      setLoading(false);
     }
-
-    // Format data
-    const formattedData = patientsArray.map((item, idx) => ({
-      id: item.id || idx + 1,
-      p_name: item.p_name,
-      pbarcode: item.patientPPModes?.[0]?.pbarcode ?? "-",
-      p_age: item.p_age,
-      p_gender: item.p_gender,
-      p_mobile: item.p_mobile ?? "-",
-      hospital_name: item.hospital?.hospitalname ?? "-",
-      p_regdate: item.p_regdate,
-      registration_status: item.patientBills?.[0]?.billstatus ?? "-",
-      refdoc: item.patientPPModes?.[0]?.refdoc ?? "-",
-      department: item.patientTests?.[0]?.investigation?.department?.dptname ?? "-",
-    }));
-
-    setPatients(formattedData);
-    setFilteredPatients(formattedData);
-    setError(formattedData.length === 0 ? "No patients found." : "");
-  } catch (err) {
-    console.error("Error fetching patients:", err);
-    setError(err.message || "Failed to fetch patients.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
-
-
+  };
 
   // 🔹 Export to Excel
   const handleExportExcel = () => {
@@ -207,11 +177,8 @@ const fetchPatientsBySearch = async () => {
     { key: "p_gender", label: "Gender" },
     { key: "p_mobile", label: "Mobile" },
     { key: "hospital_name", label: "Hospital" },
-    { key: "billstatus", label: "Bill Status" },
     { key: "p_regdate", label: "Registration Date" },
-    { key: "reg_by", label: "Registered By" },
-
-
+    { key: "registration_status", label: "Status" },
   ];
 
   const mappedItems = filteredPatients.map((item) => ({
@@ -305,29 +272,28 @@ const fetchPatientsBySearch = async () => {
               />
             </div>
 
-      <div className="flex w-full md:w-auto items-end gap-2">
-  <div className="flex flex-col w-full md:w-72">
-    <label className="block text-sm font-medium text-gray-700">
-      Search by any
-    </label>
-    <input
-      type="text"
-      value={searchValue}
-      onChange={(e) => setSearchValue(e.target.value)}
-      placeholder="Enter name, barcode, mobile, ref doc, bill status, or department"
-      className="border px-3 py-2 rounded w-full"
-    />
-  </div>
+            <div className="flex flex-col w-full md:w-48">
+              <label className="block text-sm font-medium text-gray-700">
+                Patient Barcode
+              </label>
+              <input
+                type="text"
+                value={pBarcode}
+                onChange={(e) => setPBarcode(e.target.value)}
+                placeholder="Enter barcode"
+                className="border px-3 py-2 rounded w-full"
+              />
+            </div>
 
-  <button
-    type="button"
-    onClick={fetchPatientsBySearch}
-    className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 w-full md:w-auto"
-  >
-    Search
-  </button>
-</div>
-
+            <div className="flex w-full md:w-auto items-end">
+              <button
+                type="button"
+                onClick={fetchPatientsByDate}
+                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 w-full md:w-auto"
+              >
+                Search
+              </button>
+            </div>
           </div>
 
           {/* Table */}

@@ -2,13 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-<<<<<<< HEAD
-import ImageDIsplatDataTable from "../utils/ImageDIsplatDataTable";
-// Utility to generate consistent gradient based on name
-=======
 import DataTable from "../utils/DataTable";
 
->>>>>>> updated code
 const stringToColor = (str) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -82,59 +77,6 @@ const ViewDoctorRegistration = () => {
   const handleUpdate = (doctor) => {
     navigate(`/update-doctor-registration/${doctor.id}`);
   };
-<<<<<<< HEAD
-
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "dname", label: "Name" },
-    { key: "dqlf", label: "Qualification" },
-    { key: "dspclty", label: "Specialty" },
-    { key: "ddpt", label: "Department" },
-    { key: "dregno", label: "Reg. Number" },
-    { key: "dcnt", label: "Phone" },
-    { key: "demail", label: "Email" },
-    {
-      key: "dphoto",
-      label: "Profile Image",
-      render: (d) => {
-        const color = stringToColor(d.dname || "Doctor");
-        const initials = d.dname
-          ? d.dname
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()
-          : "?";
-
-        // Check if dphoto is a valid URL
-        const isValidUrl = (url) => {
-          try {
-            return Boolean(new URL(url));
-          } catch {
-            return false;
-          }
-        };
-
-        return (
-          <div className="relative group">
-            {d.dphoto ? (
-              <img
-                src={encodeURI(d.dphoto)}
-                alt={d.dname}
-                className="w-24 h-24 rounded-full border-4 border-gradient-to-r from-teal-400 to-blue-500 object-cover transition-transform group-hover:scale-110 cursor-pointer"
-              />
-            ) : (
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer"
-                style={{ backgroundColor: color }}
-              >
-                {initials}
-              </div>
-            )}
-          </div>
-        );
-      },
-=======
 const columns = [
   { key: "id", label: "ID" },
   { key: "dname", label: "Name" },
@@ -174,7 +116,6 @@ const columns = [
           {initials}
         </div>
       );
->>>>>>> updated code
     },
   },
   { key: "dstatus", label: "Status" },
@@ -277,21 +218,6 @@ const columns = [
               No doctors found.
             </div>
           ) : (
-<<<<<<< HEAD
-            <ImageDIsplatDataTable
-              items={filteredDoctors}
-              columns={columns}
-              serverSidePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              showDetailsButtons={false}
-              onUpdate={handleUpdate}
-            />
-=======
             <div className="overflow-x-auto">
               <div className="min-w-[1000px]">
                 <DataTable
@@ -310,7 +236,6 @@ const columns = [
                 />
               </div>
             </div>
->>>>>>> updated code
           )}
         </div>
       </div>

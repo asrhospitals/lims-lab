@@ -51,15 +51,6 @@ const Sidebar = ({
 
       // ]
     },
-      {
-      name: "Details",
-      icon: <FaChartBar />,
-      roles: ["phlebotomist"],
-      children: [
-        { name: "Registration Details", link: "/patient-registration", roles: ["phlebotomist"] },
-        { name: "Test Details", link: "/test-details", roles: ["phlebotomist"] },
-      ]
-    },
     {
       name: "Report",
       icon: <FaChartBar />,
@@ -73,7 +64,15 @@ const Sidebar = ({
         { name: "Report Register", link: "/daily-patient-report-register", roles: ["phlebotomist"] },
       ]
     },
-  
+    {
+      name: "Details",
+      icon: <FaChartBar />,
+      roles: ["phlebotomist"],
+      children: [
+        { name: "Registration Details", link: "/patient-registration", roles: ["phlebotomist"] },
+        { name: "Test Details", link: "/test-details", roles: ["phlebotomist"] },
+      ]
+    },
 
     {
       name: "Rejected Sample Collections",

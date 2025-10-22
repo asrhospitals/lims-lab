@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import AdminContext from "../../context/adminContext";
 
 const UpdateColor = () => {
@@ -27,39 +27,35 @@ const UpdateColor = () => {
     },
   });
 
+  // ----------------- AUTO FILL LOGIC -----------------
   useEffect(() => {
-    const fetchColor = async () => {
+    const fetchColorFallback = async () => {
       try {
         const token = localStorage.getItem("authToken");
+        // Fetch all colors and find the one with matching ID
+        const res = await axios.get(
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-color",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { page: 1, limit: 100 },
+          }
+        );
+        const allColors = res.data?.data || [];
+        const data = allColors.find((c) => c.id === Number(id));
 
-        if (colorToUpdate) {
-          // ✅ Use context data if available
-          reset({
-            status_of_color:
-              colorToUpdate.status_of_color ||
-              colorToUpdate.colorstatus ||
-              "unknown",
-            colorcode:
-              colorToUpdate.colorcode?.hex ||
-              colorToUpdate.colorcode ||
-              "#000000",
-          });
-        } else {
-          // ✅ Fetch data from API if not in context
-          const res = await axios.get(
-            `https://asrlabs.asrhospitalindia.in/lims/master/view-color/${id}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
+        if (!data) throw new Error("Color not found");
 
-          const data = res.data?.data || {};
-          reset({
-            status_of_color:
-              data.status_of_color || data.colorstatus || "unknown",
-            colorcode: data.colorcode?.hex || data.colorcode || "#000000",
-          });
-        }
+        const colorcode =
+          typeof data.colorcode === "string"
+            ? data.colorcode.startsWith("#")
+              ? data.colorcode
+              : `#${data.colorcode}`
+            : "#000000";
+
+        reset({
+          status_of_color: data.status_of_color || "unknown",
+          colorcode,
+        });
       } catch (error) {
         console.error("Failed to fetch color:", error);
         toast.error("❌ Failed to load color details.");
@@ -69,8 +65,25 @@ const UpdateColor = () => {
       }
     };
 
-    fetchColor();
+    if (colorToUpdate) {
+      const data = colorToUpdate;
+      const colorcode =
+        typeof data.colorcode === "string"
+          ? data.colorcode.startsWith("#")
+            ? data.colorcode
+            : `#${data.colorcode}`
+          : "#000000";
+
+      reset({
+        status_of_color: data.status_of_color || "unknown",
+        colorcode,
+      });
+      setLoading(false);
+    } else {
+      fetchColorFallback();
+    }
   }, [colorToUpdate, id, navigate, reset]);
+  // ---------------------------------------------------
 
   const onSubmit = async (formData) => {
     setIsSubmitting(true);
@@ -121,7 +134,7 @@ const UpdateColor = () => {
       validation: {
         required: "Color code is required",
         pattern: {
-          value: /^#([0-9A-Fa-f]{3}){1,2}$/,
+          value: /^#([0-9A-Fa-f]{3}){1,2}$/i,
           message: "Must be a valid hex color",
         },
       },
@@ -139,9 +152,42 @@ const UpdateColor = () => {
   return (
     <div className="container max-w-7xl mx-auto w-full mt-6 px-2 sm:px-4 text-sm">
       <ToastContainer />
+
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-color"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Colors
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Update Color
+            </li>
+          </ol>
+        </nav>
+      </div>
+
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
+        className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200 mt-14"
       >
         <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
           <h4 className="font-semibold text-white">Update Color</h4>

@@ -82,7 +82,7 @@ const ViewNodalInstrument = () => {
   const handleUpdate = (instrument) => {
     setNodalInstrumentToUpdate(instrument);
     localStorage.setItem("nodalinstrumentToUpdate", JSON.stringify(instrument));
-    navigate("/update-nodal-instrument");
+     navigate(`/update-nodal-instrument/${instrument.id}`);
   };
 
   const columns = [

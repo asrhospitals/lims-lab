@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Upload as UploadIcon, X, User, Briefcase, Phone, Mail, FileText, Signature, ChevronDown } from 'lucide-react';
-<<<<<<< HEAD
-import { toast, ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css'; 
-import { useNavigate } from "react-router-dom";
-=======
 import { useNavigate } from 'react-router-dom'; // ✅ Added for navigation
 import { viewDepartments } from "../../services/apiService";
 
->>>>>>> updated code
 // Custom Dropdown Component
 const CustomDropdown = ({ options, value, onChange, placeholder, disabled = false, className = '' }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -392,117 +386,6 @@ useEffect(() => {
   
 const handleSubmit = async (e) => {
   e.preventDefault();
-<<<<<<< HEAD
-  setIsSubmitting(true);
-
-  try {
-    toast.info("Uploading digital signature...", { autoClose: 1500 });
-
-    // First upload signature
-    const signatureFormData = new FormData();
-    signatureFormData.append('digitalsignature', formData.digitalSignature);
-    
-    const signatureResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/signature/upload-signature', {
-      method: 'POST',
-      body: signatureFormData,
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      }
-    });
-    
-    const signatureData = await signatureResponse.json();
-    toast.success("Digital signature uploaded!", { autoClose: 1500 });
-
-    // Upload profile photo
-    toast.info("Uploading profile photo...", { autoClose: 1500 });
-    const profileFormData = new FormData();
-    profileFormData.append('profile', formData.photo);
-
-    const profileResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/profile/upload-profile', {
-      method: 'POST',
-      body: profileFormData,
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      }
-    });
-
-    const profileData = await profileResponse.json();
-    toast.success("Profile photo uploaded!", { autoClose: 1500 });
-
-    // Upload certificate
-    toast.info("Uploading certificate...", { autoClose: 1500 });
-    const certFormData = new FormData();
-    certFormData.append('certificate', formData.certificates[0]);
-
-    const certResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/certificate/upload-certificate', {
-      method: 'POST',
-      body: certFormData,
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      }
-    });
-
-    const certData = await certResponse.json();
-    toast.success("Certificate uploaded!", { autoClose: 1500 });
-
-    // Submit doctor data
-    const doctorData = {
-      dname: formData.fullName,
-      ddob: formData.dateOfBirth,
-      dqlf: formData.qualification,
-      dspclty: formData.specialty,
-      ddpt: formData.parentDepartment,
-      dregno: formData.registrationNumber,
-      dregcnl: formData.registrationCouncil,
-      dcnt: formData.contactNumber,
-      dwhtsap: formData.whatsappNumber,
-      demail: formData.email,
-      dphoto: profileData.fileUrl,
-      dcrtf: certData.fileUrl,
-      dditsig: signatureData.fileUrl,
-      dstatus: 'pending'
-    };
-
-    const doctorResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/master/add-doctor', {
-      method: 'POST',
-      body: JSON.stringify(doctorData),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      }
-    });
-
-    const result = await doctorResponse.json();
-
-    if (result.id) {
-      toast.success("Doctor registered successfully!", { autoClose: 2000 });
-      setSuccessMessage(result);
-
-      // Reset form
-      setFormData({
-        fullName: '',
-        dateOfBirth: '',
-        qualification: '',
-        specialty: '',
-        parentDepartment: '',
-        registrationNumber: '',
-        registrationCouncil: '',
-        contactNumber: '',
-        whatsappNumber: '',
-        email: '',
-        photo: null,
-        certificates: [],
-        digitalSignature: null,
-      });
-      setErrors({});
-        navigate("/view-doctor-registration-details");
-    } else {
-      toast.error("Doctor registration failed!", { autoClose: 2000 });
-    }
-  } catch (error) {
-    console.error('Registration failed:', error);
-    toast.error("An error occurred during registration!", { autoClose: 2000 });
-=======
   if (!validateForm()) return; // ✅ Validation first
   setIsSubmitting(true);
 
@@ -627,16 +510,12 @@ const handleSubmit = async (e) => {
   } catch (error) {
     console.error("Registration failed:", error);
     setToastMessage("Registration failed. Please try again.");
->>>>>>> updated code
   } finally {
     setIsSubmitting(false);
   }
 };
-<<<<<<< HEAD
-=======
 
 
->>>>>>> updated code
   
   const handleFileChange = (field, files) => {
     setFormData(prev => ({
@@ -646,7 +525,6 @@ const handleSubmit = async (e) => {
   };
   
   return (
-    <>
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -945,8 +823,6 @@ const handleSubmit = async (e) => {
         </div>
       </div>
     </div>
-      <ToastContainer position="top-right" newestOnTop />
-  </>
   );
 };
 
