@@ -1,7 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+<<<<<<< HEAD
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+=======
+import { RiSearchLine } from "react-icons/ri";
+>>>>>>> updated code
 
 import axios from "axios";
 import { useForm } from "react-hook-form";
@@ -17,7 +21,11 @@ const DailyPatientRegister = () => {
   const [patientFetchData, setPatientFetchData] = useState([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState(""); // Add this for end date
+<<<<<<< HEAD
   const [searchbybarcode, setSearchByBarcode] = useState(""); // Add this for end date
+=======
+
+>>>>>>> updated code
   const {
     register,
     formState: { errors },
@@ -48,6 +56,12 @@ const DailyPatientRegister = () => {
         const id = localStorage.getItem("hospital_id");
         const response = await fetchPatientReportData(id);
 
+<<<<<<< HEAD
+=======
+        console.log("response ==", response.data);
+
+        // response.data should be the array
+>>>>>>> updated code
         if (response?.data && Array.isArray(response.data)) {
           // Get today's date in YYYY-MM-DD format
           const today = new Date();
@@ -105,6 +119,7 @@ const DailyPatientRegister = () => {
     setReportDoctorToUpdate(item);
   };
 
+<<<<<<< HEAD
   const handleSearch = async () => {
     if (!startDate || !endDate) {
       alert("Please select both start and end dates.");
@@ -173,6 +188,50 @@ const DailyPatientRegister = () => {
       `Daily_Patient_Report_${new Date().toISOString().split("T")[0]}.xlsx`
     );
   };
+=======
+const handleSearch = async () => {
+  if (!startDate) {
+    alert("Please select a start date");
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+    const id = localStorage.getItem("hospital_id");
+
+    // Get token from localStorage (or wherever you store it)
+    const token = localStorage.getItem("auth_token"); // make sure you save token at login
+
+    const response = await fetch(
+      `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?startDate=${startDate}&endDate=${endDate || new Date().toISOString().split("T")[0]}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // << important
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (data?.data && Array.isArray(data.data)) {
+      setPatientFetchData(data.data);
+    } else {
+      setPatientFetchData([]);
+    }
+  } catch (error) {
+    console.error("Error fetching patient data:", error);
+    setPatientFetchData([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+  const handleExportExcel = () => console.log("Exporting to Excel...");
+  const handleExportPDF = () => console.log("Exporting to PDF...");
+>>>>>>> updated code
 
   return (
     <>
@@ -225,6 +284,7 @@ const DailyPatientRegister = () => {
           </div>
 
           {/* Search + Filter Section */}
+<<<<<<< HEAD
           <div className="flex items-end gap-2 mb-4 flex-wrap">
             {/* From Date */}
             <div className="w-[150px]">
@@ -254,6 +314,35 @@ const DailyPatientRegister = () => {
               >
                 {isLoading ? "Searching..." : "Search"}
               </button>
+=======
+          <div className="flex flex-col sm:flex-row items-end gap-4 mb-4 flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-2 items-end">
+              {/* Start Date */}
+              <div className="flex-1 min-w-[160px]">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2"
+                  placeholder="Start Date"
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2"
+                  placeholder="End Date"
+                />
+
+                {/* Search Button */}
+                <button
+                  onClick={handleSearch}
+                  className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:scale-105 transition"
+                >
+                  Search
+                </button>
+              </div>
+>>>>>>> updated code
             </div>
           </div>
 

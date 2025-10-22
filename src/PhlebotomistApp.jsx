@@ -69,6 +69,7 @@ function PhlebotomistApp() {
     return element;
   };
 
+<<<<<<< HEAD
   const router = createBrowserRouter([
     {
       path: "/",
@@ -137,6 +138,103 @@ function PhlebotomistApp() {
       ],
     },
   ]);
+=======
+  // const router = createBrowserRouter([
+  //   {
+  //     path: "/",
+  //     element: <Checker element={<Dashboard />} />,
+  //     children: [
+  //       {
+  //         path: "",
+  //         element: <Home />,
+  //       },
+  //       {
+  //         path: "/patient-registration",
+  //         element: <PatientRegistration />,
+  //       },
+  //       {
+  //         path: "/patient-registration-add",
+  //         element: <PatientRegistrationAdd />,
+  //       },
+  //       {
+  //           path: "update-patient-details/:id",
+  //           element:<UpdatePatientDetails />,
+  //         },
+  //       {
+  //         path: "/patient-report-entry",
+  //         element: <PatientReportEntry />,
+  //       },
+  //       {
+  //         path: "/patient-report-print-section",
+  //         element: <PatientReportPrintSection />,
+  //       },
+  //       {
+  //         path: "/pending-report-registration",
+  //         element: <PendingReportRegister />,
+  //       },
+  //       {
+  //         path: "/daily-patient-register",
+  //         element: <DailyPatientRegister />,
+  //       },
+  //       {
+  //         path: "/daily-critical-report-register",
+  //         element: <DailyCriticalReportRegister />,
+  //       },
+  //       {
+  //         path: "/daily-patient-report-register",
+  //         element: <DailyPatientReportRegister />,
+  //       },
+  //       {
+  //         path: "/patient-registartion-details",
+  //         element: <RegistrationDetails />,
+  //       },
+  //       {
+  //         path: "/test-details",
+  //         element: <TestDetails />,
+  //       },
+  //       {
+  //         path: "/rejected-sample-collections",
+  //         element: <RejectedSampleCollections />,
+  //       },
+  //       {
+  //         path: "/edit-report-entry/:id",
+  //         element: <EditReportEntryData />,
+  //       },
+  //       {
+  //         path: "*",
+  //         element: <>Not found</>,
+  //       },
+  //     ],
+  //   },
+  // ]);
+const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <Login />, // public route
+  },
+  {
+    path: "/",
+    element: <Checker element={<Dashboard />} />,
+    children: [
+      { path: "", element: <Home /> },
+      { path: "patient-registration", element: <PatientRegistration /> },
+      { path: "patient-registration-add", element: <PatientRegistrationAdd /> },
+      { path: "update-patient-details/:id", element: <UpdatePatientDetails /> },
+      { path: "patient-report-entry", element: <PatientReportEntry /> },
+      { path: "patient-report-print-section", element: <PatientReportPrintSection /> },
+      { path: "pending-report-registration", element: <PendingReportRegister /> },
+      { path: "daily-patient-register", element: <DailyPatientRegister /> },
+      { path: "daily-critical-report-register", element: <DailyCriticalReportRegister /> },
+      { path: "daily-patient-report-register", element: <DailyPatientReportRegister /> },
+      { path: "patient-registartion-details", element: <RegistrationDetails /> },
+      { path: "test-details", element: <TestDetails /> },
+      { path: "rejected-sample-collections", element: <RejectedSampleCollections /> },
+      { path: "edit-report-entry/:id", element: <EditReportEntryData /> },
+      { path: "*", element: <>Not found</> },
+    ],
+  },
+]);
+>>>>>>> updated code
 
 
   return <RouterProvider router={router} />;
