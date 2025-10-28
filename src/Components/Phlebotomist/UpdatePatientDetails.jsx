@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const UpdatePatientDetails = () => {
   const { id } = useParams();
@@ -23,6 +24,11 @@ const UpdatePatientDetails = () => {
             },
           }
         );
+        toast.success("Patient details loaded successfully!", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+
         setPatient(response.data);
       } catch (err) {
         toast.error("Failed to load patient details.");
@@ -49,7 +55,11 @@ const UpdatePatientDetails = () => {
           },
         }
       );
-      toast.success("Patient updated successfully!");
+      toast.success("Patient updated successfully", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
       navigate("/patient-registration");
     } catch (err) {
       toast.error("Error updating patient.");
@@ -63,6 +73,7 @@ const UpdatePatientDetails = () => {
 
   return (
     <div className="w-full mt-12 px-2 sm:px-4 space-y-4 text-sm">
+      <ToastContainer />
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">
           Update Patient Details

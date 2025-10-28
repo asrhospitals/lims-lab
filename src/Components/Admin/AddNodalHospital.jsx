@@ -4,7 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, Link } from "react-router-dom";
 import {
-  viewHospitals,
+  viewAllHosiptalList,
   viewNodals,
   addNodalHospital,
   getAllNodals
@@ -36,10 +36,12 @@ const AddNodalHospital = () => {
     const fetchData = async () => {
       try {
         const [hospitalResponse, nodalResponse] = await Promise.all([
-          viewHospitals(),
+          viewAllHosiptalList(),
           getAllNodals(),
         ]);
-        setHospitalList(hospitalResponse.data || []);
+
+        
+        setHospitalList(hospitalResponse);
         setNodalList(nodalResponse || []);
       } catch (error) {
         console.error("Failed to fetch data:", error);

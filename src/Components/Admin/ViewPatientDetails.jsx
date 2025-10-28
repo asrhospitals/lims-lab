@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
+import { BellIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import DataTable from "../utils/DataTable";
 
@@ -11,14 +12,15 @@ const ViewPatientDetails = () => {
   const [error, setError] = useState("");
   const [hospitalsList, setHospitalsList] = useState([]);
   const [patientData, setPatientData] = useState([]);
-  console.log("Patient Data:", patientData);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [hoverType, setHoverType] = useState("");
-  const [hoverData, setHoverData] = useState([]);
-  const [hoverRow, setHoverRow] = useState(null);
-  const [hoverPos, setHoverPos] = useState({ top: 0, left: 0 });
+  // Add below your existing useState declarations
+// Add at the top of your component
+const [notifications, setNotifications] = useState([]);
+const [showNotifications, setShowNotifications] = useState(false);
+
+
 
   const {
     register,
@@ -29,12 +31,11 @@ const ViewPatientDetails = () => {
   } = useForm();
   const navigate = useNavigate();
 
+  const today = new Date().toISOString().split("T")[0];
+
   const selectedHospitalName = hospitalsList.find(
     (h) => h.value === watch("hospitalselected")
   )?.label;
-
-  // Default to today's date
-  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     const fetchHospitals = async () => {
@@ -53,10 +54,8 @@ const ViewPatientDetails = () => {
 
           setHospitalsList(options);
 
-          // 👇 Auto-select 0th hospital and fetch data
           if (options.length > 0) {
             setValue("hospitalselected", options[0].value);
-            // fetch patient data for default selection
             onSubmit({
               hospitalselected: options[0].value,
               startDate: today,
@@ -71,8 +70,15 @@ const ViewPatientDetails = () => {
 
     fetchHospitals();
   }, []);
+useEffect(() => {
+  const storedNotif = localStorage.getItem("newPatientAdded");
+  if (storedNotif) {
+    setNotifications([JSON.parse(storedNotif)]);
+    localStorage.removeItem("newPatientAdded"); // so it only shows once
+  }
+}, []);
 
-  // Fetch patient data (with hospital, date range & pagination)
+
   const onSubmit = async (data) => {
     setLoading(true);
     setError("");
@@ -83,20 +89,13 @@ const ViewPatientDetails = () => {
       const response = await axios.get(
         `https://asrphleb.asrhospitalindia.in/api/v2/phleb/get-data/${hospitalselected}`,
         {
-          params: {
-            startDate,
-            endDate,
-            page,
-            limit: itemsPerPage,
-          },
+          params: { startDate, endDate, page, limit: itemsPerPage },
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       const apiData = response.data?.data || [];
       setPatientData(apiData);
-      console.log("pagination", response.data);
-      
       setTotalPages(response.data?.meta?.totalPages || 1);
     } catch (err) {
       console.error("Error fetching patient data:", err);
@@ -107,33 +106,25 @@ const ViewPatientDetails = () => {
   };
 
   useEffect(() => {
-    // Refetch data when page or itemsPerPage changes
     const values = watch();
     onSubmit(values);
   }, [page, itemsPerPage]);
 
-
-  // Pagination handler
   const handlePageChange = async (newPage) => {
     setPage(newPage);
     const values = watch();
     await onSubmit(values);
   };
 
-  // Table columns
   const columns = [
-    // { key: "id", label: "Patient ID" },
     { key: "patientName", label: "Patient Name" },
-    // { key: "hospitalName", label: "Hospital" },
     { key: "patientAge", label: "Age" },
     { key: "mobile", label: "Mobile" },
     { key: "gender", label: "Gender" },
     { key: "pbarcode", label: "Barcode" },
     { key: "p_regdate", label: "Registration Date" },
-    // { key: "registrationStatus", label: "Registration Status" },
   ];
 
-  // Map patient data
   const mappedItems = Array.isArray(patientData)
     ? patientData.map((p) => ({
         id: p.id,
@@ -149,13 +140,11 @@ const ViewPatientDetails = () => {
     : [];
 
   const handleUpdate = (item) => {
-    // Navigate to a detailed view or edit page for the patient
     navigate(`/admin-update-patient-details/${item.id}`);
   };
 
   return (
     <>
-      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav className="flex items-center font-medium px-4 py-2 bg-gray-50 border-b shadow-lg">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm">
@@ -164,7 +153,7 @@ const ViewPatientDetails = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link
                 to="/view-investigation"
@@ -172,7 +161,7 @@ const ViewPatientDetails = () => {
               >
                 Patient Details
               </Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
               View Patient
@@ -183,20 +172,50 @@ const ViewPatientDetails = () => {
 
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-          {/* Header */}
+          {/* Header + Notification */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               All Patient List
             </h2>
-            <div className="relative flex-1 sm:w-64">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                placeholder="Search Patient..."
-              />
-              <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
+
+            <div className="flex items-center gap-3">
+              <div className="relative flex w-52 sm:w-56">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  placeholder="Search Patient..."
+                />
+                <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
+              </div>
+
+              {/* 🔔 Notification Bell */}
+             {/* 🔔 Notification Bell */}
+<div className="relative">
+  <div
+    className="bg-yellow-400 p-2.5 rounded-full shadow-md cursor-pointer hover:bg-yellow-300 transition"
+    onClick={() => setShowNotifications(!showNotifications)}
+  >
+    <BellIcon className="text-white w-5 h-5" />
+    {notifications.length > 0 && (
+      <span className="absolute top-0 right-0 w-2 h-2 bg-red-600 rounded-full" />
+    )}
+  </div>
+
+  {showNotifications && notifications.length > 0 && (
+    <div className="absolute top-10 right-0 w-64 bg-white border shadow-md rounded-md p-2 z-50">
+      {notifications.map((n) => (
+        <div key={n.id} className="mb-2 last:mb-0 border-b last:border-b-0 pb-1 last:pb-0">
+          <p className="text-sm text-gray-800 font-medium">{n.message}</p>
+          <p className="text-xs text-gray-500">{n.timestamp}</p>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+
             </div>
           </div>
 
@@ -241,7 +260,6 @@ const ViewPatientDetails = () => {
               )}
             </div>
 
-            {/* Start Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Start Date
@@ -254,7 +272,6 @@ const ViewPatientDetails = () => {
               />
             </div>
 
-            {/* End Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 End Date
@@ -288,34 +305,6 @@ const ViewPatientDetails = () => {
             </div>
           ) : (
             <>
-              {/* <div className="overflow-x-auto border rounded-lg relative">
-                <table className="min-w-full divide-y divide-gray-300 text-sm text-left">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      {columns.map((col) => (
-                        <th
-                          key={col.key}
-                          className="px-4 py-2 font-bold text-gray-600 text-center"
-                        >
-                          {col.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {mappedItems.map((patient) => (
-                      <tr key={patient.id} className="hover:bg-blue-50">
-                        {columns.map((col) => (
-                          <td key={col.key} className="px-4 py-2 text-center">
-                            {patient[col.key] || "—"}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div> */}
-
               <DataTable
                 items={mappedItems}
                 columns={columns}
@@ -330,7 +319,6 @@ const ViewPatientDetails = () => {
                 showDetailsButtons={false}
               />
 
-              {/* Pagination */}
               <div className="flex justify-center items-center mt-4 space-x-3">
                 <button
                   disabled={page <= 1}

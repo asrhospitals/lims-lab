@@ -104,15 +104,15 @@ const ViewDepartment = () => {
               </Link>
             </li>
             <li className="text-gray-400">/</li>
-            <li>
+            {/* <li>
               <Link
-                to="/view-profile-Master"
+                to="#"
                 className="text-gray-700 hover:text-teal-600 transition-colors"
               >
                 Departments
               </Link>
-            </li>
-            <li className="text-gray-400">/</li>
+            </li> */}
+            {/* <li className="text-gray-400">/</li> */}
             <li aria-current="page" className="text-gray-500">
               View Department
             </li>

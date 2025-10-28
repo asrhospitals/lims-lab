@@ -5,8 +5,7 @@ import { useNavigate, Link, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-import InvestigationDetails from "./InvestigationDetails";
-import UpdateInvestigationResult from "./UpdateInvestigationResult";
+
 import {
   updateInvestigation,
   viewInvestigation,
@@ -16,11 +15,11 @@ import {
   viewSpecimenTypes,
   viewAllInstrument,
 } from "../../services/apiService";
-import AddInvestigationResult from "./AddInvestigationResult";
+
 
 const UpdateInvestigation = () => {
   const [departments, setDepartments] = useState([]);
-  const [subDepartments, setSubDepartments] = useState([]);
+const [subDepartments, setSubDepartments] = useState([]);
   const [roleTypes, setRoleTypes] = useState([]);
   const [specimens, setSpecimens] = useState([]);
   const [instruments, setInstruments] = useState([]);
@@ -40,6 +39,7 @@ const UpdateInvestigation = () => {
 
   const [normalValues, setNormalValues] = useState([]); // Existing values from API
   const [selectedIndex, setSelectedIndex] = useState(null); // Index of value being edited
+const [mastersLoaded, setMastersLoaded] = useState(false);
 
 
   const [formData, setFormData] = useState({
@@ -110,41 +110,32 @@ const UpdateInvestigation = () => {
   ];
 
   // Fetch master data (departments, roles, etc.)
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [dept, subDept, role, spec, instruments] = await Promise.all([
-          viewAllDepartmentDetails(),
-          viewAllSubDepartmentDetails(),
-          viewAllROles(),
-          viewSpecimenTypes(),
-          viewAllInstrument(),
-        ]);
-        setDepartments(
-          Array.from(dept?.data || dept || []).filter((d) => d.isactive)
-        );
-        setSubDepartments(
-          Array.from(subDept?.data || subDept || []).filter((d) => d.isactive)
-        );
-        setRoleTypes(
-          Array.from(role?.data || role || []).filter((r) => r.isactive)
-        );
-        setSpecimens(
-          Array.from(spec?.data || spec || []).filter((s) => s.isactive)
-        );
-        setInstruments(
-          Array.from(instruments?.data || instruments || []).filter(
-            (i) => i.isactive
-          )
-        );
-      } catch (err) {
-        toast.error("❌ Failed to load master data");
-        console.error(err);
-      }
-    };
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [dept, subDept, role, spec, instruments] = await Promise.all([
+        viewAllDepartmentDetails(),
+        viewAllSubDepartmentDetails(),
+        viewAllROles(),
+        viewSpecimenTypes(),
+        viewAllInstrument(),
+      ]);
 
-    fetchData();
-  }, []);
+      setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
+      setSubDepartments((subDept?.data || subDept || []).filter((d) => d.isactive));
+      setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
+      setSpecimens((spec?.data || spec || []).filter((s) => s.isactive));
+      setInstruments((instruments?.data || instruments || []).filter((i) => i.isactive));
+
+      setMastersLoaded(true); // ✅ mark as loaded
+    } catch (err) {
+      toast.error("❌ Failed to load master data");
+      console.error(err);
+    }
+  };
+
+  fetchData();
+}, []);
   // state for investigation data
 
   const fetchInvestigationData = async () => {
@@ -159,11 +150,10 @@ const UpdateInvestigation = () => {
       const data = await viewInvestigation(id);
       console.log("Investigation data:", data);
 
-      setInvestigationData(data); // store raw investigation data
+      setInvestigationData(data);
       setInvestigation(data);
       setResults(data.results || []);
 
-      // Set rich text editor values
       setInstruction(data.instruction || "");
       setInterpretation(data.interpretation || "");
       setRemarks(data.remark || "");
@@ -882,7 +872,6 @@ const UpdateInvestigation = () => {
                   {...register("department")}
                   className="w-full border px-3 py-2 rounded"
                 >
-                  <option value={""}>Select Department</option>
                   {departments.map((d, i) => (
                     <option key={i} value={d.id}>
                       {d.dptname}
@@ -899,7 +888,6 @@ const UpdateInvestigation = () => {
                   {...register("subdepartment")}
                   className="w-full border px-3 py-2 rounded"
                 >
-                  <option value="">Select Sub-Department</option>
                   {subDepartments.map((d, i) => (
                     <option key={i} value={d.id}>
                       {d.subdptname}
@@ -916,7 +904,6 @@ const UpdateInvestigation = () => {
                   {...register("roletype")}
                   className="w-full border px-3 py-2 rounded"
                 >
-                  <option value="">Select Role Type</option>
                   {roleTypes.map((r, i) => (
                     <option key={i} value={r.roletype}>
                       {r.roletype}
@@ -933,7 +920,6 @@ const UpdateInvestigation = () => {
                   {...register("sampletype")}
                   className="w-full border px-3 py-2 rounded"
                 >
-                  <option value="">Select Sample Type</option>
                   {specimens.map((s, i) => (
                     <option key={i} value={s.specimenname}>
                       {s.specimenname}

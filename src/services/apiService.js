@@ -877,6 +877,16 @@ export const viewAllHospitalType = async () => {
   }
 };
 
+
+export const viewAllHosiptalList = async () => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-all-hospital`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAllNodals = async () => {
   try {
     const res = await axios.get(`${API_ROOT_URL}/master/get-all-nodals`);

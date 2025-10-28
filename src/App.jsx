@@ -120,6 +120,8 @@ import UpdateAccessionMaster from "./Components/Admin/UpdateAccessionMaster";
 import UpdateUserDetails from "./Components/Admin/UpdateUserDetails";
 import UpdatePatientDetails from "./Components/Admin/UpdatePatientDetails";
 import ViewDoctorRegistration from "./Components/Admin/ViewDoctorRegistration";
+import UpdateUserMapping from "./Components/Admin/UpdateUserMapping";
+import UpdateNewUserMapping from "./Components/Admin/UpdateNewUserMapping";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -389,6 +391,10 @@ function App() {
           {
             path: "view-user-mapping",
             element: requireRole("admin", <ViewUserMapping />),
+          },
+              {
+            path: "update-user-mapping/:id",
+            element: requireRole("admin", <UpdateNewUserMapping />),
           },
           
           {

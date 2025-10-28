@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
-import DataTable from "../utils/DataTable";
+import WithoutActionTable from "../utils/WithoutActionTable";
+import api from "../../services/axiosService"; // ✅ use axiosService (like in other screens)
 
 const ViewUserMapping = () => {
   const [users, setUsers] = useState([]);
@@ -14,89 +15,99 @@ const ViewUserMapping = () => {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    if (location.state?.refresh) {
-      fetchUsers();
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
-
-  const fetchMasterData = async () => {
+  // ✅ Fetch Master Data
+  const fetchMasterData = useCallback(async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+      const headers = { Authorization: `Bearer ${token}` };
 
       const [hRes, nRes, rRes] = await Promise.all([
-        fetch("https://asrlabs.asrhospitalindia.in/lims/master/get-hospital?page=1&limit=1000", { headers }),
-        fetch("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal?page=1&limit=1000", { headers }),
-        fetch("https://asrlabs.asrhospitalindia.in/lims/master/get-role", { headers }),
+        api.get("/master/get-hospital?page=1&limit=1000", { headers }),
+        api.get("/master/get-nodal?page=1&limit=1000", { headers }),
+        api.get("/master/get-role", { headers }),
       ]);
 
-      const [hData, nData, rData] = await Promise.all([hRes.json(), nRes.json(), rRes.json()]);
-      setHospitals(hData?.data || []);
-      setNodals(nData?.data || []);
-      setRoles(rData?.data || []);
+      setHospitals(hRes.data?.data || []);
+      setNodals(nRes.data?.data || []);
+      setRoles(rRes.data?.data || []);
     } catch (err) {
       console.error("Failed to fetch master data:", err);
     }
-  };
+  }, []);
 
-  const fetchUsers = async () => {
+  // ✅ Fetch Users (server-side pagination)
+  const fetchUsers = useCallback(async (page = currentPage, limit = itemsPerPage) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("authToken");
-      const res = await fetch("https://asrlabs.asrhospitalindia.in/lims/authentication/get-all-users", {
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      });
 
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      const sorted = (data || []).sort((a, b) => a.user_id - b.user_id);
-      setUsers(sorted);
-      setFilteredUsers(sorted);
+      const res = await api.get(
+        `/authentication/get-all-users?page=${page}&limit=${limit}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const usersData = Array.isArray(res.data?.data) ? res.data.data : [];
+      const meta = res.data?.meta || {};
+
+      setUsers(usersData);
+      setFilteredUsers(usersData);
+      setTotalItems(meta.totalItems || usersData.length);
+      setTotalPages(meta.totalPages || Math.ceil(usersData.length / limit));
     } catch (err) {
       console.error("Failed to fetch users:", err);
       setError("Failed to fetch users.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage]);
 
+  // ✅ Load data initially & when page changes
   useEffect(() => {
     (async () => {
       await fetchMasterData();
       await fetchUsers();
     })();
-  }, []);
+  }, [fetchMasterData, fetchUsers, currentPage, itemsPerPage]);
 
+  // ✅ Search filter (client-side)
+  useEffect(() => {
+    if (!search.trim()) {
+      setFilteredUsers(users);
+    } else {
+      const q = search.toLowerCase();
+      const filtered = users.filter(
+        (u) =>
+          u.first_name?.toLowerCase().includes(q) ||
+          u.last_name?.toLowerCase().includes(q) ||
+          u.username?.toLowerCase().includes(q) ||
+          getHospitalName(u.hospital_id).toLowerCase().includes(q) ||
+          getNodalName(u.nodal_id).toLowerCase().includes(q) ||
+          getRoleName(u.role).toLowerCase().includes(q)
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [search, users, hospitals, nodals, roles]);
+
+  // ✅ Helper functions
   const getHospitalName = (id) => hospitals.find((h) => h.id === id)?.hospitalname || "-";
   const getNodalName = (id) => nodals.find((n) => n.id === id)?.nodalname || "-";
   const getRoleName = (id) => roles.find((r) => r.id === id)?.roletype || "-";
 
-  useEffect(() => {
-    const q = search.toLowerCase();
-    const filtered = users.filter(
-      (u) =>
-        u.first_name?.toLowerCase().includes(q) ||
-        u.last_name?.toLowerCase().includes(q) ||
-        u.username?.toLowerCase().includes(q) ||
-        getHospitalName(u.hospital_id).toLowerCase().includes(q) ||
-        getNodalName(u.nodal_id).toLowerCase().includes(q) ||
-        getRoleName(u.role).toLowerCase().includes(q)
-    );
-    setFilteredUsers(filtered);
+  // ✅ Pagination handlers
+  const handlePageChange = (page) => setCurrentPage(page);
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
     setCurrentPage(1);
-  }, [search, users, hospitals, nodals, roles]);
+  };
 
-  const totalItems = filteredUsers.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const mappedItems = paginatedUsers.map((u) => ({
+  // ✅ Map formatted items
+  const mappedItems = filteredUsers.map((u) => ({
     ...u,
     hospital_name: getHospitalName(u.hospital_id),
     nodal_name: getNodalName(u.nodal_id),
@@ -114,15 +125,12 @@ const ViewUserMapping = () => {
     { key: "nodal_name", label: "Nodal" },
     { key: "module_name", label: "Module" },
   ];
-
-  const handlePageChange = (page) => setCurrentPage(page);
-  const handlePageSizeChange = (size) => {
-    setItemsPerPage(size);
-    setCurrentPage(1);
-  };
+  const handleActions = (user) =>
+    navigate(`/update-user-mapping/${user.user_id}`, { state: { user } });
 
   return (
     <>
+      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
@@ -139,11 +147,13 @@ const ViewUserMapping = () => {
         </nav>
       </div>
 
+      {/* Content */}
       <div className="w-full mt-12 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
+          {/* Header & Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">User Mapping List</h2>
-            <div className="relative w-full sm:w-56"> {/* ✅ FIXED: consistent width */}
+            <div className="relative w-full sm:w-56">
               <input
                 type="text"
                 value={search}
@@ -155,6 +165,7 @@ const ViewUserMapping = () => {
             </div>
           </div>
 
+          {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => navigate("/add-user-mapping")}
@@ -164,6 +175,7 @@ const ViewUserMapping = () => {
             </button>
           </div>
 
+          {/* Table */}
           {loading ? (
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (
@@ -171,7 +183,7 @@ const ViewUserMapping = () => {
           ) : mappedItems.length === 0 ? (
             <div className="text-center py-6 text-gray-500">No Users found.</div>
           ) : (
-            <DataTable
+            <WithoutActionTable
               items={mappedItems}
               columns={columns}
               serverSidePagination={true}
@@ -182,6 +194,8 @@ const ViewUserMapping = () => {
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
+              // onUpdate={handleActions}
+
             />
           )}
         </div>

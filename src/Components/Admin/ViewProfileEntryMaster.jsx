@@ -117,15 +117,15 @@ const ViewProfileEntryMaster = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
-            <li>
+           {/* <li className="text-gray-400">/</li> */}
+             {/* <li>
               <Link
                 to="/view-profile-entry-master"
                 className="text-gray-700 hover:text-teal-600"
               >
                 ProfileEntryMasters
               </Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li className="text-gray-500" aria-current="page">
               View Profile Entry Masters

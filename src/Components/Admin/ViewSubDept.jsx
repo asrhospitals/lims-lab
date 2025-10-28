@@ -105,7 +105,7 @@ const ViewSubDpt = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link
                 to="/view-subDpt"
@@ -113,8 +113,8 @@ const ViewSubDpt = () => {
               >
                 Sub Department
               </Link>
-            </li>
-            <li className="text-gray-400">/</li>
+            </li>*/}
+            <li className="text-gray-400">/</li> 
             <li className="text-gray-500" aria-current="page">
               View Sub Department
             </li>

@@ -238,7 +238,6 @@ const sections = [
   {
     title: "Doctor Registration",
     icon: <FaUserDoctor  className="text-3xl text-[#238781]" />,
-    inProgress: true,
 
     buttons: [
       { label: "Doctor Registration", route: "/doctor-registration" },

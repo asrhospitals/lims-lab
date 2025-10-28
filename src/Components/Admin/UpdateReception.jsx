@@ -103,9 +103,14 @@ const UpdateReception = () => {
       };
 
       await updateReception(id, payload);
+      
 
-      toast.success("✅ Reception updated successfully!");
-      navigate("/view-reception");
+     toast.success("✅ Reception updated successfully!", { autoClose: 2000 });
+
+setTimeout(() => {
+  navigate("/view-reception");
+}, 2000);
+
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||

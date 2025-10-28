@@ -97,10 +97,10 @@ const ViewKitMaster = () => {
             <li>
               <Link to="/" className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors">🏠︎ Home</Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link to="/view-kit-master" className="text-gray-700 hover:text-teal-600 transition-colors">Kit Master</Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">View Kits</li>
           </ol>
