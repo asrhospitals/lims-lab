@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Upload as UploadIcon, X, User, Briefcase, Phone, Mail, FileText, Signature, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // ✅ Added for navigation
+import { viewDepartments } from "../../services/apiService";
 
 // Custom Dropdown Component
 const CustomDropdown = ({ options, value, onChange, placeholder, disabled = false, className = '' }) => {
@@ -19,7 +21,9 @@ const CustomDropdown = ({ options, value, onChange, placeholder, disabled = fals
     };
   }, []);
   
-  const selectedOption = options.find(option => option.value === value);
+  // const selectedOption = options.find(option => option.value === value);
+  const selectedOption = options.find(option => option.value?.trim() === (value?.trim() || ""));
+
   
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
@@ -280,6 +284,8 @@ const FileUpload = ({
 
 // Main App Component
 const App = () => {
+  const navigate = useNavigate(); // ✅ Added
+  const [toastMessage, setToastMessage] = useState(''); // ✅ Added
   const [formData, setFormData] = useState({
     fullName: '',
     dateOfBirth: '',
@@ -300,32 +306,43 @@ const App = () => {
   const [departments, setDepartments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  
-  // Fetch departments on mount
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('https://asrlabs.asrhospitalindia.in/lims/master/get-department', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-            'accept': 'application/json'
-          }
-        });
-        if (!response.ok) throw new Error('Failed to fetch departments');
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setDepartments(data.map(dept => dept.dptname)); // Changed from dptName to dptname
-        }
-      } catch (error) {
-        console.error('Error fetching departments:', error);
-        setDepartments([]);
-      } finally {
-        setIsLoading(false);
+
+useEffect(() => {
+  const fetchDepartments = async () => {
+    try {
+      const response = await viewDepartments(); 
+      console.log("Department API response:", response);
+
+      const deptArray = Array.isArray(response?.data) ? response.data : [];
+
+      const deptList = deptArray
+        .filter(d => d.dptname) // only keep items with dptname
+        .map(d => ({
+          value: d.dptname.trim(),
+          label: d.dptname.trim(),
+        }));
+
+      setDepartments(deptList);
+
+      // Preselect first department if none selected
+      if (deptList.length > 0 && !formData.parentDepartment) {
+        setFormData(prev => ({ ...prev, parentDepartment: deptList[0].value }));
       }
-    };
-    fetchDepartments();
-  }, []);
+
+      console.log("✅ Departments loaded:", deptList);
+    } catch (err) {
+      console.error("❌ Error fetching departments:", err);
+      setDepartments([]);
+    }
+  };
+
+  fetchDepartments();
+}, []);
+
+
+
+
+
   
   const qualifications = ['MD', 'DNB', 'DM', 'MCh', 'MBBS', 'MS', 'PhD'];
   const specialties = ['Cardiology', 'Neurology', 'Orthopedics', 'Radiology', 'Pathology', 'Pediatrics'];
@@ -367,108 +384,142 @@ const App = () => {
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      // First upload signature
-      const signatureFormData = new FormData();
-      signatureFormData.append('digitalsignature', formData.digitalSignature);
-      
-      const signatureResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/signature/upload-signature', {
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return; // ✅ Validation first
+  setIsSubmitting(true);
+
+  try {
+    // 1️⃣ Upload Digital Signature
+    const signatureFormData = new FormData();
+    signatureFormData.append('digitalsignature', formData.digitalSignature);
+
+    const signatureResponse = await fetch(
+      'https://asrlabs.asrhospitalindia.in/lims/signature/upload-signature',
+      {
         method: 'POST',
         body: signatureFormData,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
-      });
-      
-      const signatureData = await signatureResponse.json();
-      
-      // Then upload profile photo
-      const profileFormData = new FormData();
-      profileFormData.append('profile', formData.photo);
-      
-      const profileResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/profile/upload-profile', {
+      }
+    );
+    const signatureData = await signatureResponse.json();
+
+    // 2️⃣ Upload Profile Photo
+    const profileFormData = new FormData();
+    profileFormData.append('profile', formData.photo);
+
+    const profileResponse = await fetch(
+      'https://asrlabs.asrhospitalindia.in/lims/profile/upload-profile',
+      {
         method: 'POST',
         body: profileFormData,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
-      });
-      
-      const profileData = await profileResponse.json();
-      
-      // Then upload certificate
-      const certFormData = new FormData();
-      certFormData.append('certificate', formData.certificates[0]);
-      
-      const certResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/certificate/upload-certificate', {
+      }
+    );
+    const profileData = await profileResponse.json();
+
+    // 3️⃣ Upload Certificate
+    const certFormData = new FormData();
+    certFormData.append('certificate', formData.certificates[0]);
+
+    const certResponse = await fetch(
+      'https://asrlabs.asrhospitalindia.in/lims/certificate/upload-certificate',
+      {
         method: 'POST',
         body: certFormData,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
-      });
-      
-      const certData = await certResponse.json();
-      
-      // Finally submit doctor data with all file URLs
-      const doctorData = {
-        dname: formData.fullName,
-        ddob: formData.dateOfBirth,
-        dqlf: formData.qualification,
-        dspclty: formData.specialty,
-        ddpt: formData.parentDepartment,
-        dregno: formData.registrationNumber,
-        dregcnl: formData.registrationCouncil,
-        dcnt: formData.contactNumber,
-        dwhtsap: formData.whatsappNumber,
-        demail: formData.email,
-        dphoto: profileData.fileUrl,
-        dcrtf: certData.fileUrl,
-        dditsig: signatureData.fileUrl,
-        dstatus: 'pending'
-      };
-      
-      const doctorResponse = await fetch('https://asrlabs.asrhospitalindia.in/lims/master/add-doctor', {
+      }
+    );
+    const certData = await certResponse.json();
+
+    // 4️⃣ Submit Doctor Data
+    const doctorData = {
+      dname: formData.fullName,
+      ddob: formData.dateOfBirth,
+      dqlf: formData.qualification,
+      dspclty: formData.specialty,
+      ddpt: formData.parentDepartment,
+      dregno: formData.registrationNumber,
+      dregcnl: formData.registrationCouncil,
+      dcnt: formData.contactNumber,
+      dwhtsap: formData.whatsappNumber,
+      demail: formData.email,
+      dphoto: profileData.fileUrl,
+      dcrtf: certData.fileUrl,
+      dditsig: signatureData.fileUrl,
+      dstatus: 'pending'
+    };
+
+    const doctorResponse = await fetch(
+      'https://asrlabs.asrhospitalindia.in/lims/master/add-doctor',
+      {
         method: 'POST',
         body: JSON.stringify(doctorData),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
-      });
-      
-      const result = await doctorResponse.json();
-      
-      if (result.id) {
-        // Show success modal with doctor details
-        setSuccessMessage(result);
-        
-        // Reset form
-        setFormData({
-          fullName: '',
-          dateOfBirth: '',
-          qualification: '',
-          specialty: '',
-          parentDepartment: '',
-          registrationNumber: '',
-          registrationCouncil: '',
-          contactNumber: '',
-          whatsappNumber: '',
-          email: '',
-          photo: null,
-          certificates: [],
-          digitalSignature: null,
-        });
-        setErrors({});
-        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error('Registration failed:', error);
-    }
-  };
+    );
+
+    const doctorDataResponse = await doctorResponse.json();
+
+    if (doctorResponse.status === 409) {
+  setToastMessage(doctorDataResponse.message || "Doctor already exists");
+} else if (!doctorResponse.ok) {
+  setToastMessage(doctorDataResponse.message || "Failed to register doctor. Please try again.");
+} else {
+  // ✅ show popup with actual submitted data
+  setSuccessMessage({
+    ...doctorData,
+    id: doctorDataResponse.id || null,
+  });
+
+  setToastMessage("Doctor registered successfully!");
+
+  // ✅ auto-navigate to view page after 2 seconds
+  // setTimeout(() => {
+  //   navigate("/view-doctor-registration-details");
+  // }, 2000);
+setTimeout(() => {
+  setSuccessMessage(null); // hide modal first
+  navigate("/view-doctor-registration-details");
+}, 2000);
+
+  // reset form
+  setFormData({
+    fullName: '',
+    dateOfBirth: '',
+    qualification: '',
+    specialty: '',
+    parentDepartment: '',
+    registrationNumber: '',
+    registrationCouncil: '',
+    contactNumber: '',
+    whatsappNumber: '',
+    email: '',
+    photo: null,
+    certificates: [],
+    digitalSignature: null,
+  });
+  setErrors({});
+}
+
+  } catch (error) {
+    console.error("Registration failed:", error);
+    setToastMessage("Registration failed. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
   
   const handleFileChange = (field, files) => {
     setFormData(prev => ({
@@ -569,14 +620,18 @@ const App = () => {
                     <label htmlFor="parentDepartment" className="block text-sm font-medium text-gray-700 mb-1">
                       Parent Department
                     </label>
-                    <CustomDropdown
-                      options={departments.map(dept => ({ value: dept, label: dept }))}
-                      value={formData.parentDepartment}
-                      onChange={(value) => setFormData({ ...formData, parentDepartment: value })}
-                      placeholder={isLoading ? 'Loading...' : 'Select department'}
-                      disabled={isLoading || departments.length === 0}
-                      className="mb-1"
-                    />
+             <CustomDropdown
+  options={departments}
+  value={formData.parentDepartment}
+  onChange={(value) => setFormData({ ...formData, parentDepartment: value })}
+  placeholder="Select department"
+/>
+
+
+
+
+
+
                     {errors.parentDepartment && <p className="mt-1 text-sm text-red-600">{errors.parentDepartment}</p>}
                   </div>
                   <div>
@@ -728,93 +783,46 @@ const App = () => {
                 </button>
               </div>
             </form>
-            {/* Success Modal */}
-            {successMessage && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                  <div className="p-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-2xl font-bold text-green-600">Doctor Registered Successfully!</h3>
-                      <button 
-                        onClick={() => setSuccessMessage(null)}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        <X className="w-6 h-6" />
-                      </button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Doctor ID</p>
-                          <p className="text-gray-900">{successMessage.id}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Full Name</p>
-                          <p className="text-gray-900">{successMessage.dname}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Date of Birth</p>
-                          <p className="text-gray-900">{new Date(successMessage.ddob).toLocaleDateString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Qualification</p>
-                          <p className="text-gray-900">{successMessage.dqlf}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Specialty</p>
-                          <p className="text-gray-900">{successMessage.dspclty}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Department</p>
-                          <p className="text-gray-900">{successMessage.ddpt}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Registration Number</p>
-                          <p className="text-gray-900">{successMessage.dregno}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Council</p>
-                          <p className="text-gray-900">{successMessage.dregcnl}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Contact Number</p>
-                          <p className="text-gray-900">{successMessage.dcnt}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">WhatsApp Number</p>
-                          <p className="text-gray-900">{successMessage.dwhtsap}</p>
-                        </div>
-                        <div className="md:col-span-2">
-                          <p className="text-sm font-medium text-gray-500">Email</p>
-                          <p className="text-gray-900">{successMessage.demail}</p>
-                        </div>
-                        <div className="md:col-span-2">
-                          <p className="text-sm font-medium text-gray-500">Status</p>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            successMessage.dstatus === 'pending' 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {successMessage.dstatus.charAt(0).toUpperCase() + successMessage.dstatus.slice(1)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-6 flex justify-end space-x-3">
-                        <button
-                          type="button"
-                          onClick={() => setSuccessMessage(null)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+           {successMessage && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-bold text-green-600">Doctor Registered Successfully!</h3>
+          <button 
+            onClick={() => setSuccessMessage(null)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Full Name</p>
+              <p className="text-gray-900">{successMessage?.dname || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Status</p>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                successMessage?.dstatus === 'pending' 
+                  ? 'bg-yellow-100 text-yellow-800' 
+                  : 'bg-green-100 text-green-800'
+              }`}>
+                {successMessage?.dstatus
+                  ? successMessage.dstatus.charAt(0).toUpperCase() + successMessage.dstatus.slice(1)
+                  : 'Pending'}
+              </span>
+            </div>
+            {/* Add other fields similarly with ? optional chaining */}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
           </div>
         </div>
       </div>

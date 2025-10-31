@@ -72,6 +72,7 @@ const onSubmit = async (data) => {
       pincode: String(trimmedData.pincode).padStart(6, "0"), // ensure string with 6 digits
       dob: trimmedData.dob,
       contactno: String(trimmedData.contactno),
+      email: trimmedData.email, // ✅ add this line
       gender: trimmedData.gender,
       isactive: trimmedData.isactive === "true" || trimmedData.isactive === true,
     };
@@ -171,6 +172,20 @@ const onSubmit = async (data) => {
         pattern: { value: /^[6-9]\d{9}$/, message: "Invalid contact number" },
       },
     },
+    {
+  name: "email",
+  label: "Email",
+  placeholder: "Enter Email Address",
+  type: "email",
+  validation: {
+    required: "Email is required",
+    pattern: {
+      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      message: "Enter a valid email address",
+    },
+  },
+},
+
     {
       name: "gender",
       label: "Gender",

@@ -19,7 +19,14 @@ const UpdateHospital = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const { register, handleSubmit, reset, setError, clearErrors, watch, formState: { errors } } = useForm({ mode: "onChange" });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useForm({ mode: "onChange" });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,11 +38,8 @@ const UpdateHospital = () => {
 
       setIsLoading(true);
       try {
-        const [hospitalTypesResponse, hospitalResponse, hospitalsRes] = await Promise.all([
-          viewHospitalTypes(),
-          viewHospital(id),
-          viewHospitals(),
-        ]);
+        const [hospitalTypesResponse, hospitalResponse, hospitalsRes] =
+          await Promise.all([viewHospitalTypes(), viewHospital(id), viewHospitals()]);
 
         setHospitalTypes(hospitalTypesResponse.data || []);
         setExistingHospitals(hospitalsRes.data || []);
@@ -139,8 +143,18 @@ const UpdateHospital = () => {
       };
 
       await updateHospital(id, payload);
-      toast.success("✅ Hospital updated successfully!");
-      navigate("/view-hospital");
+
+      // Show success toast before navigating
+      toast.success("✅ Hospital updated successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      // Delay navigation so toast can appear
+      setTimeout(() => {
+        navigate("/view-hospital");
+      }, 2100);
+
     } catch (err) {
       console.error(err);
       toast.error(err?.response?.data?.message || "Failed to update hospital.");

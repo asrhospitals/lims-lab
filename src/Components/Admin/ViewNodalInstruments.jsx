@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom"; // ✅ added useLocation
 import { RiSearchLine } from "react-icons/ri";
 import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
@@ -17,32 +17,36 @@ const ViewNodalInstrument = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const navigate = useNavigate();
+  const location = useLocation(); // ✅ added
   const { setNodalInstrumentToUpdate } = useContext(AdminContext);
 
-  // Handlers for pagination
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
+  const handlePageChange = (page) => setCurrentPage(page);
   const handlePageSizeChange = (size) => {
     setItemsPerPage(size);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
   };
+
+  // ✅ Refresh logic after update
+  useEffect(() => {
+    if (location.state?.refresh) {
+      setCurrentPage(1); // triggers existing fetchAll useEffect
+      navigate(location.pathname, { replace: true }); // remove state to prevent loop
+    }
+  }, [location.state, navigate]);
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const params = {
-          page: currentPage,
-          limit: itemsPerPage,
-        };
+        const params = { page: currentPage, limit: itemsPerPage };
         const response = await viewNodalInstruments(params);
+
         const data = (response.data || []).sort(
           (a, b) => Number(a.instruments_id) - Number(b.instruments_id)
         );
+
         setInstruments(data);
-        setFiltered(data); // fixed state name
+        setFiltered(data);
         setTotalPages(response?.meta?.totalPages || 1);
         setTotalItems(response?.meta?.totalItems || 0);
       } catch (err) {
@@ -55,28 +59,30 @@ const ViewNodalInstrument = () => {
       }
     };
 
-    fetchAll(); // ✅ call the correct function
+    fetchAll();
   }, [currentPage, itemsPerPage]);
 
+  // Search filter
   useEffect(() => {
-    const term = search.toLowerCase();
-    if (!term.trim()) {
+    const term = search.toLowerCase().trim();
+    if (!term) {
       setFiltered(instruments);
     } else {
-      setFiltered(
-        (instruments || []).filter(
-          (i) =>
-            (i.nodalname && i.nodalname.toLowerCase().includes(term)) ||
-            (i.instrumentname && i.instrumentname.toLowerCase().includes(term))
-        )
+      const result = instruments.filter(
+        (i) =>
+          (i.nodalName &&
+            i.nodalName.toLowerCase().includes(term)) ||
+          (i.instrumentName &&
+            i.instrumentName.toLowerCase().includes(term))
       );
+      setFiltered(result);
     }
   }, [search, instruments]);
 
   const handleUpdate = (instrument) => {
     setNodalInstrumentToUpdate(instrument);
     localStorage.setItem("nodalinstrumentToUpdate", JSON.stringify(instrument));
-    navigate("/update-nodal-instrument");
+     navigate(`/update-nodal-instrument/${instrument.id}`);
   };
 
   const columns = [
@@ -86,7 +92,7 @@ const ViewNodalInstrument = () => {
     { key: "status", label: "Status" },
   ];
 
-  const mappedItems = (filtered || []).map((i) => ({
+  const mappedItems = filtered.map((i) => ({
     id: i.id ?? Math.random().toString(36).substring(2, 9),
     instrumentname: i.instrumentName || "-",
     nodalname: i.nodalName || "-",
@@ -141,7 +147,7 @@ const ViewNodalInstrument = () => {
                   value={search}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (/^[a-zA-Z0-9_,\s]*$/.test(val)) {
+                    if (/^[a-zA-Z0-9_,\s-]*$/.test(val)) {
                       setSearch(val);
                     }
                   }}

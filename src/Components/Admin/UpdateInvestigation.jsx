@@ -200,7 +200,7 @@ const UpdateInvestigation = () => {
       instrumenttype: investigationData.instrumenttype || "",
       description: investigationData.description || "",
       sac: investigationData.sac || "",
-      order: investigationData.order || "",
+      mainorder: investigationData.order || "",
       derivedtest: investigationData.derivedtest || "",
       extranaltest: investigationData.extranaltest || "",
       containertype: investigationData.containertype || "",
@@ -659,8 +659,8 @@ const UpdateInvestigation = () => {
       // reset();
 
       setTimeout(() => {
-        //  navigate("/view-investigation");
-      }, 500);
+         navigate("/view-investigation");
+      }, 1000);
     } catch (err) {
       toast.error("❌ Failed to update investigation");
       console.error(err);
@@ -668,6 +668,8 @@ const UpdateInvestigation = () => {
       setIsSubmitting(false);
     }
   };
+  
+
 
   const [newResult, setNewResult] = useState({
     name: "",

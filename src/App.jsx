@@ -114,11 +114,13 @@ import AddUser from "./Components/Admin/AddUser";
 import ViewUserDetails from "./Components/Admin/ViewUserDetails";
 import AddUserMapping from "./Components/Admin/AddUserMapping";
 import ViewUserMapping from "./Components/Admin/ViewUserMapping";
+import UpdateUserMapping from "./Components/Admin/UpdateUserMapping";
 import AddAccessionMaster from "./Components/Admin/AddAccessionMaster";
 import ViewAccessionMaster from "./Components/Admin/ViewAccessionMaster";
 import UpdateAccessionMaster from "./Components/Admin/UpdateAccessionMaster";
 import UpdateUserDetails from "./Components/Admin/UpdateUserDetails";
 import UpdatePatientDetails from "./Components/Admin/UpdatePatientDetails";
+import ViewDoctorRegistration from "./Components/Admin/ViewDoctorRegistration";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -274,6 +276,17 @@ function App() {
                 <Navigate to="/" />
               ),
           },
+{
+            path: "view-doctor-registration-details",
+            element:
+              userRole === "admin" ? (
+                <ViewDoctorRegistration />
+              ) : (
+                <Navigate to="/" />
+              ),
+          },
+   
+
           {
             path: "update-hospital/:id",
             element:
@@ -326,7 +339,7 @@ function App() {
             element: requireRole("admin", <ViewNodalInstrument />),
           },
           {
-            path: "update-nodal-instrument",
+            path: "update-nodal-instrument/:id",
             element: requireRole("admin", <UpdateNodalInstrument />),
           },
           {
@@ -368,7 +381,7 @@ function App() {
             path: "update-user-list/:id",
             element: requireRole("admin", <UpdateUserDetails />),
           },
-          
+            
           {
             path: "add-user-mapping",
             element: requireRole("admin", <AddUserMapping />),
@@ -378,6 +391,10 @@ function App() {
             path: "view-user-mapping",
             element: requireRole("admin", <ViewUserMapping />),
           },
+            {
+    path: "update-user-mapping/:id",
+    element: requireRole("admin", <UpdateUserMapping />),
+  },
           
           {
             path: "update-role",

@@ -11,6 +11,10 @@ const httpOptions = {
 };
 
 const API_ROOT_URL = "https://asrlabs.asrhospitalindia.in/lims";
+const API_ROOT_Phlebotomist_URL = "https://asrphleb.asrhospitalindia.in/api/v1/phleb";
+
+
+
 
 export const addDepartment = async (departmentData) => {
   // no try/catch here
@@ -851,3 +855,47 @@ export const viewAllInstrument = async () => {
     throw error;
   }
 };
+
+
+
+export const fetchPatientReportData = async (id) => {
+  try {
+    const res = await axios.get(`${API_ROOT_Phlebotomist_URL}/report/patient-report/${id}`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+export const viewAllHospitalType = async () => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-all-hospitaltype`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllNodals = async () => {
+  try {
+    const res = await axios.get(`${API_ROOT_URL}/master/get-all-nodals`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+export const fetchPhebotomistPatientData = async (id) => {
+  try {
+    const res = await axios.get(`${API_ROOT_Phlebotomist_URL}/get-patient-data/${id}`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+
+

@@ -4,10 +4,15 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, Link } from "react-router-dom";
 import { addDepartment, viewDepartments } from "../../services/apiService";
+import { FiBell } from "react-icons/fi";
 
 const AddDept = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [notifications, setNotifications] = useState([
+    { message: "Department added successfully!", read: false }
+  ]);
+  const [bellOpen, setBellOpen] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -19,11 +24,11 @@ const AddDept = () => {
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      isactive: "true", // ✅ Default selected = True (Active Yes)
+      isactive: "true", // Default selected = True (Active Yes)
     },
   });
 
-  // ✅ Load existing departments for duplicate check
+  // Load existing departments for duplicate check
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
@@ -41,7 +46,6 @@ const AddDept = () => {
     setIsSubmitting(true);
 
     try {
-      // ✅ Check for duplicate department (case-insensitive)
       const duplicate = departments.find(
         (dept) => dept.dptname?.toLowerCase() === data.dptname.toLowerCase()
       );
@@ -55,21 +59,23 @@ const AddDept = () => {
         return;
       }
 
-      // ✅ Prepare data
       const formattedData = { ...data, isactive: data.isactive === "true" };
-
       const response = await addDepartment(formattedData);
 
-      // Accept both 200 and 201 as success
       if (response.status === 200 || response.status === 201) {
         toast.success("Department added successfully!", {
           position: "top-right",
           autoClose: 2000,
         });
 
+        // Add live notification to bell
+        setNotifications([
+          ...notifications,
+          { message: `Department "${data.dptname}" added!`, read: false },
+        ]);
+
         reset();
 
-        // ⏳ Small delay so toast shows before redirect
         setTimeout(() => {
           navigate("/view-departments");
         }, 2200);
@@ -89,28 +95,72 @@ const AddDept = () => {
   return (
     <>
       <ToastContainer />
-      {/* Breadcrumb */}
-      <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
-          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-            <li>
-              <Link to="/" className="text-gray-700 hover:text-teal-600">
-                🏠 Home
-              </Link>
-            </li>
-            <li className="text-gray-400">/</li>
-            <li>
-              <Link
-                to="/view-departments"
-                className="text-gray-700 hover:text-teal-600"
-              >
-                Departments
-              </Link>
-            </li>
-            <li className="text-gray-400">/</li>
-            <li className="text-gray-500">Add Department</li>
-          </ol>
+      {/* Breadcrumb & Notification Bell */}
+      <div className="fixed top-[61px] w-full z-10 flex justify-between items-center px-4 py-2 bg-gray-50 border-b shadow-lg">
+        <nav className="flex items-center font-medium space-x-1 md:space-x-3 text-sm">
+          <li className="list-none">
+            <Link to="/" className="text-gray-700 hover:text-teal-600">
+              🏠 Home
+            </Link>
+          </li>
+          <li className="text-gray-400">/</li>
+          <li className="list-none">
+            <Link
+              to="/view-departments"
+              className="text-gray-700 hover:text-teal-600"
+            >
+              Departments
+            </Link>
+          </li>
+          <li className="text-gray-400">/</li>
+          <li className="text-gray-500 list-none">Add Department</li>
         </nav>
+
+        {/* Notification Bell */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setBellOpen(!bellOpen);
+              // mark all notifications as read
+              setNotifications(
+                notifications.map((n) => ({ ...n, read: true }))
+              );
+            }}
+            className="relative p-2 rounded-full hover:bg-gray-100 transition"
+          >
+            <FiBell className="text-gray-700 w-5 h-5" />
+            {notifications.filter((n) => !n.read).length > 0 && (
+              <span className="absolute top-0 right-0 text-[10px] bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                {notifications.filter((n) => !n.read).length}
+              </span>
+            )}
+          </button>
+
+          {/* Dropdown notifications */}
+          {bellOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 shadow-lg rounded-lg z-20 p-2 max-h-64 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <p className="text-gray-500 text-xs text-center">
+                  No notifications
+                </p>
+              ) : (
+                notifications
+                  .slice()
+                  .reverse()
+                  .map((n, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-2 rounded mb-1 ${
+                        n.read ? "bg-gray-100" : "bg-teal-50 font-medium"
+                      }`}
+                    >
+                      {n.message}
+                    </div>
+                  ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Form */}
@@ -148,29 +198,19 @@ const AddDept = () => {
                       : "border-gray-300 focus:ring-teal-500"
                   } focus:ring-2 transition`}
                   onKeyUp={(e) => {
-                    if (/^[A-Za-z\s]+$/.test(e.target.value))
-                      clearErrors("dptname");
+                    if (/^[A-Za-z\s]+$/.test(e.target.value)) clearErrors("dptname");
                   }}
                   onInput={(e) => {
                     const input = e.target;
                     const cursorPos = input.selectionStart;
-
-                    // Remove invalid characters
                     const cleanedValue = input.value.replace(/[^A-Za-z\s]/g, "");
-
-                    // Adjust cursor position
                     const diff = input.value.length - cleanedValue.length;
                     input.value = cleanedValue;
-                    input.setSelectionRange(
-                      cursorPos - diff,
-                      cursorPos - diff
-                    );
+                    input.setSelectionRange(cursorPos - diff, cursorPos - diff);
                   }}
                 />
                 {errors.dptname && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.dptname.message}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.dptname.message}</p>
                 )}
               </div>
 
@@ -200,9 +240,7 @@ const AddDept = () => {
                   </label>
                 </div>
                 {errors.isactive && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.isactive.message}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.isactive.message}</p>
                 )}
               </div>
             </div>

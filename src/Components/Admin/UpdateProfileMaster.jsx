@@ -64,7 +64,7 @@ const UpdateProfileMaster = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         const token = localStorage.getItem("authToken");
@@ -74,44 +74,38 @@ const UpdateProfileMaster = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        
-        console.log("Profile API Response:", response.data);
-        
-        // Handle different possible response structures
+
         const profileData = response.data?.data || response.data;
-        
+
         if (profileData) {
-          console.log("Profile Data:", profileData);
-          
           // Map profile data to form fields
-          setSelectedProfile(profileData.profilename || profileData.profile_id?.toString() || "");
+          // ✅ Fix: map the profile ID to a string that exists in the profiles list
+          const matchedProfile = profiles.find(
+            (p) => p.id === profileData.profileid || p.id === profileData.profile_id
+          );
+          setSelectedProfile(matchedProfile ? matchedProfile.id.toString() : "");
+
           setIsActive(profileData.is_active !== false && profileData.is_active !== 0);
-          
-          // Set selected tests if they exist - handle different possible structures
+
+          // Set selected tests if they exist
           let investigationIds = [];
-          
           if (profileData.investigationids && Array.isArray(profileData.investigationids)) {
             investigationIds = profileData.investigationids;
           } else if (profileData.investigations && Array.isArray(profileData.investigations)) {
-            // If investigations is an array of objects with ids
             investigationIds = profileData.investigations.map(inv => inv.investigation_id || inv.id);
           }
-          
-          console.log("Investigation IDs:", investigationIds);
-          
+
           if (investigationIds.length > 0) {
             const tests = investigationIds.map(testId => {
-              const investigation = investigations.find(inv => 
+              const investigation = investigations.find(inv =>
                 inv.investigation_id === testId || inv.id === testId
               );
               return {
                 id: testId,
                 name: investigation?.testname || `Test ${testId}`
               };
-            }).filter(test => test.id); // Remove any invalid tests
-            
+            }).filter(test => test.id);
             setSelectedTests(tests);
-            console.log("Selected Tests:", tests);
           }
         }
       } catch (err) {
@@ -122,15 +116,13 @@ const UpdateProfileMaster = () => {
       }
     };
 
-    // Only fetch profile data if we have investigations loaded
-    if (investigations.length > 0) {
+    if (profiles.length > 0 && investigations.length > 0) {
       fetchProfileData();
     }
-  }, [id, investigations]);
+  }, [id, profiles, investigations]);
 
   const handleProfileChange = (e) => {
     setSelectedProfile(e.target.value);
-    // Don't clear selected tests when updating
   };
 
   const addTest = (inv) => {
@@ -145,46 +137,42 @@ const UpdateProfileMaster = () => {
   };
 
   const handleReset = () => {
-    // Reset to original values instead of clearing
+    setSearch("");
+    // Reset to original data
     const fetchOriginalData = async () => {
       try {
         const token = localStorage.getItem("authToken");
         const response = await axios.get(
           `https://asrlabs.asrhospitalindia.in/lims/master/get-profile/${id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        
-        // Handle different possible response structures
+
         const profileData = response.data?.data || response.data;
-        
+
         if (profileData) {
-          // Map profile data to form fields
-          setSelectedProfile(profileData.profileid?.toString() || profileData.profile_id?.toString() || "");
+          const matchedProfile = profiles.find(
+            (p) => p.id === profileData.profileid || p.id === profileData.profile_id
+          );
+          setSelectedProfile(matchedProfile ? matchedProfile.id.toString() : "");
           setIsActive(profileData.is_active !== false && profileData.is_active !== 0);
-          
-          // Set selected tests if they exist - handle different possible structures
+
           let investigationIds = [];
-          
           if (profileData.investigationids && Array.isArray(profileData.investigationids)) {
             investigationIds = profileData.investigationids;
           } else if (profileData.investigations && Array.isArray(profileData.investigations)) {
-            // If investigations is an array of objects with ids
             investigationIds = profileData.investigations.map(inv => inv.investigation_id || inv.id);
           }
-          
+
           if (investigationIds.length > 0) {
             const tests = investigationIds.map(testId => {
-              const investigation = investigations.find(inv => 
+              const investigation = investigations.find(inv =>
                 inv.investigation_id === testId || inv.id === testId
               );
               return {
                 id: testId,
                 name: investigation?.testname || `Test ${testId}`
               };
-            }).filter(test => test.id); // Remove any invalid tests
-            
+            }).filter(test => test.id);
             setSelectedTests(tests);
           }
         }
@@ -192,9 +180,7 @@ const UpdateProfileMaster = () => {
         console.error("Failed to reset profile data", err);
       }
     };
-    
     fetchOriginalData();
-    setSearch("");
   };
 
   useEffect(() => {
@@ -229,7 +215,7 @@ const UpdateProfileMaster = () => {
         is_active: isActive,
       };
 
-      const res = await updateProfile(id, payload);
+      await updateProfile(id, payload);
 
       toast.success("Profile updated successfully!", {
         position: "top-right",
@@ -249,17 +235,6 @@ const UpdateProfileMaster = () => {
       setIsSubmitting(false);
     }
   };
-
-  if (loading && !id) {
-    return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile data...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -382,7 +357,7 @@ const UpdateProfileMaster = () => {
                       const isSelected = selectedTests.some((t) => t.id === (inv.investigation_id || inv.id));
                       return (
                         <li
-                          key={inv.investigation_id}
+                          key={inv.investigation_id || inv.id}
                           className={`flex justify-between items-center p-2 border-b last:border-0 ${
                             isSelected ? 'bg-teal-50' : ''
                           }`}
@@ -395,8 +370,8 @@ const UpdateProfileMaster = () => {
                             onClick={() => addTest(inv)}
                             disabled={isSelected}
                             className={`px-2 py-1 text-xs rounded ${
-                              isSelected 
-                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                              isSelected
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                                 : 'bg-teal-100 text-teal-700 hover:bg-teal-200'
                             }`}
                           >

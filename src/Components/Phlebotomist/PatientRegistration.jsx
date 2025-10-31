@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Bell } from "lucide-react";
 
-const PatientRegistration = () => {
+const PatientRegistration = () => { 
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [search, setSearch] = useState("");
@@ -16,7 +18,9 @@ const PatientRegistration = () => {
   const [pBarcode, setPBarcode] = useState("");
   const navigate = useNavigate();
 
-  // 🔹 Initial Fetch Patients
+  const today = new Date().toISOString().split("T")[0]; // ✅ restrict future dates
+
+  // 🔹 Fetch Patients
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -36,7 +40,6 @@ const PatientRegistration = () => {
         );
 
         if (!response.ok) throw new Error("Network response was not ok");
-
         const result = await response.json();
 
         const formattedData = (result.data || []).map((item) => ({
@@ -72,7 +75,8 @@ const PatientRegistration = () => {
       filtered = filtered.filter(
         (item) =>
           (item.p_name || "").toLowerCase().includes(lower) ||
-          (item.p_mobile || "").includes(lower)
+          (item.p_mobile || "").includes(lower) ||
+          (item.pbarcode || "").toLowerCase().includes(lower)
       );
     }
     setFilteredPatients(filtered);
@@ -95,9 +99,7 @@ const PatientRegistration = () => {
       if (pBarcode) query.push(`pbarcode=${pBarcode}`);
 
       const response = await fetch(
-        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?${query.join(
-          "&"
-        )}`,
+        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?${query.join("&")}`,
         {
           method: "GET",
           headers: {
@@ -108,7 +110,6 @@ const PatientRegistration = () => {
       );
 
       if (!response.ok) throw new Error("Failed to fetch by date");
-
       const result = await response.json();
       const patientsArray = Array.isArray(result) ? result : result.data || [];
 
@@ -126,12 +127,7 @@ const PatientRegistration = () => {
 
       setPatients(formattedData);
       setFilteredPatients(formattedData);
-
-      if (formattedData.length === 0) {
-        setError("No patients found for this date range.");
-      } else {
-        setError("");
-      }
+      setError(formattedData.length === 0 ? "No patients found for this date range." : "");
     } catch (err) {
       console.error("Error fetching patients by date:", err);
       setError("Failed to fetch patients by date.");
@@ -221,30 +217,38 @@ const PatientRegistration = () => {
       {/* Content */}
       <div className="w-full mt-12 px-2 sm:px-4 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-          {/* Header & Export */}
+          {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               Patient Registration List
             </h2>
 
-            <div className="flex flex-row gap-3">
+            <div className="flex flex-row gap-3 items-center">
+              {/* Excel */}
               <div
                 onClick={handleExportExcel}
                 className="bg-green-100 rounded-lg p-2 cursor-pointer hover:bg-green-200 transition flex items-center justify-center"
               >
                 <img src="./excel.png" alt="Export to Excel" className="w-7 h-7" />
               </div>
-            </div>
-          </div>
 
-          {/* Add Patient Button */}
-          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-3 mb-4">
-            <button
-              onClick={() => navigate("/patient-registration-add")}
-              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 w-full sm:w-auto"
-            >
-              Add Patient
-            </button>
+              {/* Notification Bell (Yellow) */}
+              <div
+                onClick={() => toast.info("🔔 You have new updates!", {
+                  style: {
+                    background: "#FEF3C7",
+                    color: "#92400E",
+                    borderRadius: "10px",
+                    fontWeight: "600",
+                  },
+                })}
+                className="bg-yellow-100 rounded-lg p-2 cursor-pointer hover:bg-yellow-200 transition flex items-center justify-center"
+                title="Notifications"
+              >
+                <Bell size={26} strokeWidth={2.3} className="text-yellow-700" />
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+              </div>
+            </div>
           </div>
 
           {/* Filters */}
@@ -258,6 +262,7 @@ const PatientRegistration = () => {
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 className="border px-3 py-2 rounded w-full md:w-48"
+                max={today}
               />
             </div>
 
@@ -270,6 +275,7 @@ const PatientRegistration = () => {
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 className="border px-3 py-2 rounded w-full md:w-48"
+                max={today}
               />
             </div>
 
@@ -281,7 +287,7 @@ const PatientRegistration = () => {
                 type="text"
                 value={pBarcode}
                 onChange={(e) => setPBarcode(e.target.value)}
-                placeholder="Enter barcode"
+                placeholder="Search by Name, Mobile, or Barcode..."
                 className="border px-3 py-2 rounded w-full"
               />
             </div>
@@ -314,13 +320,24 @@ const PatientRegistration = () => {
                 itemsPerPage={10}
                 showDetailsButtons={false}
                 onUpdate={(patient) =>
-                  navigate(`/update-patient/${patient.id}`)
+                  navigate(`/update-patient-details/${patient.id}`)
                 }
               />
             )}
           </div>
         </div>
       </div>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </>
   );
 };

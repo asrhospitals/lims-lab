@@ -1,10 +1,11 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import Barcode from "react-barcode";
-import captureImg from "../../../public/capture-new.png";
+// import captureImg from "../../../public/capture-new.png";
 
 import {
   Tabs,
@@ -1319,12 +1320,13 @@ const UpdatePatientDetails = () => {
                   className="flex items-center bg-white px-3 py-2 rounded text-sm space-x-2 
              transform transition-transform duration-200 hover:scale-105"
                 >
-                  <img
-                    src={captureImg}
-                    alt="Capture Icon"
-                    className="w-5 h-5"
-                  />
-                  <span className="text-black">Capture Photo</span>
+                 <img
+  src="/capture-new.png"
+  alt="Capture Icon"
+  className="w-5 h-5"
+/>
+<span className="text-black">Capture Photo</span>
+
                 </button>
               </div>
 

@@ -28,7 +28,6 @@ const LoginPage = () => {
 
     try {
       const response = await axios.post(OTP_SENDER, loginData);
-      console.log("login response ", response.data);
 
       localStorage.setItem("hospital_name", response.data.hospitalname);
       localStorage.setItem("nodalname", response.data.nodalname);
@@ -42,7 +41,6 @@ const LoginPage = () => {
         setResponseData({ userid: response.data.id, otp: "" });
         setOtp(response.data.otp); // for debug
       } else {
-        // Direct login without OTP for non-admin
         toast.success("Login successful!");
         localStorage.setItem("authToken", response.data.token);
         window.location.reload();

@@ -21,14 +21,10 @@ const ViewPhlebotomist = () => {
     const fetchPhlebotomists = async () => {
       setLoading(true);
       try {
-        const params = {
-          page: currentPage,
-          limit: itemsPerPage,
-        };
-
+        const params = { page: currentPage, limit: itemsPerPage };
         const res = await viewPhlebotomists(params);
 
-        const phlebotomistsData = res.data.sort(
+        const phlebotomistsData = (res.data?.data || res.data || []).sort(
           (a, b) => Number(a.id) - Number(b.id)
         );
 
@@ -37,9 +33,7 @@ const ViewPhlebotomist = () => {
         setTotalPages(res?.meta?.totalPages || 1);
         setTotalItems(res?.meta?.totalitems || 0);
       } catch (err) {
-        setError(
-          err.response?.data?.message || "Failed to fetch Phlebotomists."
-        );
+        setError(err.response?.data?.message || "Failed to fetch Phlebotomists.");
       } finally {
         setLoading(false);
       }
@@ -48,7 +42,7 @@ const ViewPhlebotomist = () => {
     fetchPhlebotomists();
   }, [currentPage, itemsPerPage]);
 
-  // Client-side search filtering
+  // ✅ Fixed Search Filter
   useEffect(() => {
     if (!search.trim()) {
       setFilteredPhlebotomists(phlebotomists);
@@ -66,13 +60,10 @@ const ViewPhlebotomist = () => {
     }
   }, [search, phlebotomists]);
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
+  const handlePageChange = (page) => setCurrentPage(page);
   const handlePageSizeChange = (newSize) => {
     setItemsPerPage(newSize);
-    setCurrentPage(1); // Reset to first page when changing page size
+    setCurrentPage(1);
   };
 
   const handleUpdate = (phlebotomist) => {
@@ -93,9 +84,7 @@ const ViewPhlebotomist = () => {
 
   const mappedItems = (filteredPhlebotomists || []).map((h) => ({
     ...h,
-    id: h.id ?? Math.random().toString(36).substr(2, 9),
     dob: h.dob ? new Date(h.dob).toLocaleDateString("en-IN") : "-",
-    isactive: !!h.isactive,
     status: h.isactive ? "Active" : "Inactive",
   }));
 
@@ -104,76 +93,62 @@ const ViewPhlebotomist = () => {
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
-              <Link
-                to="/"
-                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
-              >
+              <Link to="/" className="text-gray-700 hover:text-teal-600">
                 🏠︎ Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <Link
-                to="/view-phlebotomist"
-                className="text-gray-700 hover:text-teal-600 transition-colors"
-              >
+              <Link to="/view-phlebotomist" className="text-gray-700 hover:text-teal-600">
                 Phlebotomists
               </Link>
             </li>
             <li className="text-gray-400">/</li>
-            <li aria-current="page" className="text-gray-500">
-              View Phlebotomists
-            </li>
+            <li className="text-gray-500">View Phlebotomists</li>
           </ol>
         </nav>
       </div>
 
-      {/* Main Content */}
-      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
+      {/* Content */}
+      <div className="w-full mt-14 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
+
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-              Phlebotomist List
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-64">
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
-                  placeholder="Search Phlebotomist..."
-                />
-                <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
-              </div>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Phlebotomist List</h2>
+
+            <div className="relative sm:w-64 w-full">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500"
+                placeholder="Search Phlebotomist..."
+              />
+              <RiSearchLine className="absolute left-3 top-2.5 text-gray-400" />
             </div>
           </div>
 
-          {/* Add New Button */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <button
-              onClick={() => navigate("/add-user")}
-              className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
-            >
-              Add New
-            </button>
-          </div>
+          {/* Add New */}
+          <button
+            onClick={() => navigate("/add-user")}
+            className="mb-3 px-6 py-2 bg-teal-600 text-white rounded-lg shadow hover:bg-teal-700"
+          >
+            Add New
+          </button>
 
-          {/* Data Table */}
+          {/* Table */}
           {loading ? (
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
           ) : filteredPhlebotomists.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              No Phlebotomists found.
-            </div>
+            <div className="text-center py-6 text-gray-500">No Phlebotomists found.</div>
           ) : (
             <DataTable
               items={mappedItems}

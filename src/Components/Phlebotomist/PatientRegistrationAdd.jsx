@@ -31,13 +31,13 @@ const PatientRegistrationAdd = () => {
 
   const [showCamera, setShowCamera] = useState(false);
   const [whatsappSameAsMobile, setWhatsappSameAsMobile] = useState(false);
-  const [age, setAge] = useState("");
+  const [age, setAge] = useState({ years: "", months: "", days: "" });
 
   const [numberType, setNumberType] = useState("OP");
   // Format today's date as YYYY-MM-DD
   const today = new Date();
   const formattedDate = today.toISOString().split("T")[0];
-
+  const todaysdate = new Date().toISOString().split("T")[0];
   const [billingItems, setBillingItems] = useState([]);
   const [billingData, setBillingData] = useState([]);
   const [tests, setTests] = useState([]);
@@ -163,7 +163,21 @@ const PatientRegistrationAdd = () => {
     return sum + Number(test.normalprice || 0);
   }, 0);
 
-  // console.log("ptotal==", ptotal);
+
+  const handleDiscountValueChange = (val) => {
+    let value = Number(val);
+
+    if (pdisc.type === "%" && value > 20) {
+      setError("Maximum discount allowed is 20%");
+    } else if (value < 0) {
+      setError("Discount cannot be negative");
+    } else {
+      setError("");
+      setDiscount({ ...pdisc, value });
+    }
+  };
+
+
 
   const discountValue =
     pdisc.type === "%" ? (ptotal * pdisc.value) / 100 : pdisc.value;
@@ -192,26 +206,53 @@ const PatientRegistrationAdd = () => {
 
   const watchedDob = watch("dob");
 
-  // Auto-calculate age when DOB changes
-  useEffect(() => {
-    if (watchedDob) {
-      const today = new Date();
-      const birthDate = new Date(watchedDob);
-      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (
-        monthDiff < 0 ||
-        (monthDiff === 0 && today.getDate() < birthDate.getDate())
-      ) {
-        calculatedAge--;
-      }
-      if (calculatedAge >= 0 && calculatedAge <= 100) {
-        setAge(calculatedAge);
-        setValue("age", calculatedAge);
-      }
-    }
-  }, [watchedDob, setValue]);
 
+  // Auto-calculate age when DOB changes
+
+ useEffect(() => {
+   if (watchedDob) {
+     const today = new Date();
+     let birthDate = new Date(watchedDob); // use let here to allow reassignment
+ 
+     // Restrict future dates
+     if (birthDate > today) {
+       birthDate = today;
+     }
+ 
+     let years = today.getFullYear() - birthDate.getFullYear();
+     let months = today.getMonth() - birthDate.getMonth();
+     let days = today.getDate() - birthDate.getDate();
+ 
+     if (days < 0) {
+       months -= 1;
+       days += new Date(today.getFullYear(), today.getMonth(), 0).getDate(); // days in prev month
+     }
+     if (months < 0) {
+       years -= 1;
+       months += 12;
+     }
+ 
+     setAge({ years, months, days });
+   } else {
+     setAge({ years: "", months: "", days: "" });
+   }
+ }, [watchedDob]);
+ //  helper to check if guardian info is required
+ const isGuardianRequired = age.years !== "" && (age.years < 18 || age.years > 65);
+ //Registartion Date & Time ..///
+ const [regDateTime, setRegDateTime] = useState("");
+ 
+ const formatDateTime = (dtString) => {
+   if (!dtString) return "";
+   const dt = new Date(dtString);
+   return dt.toLocaleString("en-IN", {
+     day: "2-digit",
+     month: "short",
+     year: "numeric",
+     hour: "2-digit",
+     minute: "2-digit",
+   });
+ };
   // Fetch hospitaldetails
 
   // Auto-fill WhatsApp number when checkbox is checked
@@ -334,6 +375,7 @@ const PatientRegistrationAdd = () => {
   };
 
   const hospitalId = localStorage.getItem("hospital_id");
+  
   const departmentphlebotomist = localStorage.getItem("phlebotomist");
   const nodalId = localStorage.getItem("Kadapr");
 
@@ -436,160 +478,278 @@ const PatientRegistrationAdd = () => {
     setBillingData(opbillPayload);
   };
 
-  const onSubmit = async (data) => {
-    console.log("inside");
+//   const onSubmit = async (data) => {
+//     console.log("inside");
 
-    if (!isBillingCompleted) {
-      toast.error("Please fill the billing information before submitting");
-      return;
-    }
+//     if (!isBillingCompleted) {
+//       toast.error("Please fill the billing information before submitting");
+//       return;
+//     }
 
-    setIsSubmitting(true);
-    try {
-      const hospitalName = localStorage.getItem("hospital_name");
-      const nodalname = localStorage.getItem("nodalname");
-      const authToken = localStorage.getItem("authToken");
+//     setIsSubmitting(true);
+//     try {
+//       const hospitalName = localStorage.getItem("hospital_name");
+//       const nodalname = localStorage.getItem("nodalname");
+//       const authToken = localStorage.getItem("authToken");
 
-      // Calculate billing totals
-      const ptotal = addedTests.reduce((sum, t) => sum + t.walkinprice, 0);
-      const discountValue =
-        pdisc.type === "%" ? (ptotal * pdisc.value) / 100 : pdisc.value;
-      const receivable = ptotal - discountValue;
-      const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-      const dueAmount = receivable - totalPaid;
+//       // Calculate billing totals
+//       const ptotal = addedTests.reduce((sum, t) => sum + t.walkinprice, 0);
+//       const discountValue =
+//         pdisc.type === "%" ? (ptotal * pdisc.value) / 100 : pdisc.value;
+//       const receivable = ptotal - discountValue;
+//       const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+//       const dueAmount = receivable - totalPaid;
 
-      // const pptestPayload =
-      //   addedTests.length > 0
-      //     ? addedTests.map((test) => ({
-      //         pop: data.opNumber || "",
-      //         popno: data.registrationNumber || "",
-      //         pipno: numberType || "",
-      //         pscheme: data.schemeType || "",
-      //         refdoc: data.referralDoctorName || "",
-      //         pbarcode: data.barcodeNumber || test.uid || "",
-      //         trfno: data.trfNumber || "",
-      //         remark: data.remarks || note || "",
-      //         attatchfile: prescriptionFile?.url,
-      //       }))
-      //     : [
-      //         {
-      //           pop: data.opNumber || "",
-      //           popno: data.registrationNumber || "",
-      //           pipno: numberType || "",
-      //           pscheme: data.schemeType || "",
-      //           refdoc: data.referralDoctorName || "",
-      //           pbarcode: data.barcodeNumber,
-      //           trfno: data.trfNumber || "",
-      //           remark: data.remarks || note || "",
-      //           attatchfile: prescriptionFile?.url,
-      //         },
-      //       ];
+//       // const pptestPayload =
+//       //   addedTests.length > 0
+//       //     ? addedTests.map((test) => ({
+//       //         pop: data.opNumber || "",
+//       //         popno: data.registrationNumber || "",
+//       //         pipno: numberType || "",
+//       //         pscheme: data.schemeType || "",
+//       //         refdoc: data.referralDoctorName || "",
+//       //         pbarcode: data.barcodeNumber || test.uid || "",
+//       //         trfno: data.trfNumber || "",
+//       //         remark: data.remarks || note || "",
+//       //         attatchfile: prescriptionFile?.url,
+//       //       }))
+//       //     : [
+//       //         {
+//       //           pop: data.opNumber || "",
+//       //           popno: data.registrationNumber || "",
+//       //           pipno: numberType || "",
+//       //           pscheme: data.schemeType || "",
+//       //           refdoc: data.referralDoctorName || "",
+//       //           pbarcode: data.barcodeNumber,
+//       //           trfno: data.trfNumber || "",
+//       //           remark: data.remarks || note || "",
+//       //           attatchfile: prescriptionFile?.url,
+//       //         },
+//       //       ];
 
-      const pptestPayload = [
-        {
-          pop: data.opNumber || "",
-          popno: data.opNumber || "",
-          pipno: numberType || "",
-          pscheme: data.schemeType || "",
-          refdoc: data.referralDoctorName || "",
-          pbarcode: data.barcodeNo || "",
-          trfno: data.trfNumber || "",
-          remark: data.remarks || note || "",
-          attatchfile: prescriptionFile?.url,
-        },
+//       const pptestPayload = [
+//         {
+//           pop: data.opNumber || "",
+//           popno: data.opNumber || "",
+//           pipno: numberType || "",
+//           pscheme: data.schemeType || "",
+//           refdoc: data.referralDoctorName || "",
+//           pbarcode: data.barcodeNo || "",
+//           trfno: data.trfNumber || "",
+//           remark: data.remarks || note || "",
+//           attatchfile: prescriptionFile?.url,
+//         },
+//       ];
+
+//       console.log("pptestPayload==", pptestPayload);
+
+//       console.log("pptestPayload==", pptestPayload);
+
+//       let abhaPayload = [];
+
+//       if (abhaMode === "mobile") {
+//         abhaPayload = [
+//           {
+//             isaadhar: false,
+//             ismobile: true,
+//             aadhar: null,
+//             mobile: abhaValue || null,
+//             abha: null,
+//           },
+//         ];
+//       } else if (abhaMode === "abha") {
+//         abhaPayload = [
+//           {
+//             isaadhar: false,
+//             ismobile: false,
+//             aadhar: null,
+//             mobile: null,
+//             abha: abhaValue || null,
+//           },
+//         ];
+//       } else if (abhaMode === "aadhaar") {
+//         abhaPayload = [
+//           {
+//             isaadhar: true,
+//             ismobile: false,
+//             aadhar: abhaValue || null,
+//             mobile: null,
+//             abha: null,
+//           },
+//         ];
+//       }
+
+//       console.log("t.addedTests ", addedTests);
+
+//       const shortcodesToSend = addedTests.map((t) => Number(t.id));
+
+//       console.log("shortcodesToSend ", shortcodesToSend);
+
+//       const payload = {
+//         p_title: data.p_title,
+//         hospital_id: data.referralSource,
+//         city: data.city,
+//         state: data.state,
+//         p_name: data.p_name,
+//         p_age: age.years,
+// p_age_months: age.months,   // optional
+// p_age_days: age.days,       // optional
+//         p_gender: data.p_gender,
+//         p_regdate: data.p_regdate,
+//         p_mobile: data.p_mobile,
+//         p_image: "", // optional
+//         investigation_ids: shortcodesToSend,
+//         opbill: billingData,
+//         pptest: pptestPayload,
+//         abha: abhaPayload,
+//       };
+//       console.log("paylaod ", payload);
+
+//       const response = await axios.post(
+//         `https://asrphleb.asrhospitalindia.in/api/v1/phleb/add-patient-test`,
+
+//         payload,
+//         {
+//           headers: {
+//             Authorization: `Bearer ${authToken}`,
+//             "Content-Type": "application/json",
+//           },
+//         }
+//       );
+
+//       console.log("Success response:", response.data);
+//       toast.success("Patient registered successfully!");
+//       reset();
+
+//       setTimeout(() => {
+//         navigate("/patient-registration");
+//       }, 2000);
+//     } catch (error) {
+//       console.error(
+//         "❌ Error response:",
+//         error.response?.data || error.message
+//       );
+//       toast.error("Failed to register patient");
+//     } finally {
+//       setIsSubmitting(false); // Reset submitting state
+//     }
+//   };
+const onSubmit = async (data) => {
+  console.log("inside onSubmit");
+
+  if (!isBillingCompleted) {
+    toast.error("Please fill the billing information before submitting");
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    // ✅ Get auth token and hospital ID safely
+const authToken = localStorage.getItem("authToken");
+const userData = JSON.parse(localStorage.getItem("user"));
+const hospitalId = userData?.hospital_id;
+
+if (!hospitalId) {
+  toast.error("Hospital ID not found. Please login again.");
+  setIsSubmitting(false);
+  return;
+}
+
+    
+
+    // Calculate billing totals
+    const ptotal = addedTests.reduce((sum, t) => sum + t.walkinprice, 0);
+    const discountValue =
+      pdisc.type === "%" ? (ptotal * pdisc.value) / 100 : pdisc.value;
+    const receivable = ptotal - discountValue;
+    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+    const dueAmount = receivable - totalPaid;
+
+    // Prepare pptest payload
+    const pptestPayload = [
+      {
+        pop: data.opNumber || "",
+        popno: data.opNumber || "",
+        pipno: numberType || "",
+        pscheme: data.schemeType || "",
+        refdoc: data.referralDoctorName || "",
+        pbarcode: data.barcodeNo || "",
+        trfno: data.trfNumber || "",
+        remark: data.remarks || note || "",
+        attatchfile: prescriptionFile?.url || null,
+      },
+    ];
+
+    // Prepare ABHA payload
+    let abhaPayload = [];
+    if (abhaMode === "mobile") {
+      abhaPayload = [
+        { isaadhar: false, ismobile: true, aadhar: null, mobile: abhaValue || null, abha: null },
       ];
-
-      console.log("pptestPayload==", pptestPayload);
-
-      console.log("pptestPayload==", pptestPayload);
-
-      let abhaPayload = [];
-
-      if (abhaMode === "mobile") {
-        abhaPayload = [
-          {
-            isaadhar: false,
-            ismobile: true,
-            aadhar: null,
-            mobile: abhaValue || null,
-            abha: null,
-          },
-        ];
-      } else if (abhaMode === "abha") {
-        abhaPayload = [
-          {
-            isaadhar: false,
-            ismobile: false,
-            aadhar: null,
-            mobile: null,
-            abha: abhaValue || null,
-          },
-        ];
-      } else if (abhaMode === "aadhaar") {
-        abhaPayload = [
-          {
-            isaadhar: true,
-            ismobile: false,
-            aadhar: abhaValue || null,
-            mobile: null,
-            abha: null,
-          },
-        ];
-      }
-
-      console.log("t.addedTests ", addedTests);
-
-      const shortcodesToSend = addedTests.map((t) => Number(t.id));
-
-      console.log("shortcodesToSend ", shortcodesToSend);
-
-      const payload = {
-        p_title: data.p_title,
-        hospital_id: data.referralSource,
-        city: data.city,
-        state: data.state,
-        p_name: data.p_name,
-        p_age: data.p_age,
-        p_gender: data.p_gender,
-        p_regdate: data.p_regdate,
-        p_mobile: data.p_mobile,
-        p_image: "", // optional
-        investigation_ids: shortcodesToSend,
-        opbill: billingData,
-        pptest: pptestPayload,
-        abha: abhaPayload,
-      };
-      console.log("paylaod ", payload);
-
-      const response = await axios.post(
-        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/add-patient-test`,
-
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("Success response:", response.data);
-      toast.success("Patient registered successfully!");
-      reset();
-
-      setTimeout(() => {
-        navigate("/patient-registration");
-      }, 2000);
-    } catch (error) {
-      console.error(
-        "❌ Error response:",
-        error.response?.data || error.message
-      );
-      toast.error("Failed to register patient");
-    } finally {
-      setIsSubmitting(false); // Reset submitting state
+    } else if (abhaMode === "abha") {
+      abhaPayload = [
+        { isaadhar: false, ismobile: false, aadhar: null, mobile: null, abha: abhaValue || null },
+      ];
+    } else if (abhaMode === "aadhaar") {
+      abhaPayload = [
+        { isaadhar: true, ismobile: false, aadhar: abhaValue || null, mobile: null, abha: null },
+      ];
     }
-  };
+
+    const shortcodesToSend = addedTests.map((t) => Number(t.id));
+
+    // ✅ Construct payload with hospital_id from localStorage
+    const payload = {
+      p_title: data.p_title,
+      hospital_id: hospitalId, // must be defined
+      city: data.city,
+      state: data.state,
+      p_name: data.p_name,
+      p_age: age.years,
+      p_age_months: age.months,
+      p_age_days: age.days,
+      p_gender: data.p_gender,
+      p_regdate: data.p_regdate,
+      p_mobile: data.p_mobile,
+      p_image: "", // optional
+      investigation_ids: shortcodesToSend,
+      opbill: billingData,
+      pptest: pptestPayload,
+      abha: abhaPayload,
+    };
+
+    console.log("Final payload:", payload);
+
+    // Send request
+    const response = await axios.post(
+      "https://asrphleb.asrhospitalindia.in/api/v1/phleb/add-patient-test",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Success response:", response.data);
+    toast.success("Patient registered successfully!");
+    reset();
+
+    setTimeout(() => {
+      navigate("/patient-registration");
+    }, 2000);
+  } catch (error) {
+    console.error("❌ Error response:", error.response?.data || error.message);
+    toast.error("Failed to register patient");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+
 
   const handleFileChange = (e) => {
     if (e.target.files[0]) {
@@ -656,7 +816,7 @@ const PatientRegistrationAdd = () => {
 
   const email = watch("email");
   const emailAlerts = watch("emailAlerts");
-  
+
   const sendEmail = (email) => {
     console.log("📧 Sending email to:", email);
     // Example: fetch("/api/send-email", { method: "POST", body: JSON.stringify({ email }) });
@@ -667,7 +827,6 @@ const PatientRegistrationAdd = () => {
       sendEmail(email);
     }
   }, [emailAlerts, email, errors]);
-
 
   return (
     <>
@@ -750,8 +909,8 @@ const PatientRegistrationAdd = () => {
                 {abhaMode === "mobile"
                   ? "Mobile Number:"
                   : abhaMode === "abha"
-                  ? "ABHA ID:"
-                  : "Aadhaar Number:"}{" "}
+                    ? "ABHA ID:"
+                    : "Aadhaar Number:"}{" "}
                 <span className="text-red-500">*</span>
               </label>
               <input
@@ -762,8 +921,8 @@ const PatientRegistrationAdd = () => {
                   abhaMode === "mobile"
                     ? "Enter the ABHA Mobile Number"
                     : abhaMode === "abha"
-                    ? "Enter ABHA ID"
-                    : "Enter Aadhaar Number"
+                      ? "Enter ABHA ID"
+                      : "Enter Aadhaar Number"
                 }
                 className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
@@ -853,7 +1012,6 @@ const PatientRegistrationAdd = () => {
                 {...register("patientSourceType", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Source Type</option>
                 <option value="walk-in">Walk-in</option>
                 <option value="in-house">In-house</option>
                 <option value="b2b">B2B</option>
@@ -940,7 +1098,6 @@ const PatientRegistrationAdd = () => {
                 {...register("p_title", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Title</option>
                 <option value="Mr">Mr</option>
                 <option value="Mrs">Mrs</option>
                 <option value="Dr">Dr</option>
@@ -1024,17 +1181,16 @@ const PatientRegistrationAdd = () => {
                 {...register("p_gender", { required: true })}
                 className="w-full border px-3 py-2 rounded"
               >
-                <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
-                <option value="TS">TS</option>
-                <option value="TG">TG</option>
+                <option value="Others">Others</option>
+                {/* <option value="TG">TG</option> */}
               </select>
               {errors.gender && (
                 <p className="text-red-600 text-xs mt-1">Gender is required</p>
               )}
             </div>
-
+{/* 
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Registration Date<span className="text-red-500">*</span>
@@ -1044,14 +1200,14 @@ const PatientRegistrationAdd = () => {
                 {...register("p_regdate", {
                   required: "Date is required",
                   validate: (value) => {
-                    const selectedDate = new Date(value);
                     return (
-                      selectedDate <= today || "Date cannot be in the future"
+                      value === todaysdate || "Only today's date is allowed"
                     );
                   },
                 })}
-                defaultValue={formattedDate}
-                max={formattedDate}
+                defaultValue={todaysdate}
+                min={todaysdate}
+                max={todaysdate}
                 className="w-full border px-3 py-2 rounded"
               />
               {errors.p_regdate && (
@@ -1059,62 +1215,111 @@ const PatientRegistrationAdd = () => {
                   {errors.p_regdate.message}
                 </p>
               )}
-            </div>
+            </div> */}
+<div>
+  <label className="block text-sm font-medium text-gray-700">
+    Registration Date & Time<span className="text-red-500">*</span>
+  </label>
+  <input
+    type="datetime-local"
+    {...register("p_regdatetime", {
+      required: "Registration date & time is required",
+      validate: (value) => {
+        const selectedDate = new Date(value);
+        const now = new Date();
+        return selectedDate <= now || "Date & time cannot be in the future";
+      },
+    })}
+    defaultValue={new Date().toISOString().slice(0, 16)}
+    max={new Date().toISOString().slice(0, 16)}
+    className="w-full border px-3 py-2 rounded"
+    onChange={(e) => setRegDateTime(e.target.value)}
+  />
+  {errors.p_regdatetime && (
+    <p className="text-red-600 text-xs mt-1">
+      {errors.p_regdatetime.message}
+    </p>
+  )}
+
+  {/* Readable display */}
+  {regDateTime && (
+    <p className="text-gray-700 text-sm mt-1">
+      Selected: {formatDateTime(regDateTime)}
+    </p>
+  )}
+</div>
+          <div>
+  <label className="block text-sm font-medium text-gray-700">
+    Date of Birth<span className="text-red-500">*</span>
+  </label>
+  <input
+    type="date"
+        max={new Date().toISOString().split("T")[0]} // ✅ Restrict future dates
+
+    {...register("dob", {
+      required: true,
+      validate: (value) => {
+        const selectedDate = new Date(value);
+        const today = new Date();
+        return selectedDate <= today || "Date cannot be in the future";
+      },
+    })}
+    className="w-full border px-3 py-2 rounded"
+  />
+  {errors.dob && (
+    <p className="text-red-600 text-xs mt-1">
+      {errors.dob.message || "Date of Birth is required"}
+    </p>
+  )}
+
+  {/* Combined Age Message */}
+  {watchedDob && !errors.dob && age.years !== "" && (
+    <p className="text-gray-700 text-sm mt-1">
+      Age: {age.years} years {age.months} months
+    </p>
+  )}
+</div>
+
+<div className="">
+  <label className="block text-sm font-medium text-gray-700">
+    Age <span className="text-red-500">*</span>
+  </label>
+  <div className="flex gap-2">
+    <input
+      type="text"
+      readOnly
+      value={age.years !== "" ? `${age.years} years` : ""}
+      placeholder="YYYY"
+      className="w-1/3 border px-3 py-2 rounded bg-gray-100 text-center"
+    />
+    <input
+      type="text"
+      readOnly
+      value={age.months !== "" ? `${age.months} months` : ""}
+      placeholder="MM"
+      className="w-1/3 border px-3 py-2 rounded bg-gray-100 text-center"
+    />
+    <input
+      type="text"
+      readOnly
+      value={age.days !== "" ? `${age.days} days` : ""}
+      placeholder="DD"
+      className="w-1/3 border px-3 py-2 rounded bg-gray-100 text-center"
+    />
+  </div>
+  {errors.p_age && (
+    <p className="text-red-600 text-xs mt-1">Age / DOB is required</p>
+  )}
+</div>
+
+
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Date of Birth<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                {...register("dob", {
-                  required: true,
-                  validate: (value) => {
-                    const selectedDate = new Date(value);
-                    const today = new Date();
-                    return (
-                      selectedDate <= today || "Date cannot be in the future"
-                    );
-                  },
-                })}
-                className="w-full border px-3 py-2 rounded"
-              />
-              {errors.dob && (
-                <p className="text-red-600 text-xs mt-1">
-                  {errors.dob.message || "Date of Birth is required"}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Age<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                {...register("p_age", {
-                  required: true,
-                  min: 0,
-                  max: 100,
-                })}
-                value={age}
-                readOnly
-                className="w-full border px-3 py-2 rounded bg-gray-100"
-                placeholder="Auto-calculated"
-              />
-              {errors.age && (
-                <p className="text-red-600 text-xs mt-1">
-                  Age must be between 0-100
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Blood Group<span className="text-red-500">*</span>
+                Blood Group
               </label>
               <select
-                {...register("bloodGroup", { required: true })}
+                {...register("bloodGroup", { required: false })}
                 className="w-full border px-3 py-2 rounded"
               >
                 <option value="">Select Blood Group</option>
@@ -1127,18 +1332,13 @@ const PatientRegistrationAdd = () => {
                 <option value="AB+">AB+</option>
                 <option value="AB-">AB-</option>
               </select>
-              {errors.bloodGroup && (
-                <p className="text-red-600 text-xs mt-1">
-                  Blood group is required
-                </p>
-              )}
             </div>
           </div>
 
           {/* ID Proof Details */}
           <div className="px-6 pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-0">
-              ID Proof Details<span className="text-red-500">*</span>
+              ID Proof Details
             </h3>
             <div className="mt-1 border-b border-gray-100"></div>
           </div>
@@ -1146,7 +1346,7 @@ const PatientRegistrationAdd = () => {
             {/* ID Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                ID Type <span className="text-red-500">*</span>
+                ID Type
               </label>
               <select
                 {...register("idType", {
@@ -1158,17 +1358,12 @@ const PatientRegistrationAdd = () => {
                 <option value="Aadhaar">Aadhaar</option>
                 <option value="PAN">PAN</option>
               </select>
-              {errors.idType && (
-                <p className="text-red-600 text-xs mt-1">
-                  {errors.idType.message}
-                </p>
-              )}
             </div>
 
             {/* ID Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                ID Number <span className="text-red-500">*</span>
+                ID Number
               </label>
               <input
                 {...register("idNumber", {
@@ -1193,11 +1388,6 @@ const PatientRegistrationAdd = () => {
                 className="w-full border px-3 py-2 rounded"
                 placeholder="Enter ID Number"
               />
-              {errors.idNumber && (
-                <p className="text-red-600 text-xs mt-1">
-                  {errors.idNumber.message}
-                </p>
-              )}
             </div>
 
             {/* Email */}
@@ -1258,7 +1448,7 @@ const PatientRegistrationAdd = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Photo Capture<span className="text-red-500">*</span>
+                Photo Capture
               </label>
 
               <div className="border mt-2 p-2 w-full rounded flex items-center space-x-2">
@@ -1400,81 +1590,162 @@ const PatientRegistrationAdd = () => {
           </div>
 
           {/* Guardian Information */}
+{/* 
+          {(age.years < 18 || age.years > 65) && (
 
-          <div className="px-6 pt-6">
-            <h3 className=" text-lg font-medium text-gray-900 mb-0">
-              Guardian Information<span className="text-red-500">*</span>
-              <span className="ml-2 text-sm font-normal text-gray-400">
-                (required if patient is minor or elderly)
-              </span>
-            </h3>
-            <div className="mt-1 border-b border-gray-100"></div>
-          </div>
+            <>
+              <div className="px-6 pt-6">
+                <h3 className=" text-lg font-medium text-gray-900 mb-0">
+                  Guardian Information<span className="text-red-500">*</span>
+                  <span className="ml-2 text-sm font-normal text-gray-400">
+                    (required if patient is minor or elderly)
+                  </span>
+                </h3>
+                <div className="mt-1 border-b border-gray-100"></div>
+              </div>
 
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Name<span className="text-red-500">*</span>
-              </label>
-              <input
-                {...register("guardianName", {
-                  required: true,
-                  pattern: /^[A-Za-z\s]+$/,
-                })}
-                className="w-full border px-3 py-2 rounded"
-                placeholder="Enter Guardian Name"
-              />
-              {errors.guardianName && (
-                <p className="text-red-600 text-xs mt-1">
-                  Name must contain alphabets only
-                </p>
-              )}
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Mobile<span className="text-red-500">*</span>
-              </label>
-              <input
-                {...register("guardianMobile", {
-                  required: true,
-                  pattern: /^[0-9]{10}$/,
-                })}
-                className="w-full border px-3 py-2 rounded"
-                placeholder="Enter 10-digit Mobile Number"
-              />
-              {errors.guardianMobile && (
-                <p className="text-red-600 text-xs mt-1">Must be 10 digits</p>
-              )}
-            </div>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Name<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    {...register("guardianName", {
+                      required: true,
+                      pattern: /^[A-Za-z\s]+$/,
+                    })}
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="Enter Guardian Name"
+                  />
+                  {errors.guardianName && (
+                    <p className="text-red-600 text-xs mt-1">
+                      Name must contain alphabets only
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Address (Optional)
-              </label>
-              <input
-                {...register("street")}
-                className="w-full border px-3 py-2 rounded"
-                placeholder="Enter Address"
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Mobile<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    {...register("guardianMobile", {
+                      required: true,
+                      pattern: /^[0-9]{10}$/,
+                    })}
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="Enter 10-digit Mobile Number"
+                  />
+                  {errors.guardianMobile && (
+                    <p className="text-red-600 text-xs mt-1">Must be 10 digits</p>
+                  )}
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Relation
-              </label>
-              <select
-                {...register("relation")}
-                className="w-full border px-3 py-2 rounded"
-              >
-                <option value="">Select Relation</option>
-                <option value="Parent">Parent</option>
-                <option value="Guardian">Guardian</option>
-                <option value="Relative">Relative</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Address (Optional)
+                  </label>
+                  <input
+                    {...register("street")}
+                    className="w-full border px-3 py-2 rounded"
+                    placeholder="Enter Address"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Relation
+                  </label>
+                  <select
+                    {...register("relation")}
+                    className="w-full border px-3 py-2 rounded"
+                  >
+                    <option value="">Select Relation</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Guardian">Guardian</option>
+                    <option value="Relative">Relative</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+            </>
+          )} */}
+  {/* Guardian Information */}
+{isGuardianRequired && (
+  <div>
+    <div className="px-6 pt-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-0">
+        Guardian Information<span className="text-red-500">*</span>
+        <span className="ml-2 text-sm font-normal text-gray-400">
+          (required if patient is minor or elderly)
+        </span>
+      </h3>
+      <div className="mt-1 border-b border-gray-100"></div>
+    </div>
+
+    <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          {...register("guardianName", {
+            required: "Guardian name is required",
+            pattern: /^[A-Za-z\s]+$/,
+          })}
+          className="w-full border px-3 py-2 rounded"
+          placeholder="Enter Guardian Name"
+        />
+        {errors.guardianName && (
+          <p className="text-red-600 text-xs mt-1">{errors.guardianName.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Mobile <span className="text-red-500">*</span>
+        </label>
+        <input
+          {...register("guardianMobile", {
+            required: "Guardian mobile is required",
+            pattern: /^[0-9]{10}$/,
+          })}
+          className="w-full border px-3 py-2 rounded"
+          placeholder="Enter 10-digit Mobile Number"
+        />
+        {errors.guardianMobile && (
+          <p className="text-red-600 text-xs mt-1">{errors.guardianMobile.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Address (Optional)
+        </label>
+        <input
+          {...register("street")}
+          className="w-full border px-3 py-2 rounded"
+          placeholder="Enter Address"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Relation
+        </label>
+        <select {...register("relation")} className="w-full border px-3 py-2 rounded">
+          <option value="">Select Relation</option>
+          <option value="Parent">Parent</option>
+          <option value="Guardian">Guardian</option>
+          <option value="Relative">Relative</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+  </div>
+)}
+
 
           <div className="px-6 pt-6">
             <h3 className=" text-lg font-medium text-gray-900 mb-0">
@@ -1900,7 +2171,7 @@ const PatientRegistrationAdd = () => {
                 <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Number Type<span className="text-red-500">*</span>
+                      Select OP/IP <span className="text-red-500">*</span>
                     </label>
                     <select
                       id="numberType"
@@ -1908,8 +2179,8 @@ const PatientRegistrationAdd = () => {
                       value={numberType}
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="OP">OP Number</option>
-                      <option value="IP">IP Number</option>
+                      <option value="OP">OP</option>
+                      <option value="IP">IP</option>
                     </select>
                   </div>
 
@@ -1992,11 +2263,27 @@ const PatientRegistrationAdd = () => {
                       Barcode No<span className="text-red-500">*</span>
                     </label>
                     <input
-                      {...register("barcodeNo")}
+                      {...register("barcodeNo", {
+                        required: "Barcode number is required",
+                        minLength: {
+                          value: 8,
+                          message: "Barcode must be 8 characters",
+                        },
+                        maxLength: {
+                          value: 8,
+                          message: "Barcode must be 8 characters",
+                        },
+                      })}
                       type="text"
                       className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    {errors.barcodeNo && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.barcodeNo.message}
+                      </p>
+                    )}
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       TRF Number<span className="text-red-500">*</span>
@@ -2070,11 +2357,10 @@ const PatientRegistrationAdd = () => {
                   {/* Tabs Navigation */}
                   <div className="flex border-b">
                     <button
-                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${
-                        activeTab === "investigation"
-                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                      }`}
+                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${activeTab === "investigation"
+                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveTab("investigation");
@@ -2083,11 +2369,10 @@ const PatientRegistrationAdd = () => {
                       Add Test
                     </button>
                     <button
-                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${
-                        activeTab === "billing"
-                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                      }`}
+                      className={`flex-1 py-4 px-6 text-center font-medium text-lg ${activeTab === "billing"
+                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        }`}
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveTab("billing");
@@ -2159,6 +2444,9 @@ const PatientRegistrationAdd = () => {
                                     Short Code
                                   </th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Department
+                                  </th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Amount
                                   </th>
                                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -2179,7 +2467,9 @@ const PatientRegistrationAdd = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                       {test.shortcode}
                                     </td>
-
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                      {test.department.dptname}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                       ₹{test.normalprice}
                                     </td>
@@ -2336,9 +2626,8 @@ const PatientRegistrationAdd = () => {
                             Due Amount
                           </h3>
                           <p
-                            className={`text-xl font-bold ${
-                              dueAmount > 0 ? "text-red-600" : "text-green-600"
-                            }`}
+                            className={`text-xl font-bold ${dueAmount > 0 ? "text-red-600" : "text-green-600"
+                              }`}
                           >
                             ₹{dueAmount}
                           </p>
@@ -2376,16 +2665,20 @@ const PatientRegistrationAdd = () => {
                               type="number"
                               min="0"
                               value={pdisc.value}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setDiscount({
-                                  ...pdisc,
-                                  value: value === "" ? "" : Number(value),
-                                });
-                              }}
-                              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              // onChange={(e) => {
+                              //   const value = e.target.value;
+                              //   setDiscount({
+                              //     ...pdisc,
+                              //     value: value === "" ? "" : Number(value),
+                              //   });
+                              // }}
+                              onChange={(e) => handleDiscountValueChange(e.target.value)}
+                              className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 ${error ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"
+                                }`}
                             />
+                            {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
                           </div>
+
                           <div className="flex items-end">
                             <button
                               onClick={(e) => {
