@@ -755,6 +755,11 @@ export const updateInvestigation = async (id, investigationData) => {
     throw error;
   }
 };
+
+
+
+
+
 // Profile API functions
 // Add Profile
 export const addProfile = async (profileData) => {

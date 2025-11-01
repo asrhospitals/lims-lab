@@ -5,15 +5,12 @@ import AddInvestigationResultReflexTests from "./AddReflexTests";
 
 const AddInvestigationResult = ({ results = [], setResults }) => {
   const [showNormalValueModal, setShowNormalValueModal] = useState(false);
-  const [showMandatoryConditionsModal, setShowMandatoryConditionsModal] =
-    useState(false);
+  const [showMandatoryConditionsModal, setShowMandatoryConditionsModal] = useState(false);
   const [showReflexTestsModal, setShowReflexTestsModal] = useState(false);
   const handleCloseNormalValue = () => setShowNormalValueModal(false);
   const handleShowNormalValue = () => setShowNormalValueModal(true);
-  const handleCloseMandatoryConditions = () =>
-    setShowMandatoryConditionsModal(false);
-  const handleShowMandatoryConditions = () =>
-    setShowMandatoryConditionsModal(true);
+  const handleCloseMandatoryConditions = () => setShowMandatoryConditionsModal(false);
+  const handleShowMandatoryConditions = () => setShowMandatoryConditionsModal(true);
   const handleCloseReflexTests = () => setShowReflexTestsModal(false);
   const handleShowReflexTests = () => setShowReflexTestsModal(true);
 
@@ -42,36 +39,41 @@ const AddInvestigationResult = ({ results = [], setResults }) => {
   };
 
   const handleMandatoryConditionsUpdate = (conditions) => {
-    setNewResult(prev => ({
-      ...prev,
-      mandatoryConditions: conditions
-    }));
+    setNewResult(prev => {
+      const updated = { ...prev, mandatoryConditions: conditions };
+      console.log("Updated mandatoryConditions", updated.mandatoryConditions);
+      return updated;
+    });
   };
 
+
   const handleReflexTestsUpdate = (reflexData) => {
+    console.log("reflexData", reflexData);
+
     setNewResult(prev => ({
       ...prev,
       reflexTests: reflexData
     }));
+
   };
 
   const handleAddResult = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     console.log("newResult", newResult);
-    
+
     // Validate required fields
     if (!newResult.name.trim()) {
       alert("Result Name is required");
       return;
     }
-    
+
     if (!newResult.valueType) {
       alert("Value Type is required");
       return;
     }
-    
+
     setResults([...results, newResult]);
 
     console.log("...results", ...results);
@@ -144,29 +146,34 @@ const AddInvestigationResult = ({ results = [], setResults }) => {
                 <td className="border px-2 py-1">{result.defaultValue}</td>
                 <td className="border px-2 py-1">{result.roundOff}</td>
                 <td className="border px-2 py-1">
-                  {Array.isArray(result.normalValues) ? 
-                    result.normalValues.length > 0 ? 
-                      `${result.normalValues.length} normal value(s)` : 
-                      "None" : 
+                  {Array.isArray(result.normalValues) ?
+                    result.normalValues.length > 0 ?
+                      `${result.normalValues.length} normal value(s)` :
+                      "None" :
                     "None"
                   }
                 </td>
                 <td className="border px-2 py-1">
-                  {Array.isArray(result.mandatoryConditions) ? 
-                    result.mandatoryConditions.length > 0 ? 
-                      `${result.mandatoryConditions.length} condition(s)` : 
-                      "None" : 
+                  {Array.isArray(result.mandatoryConditions) ?
+                    result.mandatoryConditions.length > 0 ?
+                      `${result.mandatoryConditions.length} condition(s)` :
+                      "None" :
                     "None"
                   }
                 </td>
                 <td className="border px-2 py-1">
-                  {Array.isArray(result.reflexTests) ? 
-                    result.reflexTests.length > 0 ? 
-                      `${result.reflexTests.length} test(s)` : 
-                      "None" : 
+                  {result.reflexTests && result.reflexTests.selectedTests?.length > 0 ? (
+                    <>
+                      <div> {result.reflexTests.triggerParameter}</div>
+                      <div>
+                        {result.reflexTests.selectedTests.join(", ")}
+                      </div>
+                    </>
+                  ) : (
                     "None"
-                  }
+                  )}
                 </td>
+
                 <td className="border px-2 py-1">
                   {result.showTrends ? "Yes" : "No"}
                 </td>

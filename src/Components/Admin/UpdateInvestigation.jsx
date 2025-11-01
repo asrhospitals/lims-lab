@@ -15,11 +15,12 @@ import {
   viewSpecimenTypes,
   viewAllInstrument,
 } from "../../services/apiService";
+import AddInvestigationResultMandatoryConditions from "./AddInvestigationResultMandatoryConditions";
 
 
 const UpdateInvestigation = () => {
   const [departments, setDepartments] = useState([]);
-const [subDepartments, setSubDepartments] = useState([]);
+  const [subDepartments, setSubDepartments] = useState([]);
   const [roleTypes, setRoleTypes] = useState([]);
   const [specimens, setSpecimens] = useState([]);
   const [instruments, setInstruments] = useState([]);
@@ -39,25 +40,37 @@ const [subDepartments, setSubDepartments] = useState([]);
 
   const [normalValues, setNormalValues] = useState([]); // Existing values from API
   const [selectedIndex, setSelectedIndex] = useState(null); // Index of value being edited
-const [mastersLoaded, setMastersLoaded] = useState(false);
+  const [mastersLoaded, setMastersLoaded] = useState(false);
 
+  const [labConsumables, setLabConsumables] = useState([]);
+  const [newLabConsumable, setNewLabConsumable] = useState({ name: "", qty: "" });
+  const [showModalMandatoryCondition, setShowModalMandatoryCondition] = useState(false);
+  const [conditions, setConditions] = useState([]);
+  const [showModalReflexTests, setShowModalReflexTests] = useState(false);
+  const [selectedTests, setSelectedTests] = useState([]);
 
   const [formData, setFormData] = useState({
+    id: "",
     type: "",
-    ageMinYear: "",
-    ageMinMonth: "",
-    ageMinDay: "",
-    ageMaxYear: "",
-    ageMaxMonth: "",
-    ageMaxDay: "",
-    rangeMin: "",
-    rangeMax: "",
-    rangeAbnormal: false,
-    avoidRangeInReport: false,
-    validRangeMin: "",
-    validRangeMax: "",
-    criticalRangeLow: "",
-    criticalRangeHigh: "",
+    age_min_yyyy: "",
+    age_min_mm: "",
+    age_min_dd: "",
+    age_max_yyyy: "",
+    age_max_mm: "",
+    age_max_dd: "",
+    range_min: "",
+    range_max: "",
+    isrange_abnormal: false,
+    avoid_in_report: false,
+    valid_range_min: "",
+    valid_range_max: "",
+    critical_low: "",
+    critical_high: "",
+    resultValue: "",
+    resultName: "",
+    triggerParameter: "",
+    reflexTest: "",
+    resultId: "",
   });
 
   const {
@@ -110,33 +123,97 @@ const [mastersLoaded, setMastersLoaded] = useState(false);
   ];
 
   // Fetch master data (departments, roles, etc.)
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const [dept, subDept, role, spec, instruments] = await Promise.all([
-        viewAllDepartmentDetails(),
-        viewAllSubDepartmentDetails(),
-        viewAllROles(),
-        viewSpecimenTypes(),
-        viewAllInstrument(),
-      ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [dept, subDept, role, spec, instruments] = await Promise.all([
+          viewAllDepartmentDetails(),
+          viewAllSubDepartmentDetails(),
+          viewAllROles(),
+          viewSpecimenTypes(),
+          viewAllInstrument(),
+        ]);
 
-      setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
-      setSubDepartments((subDept?.data || subDept || []).filter((d) => d.isactive));
-      setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
-      setSpecimens((spec?.data || spec || []).filter((s) => s.isactive));
-      setInstruments((instruments?.data || instruments || []).filter((i) => i.isactive));
+        setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
+        setSubDepartments((subDept?.data || subDept || []).filter((d) => d.isactive));
+        setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
+        setSpecimens((spec?.data || spec || []).filter((s) => s.isactive));
+        setInstruments((instruments?.data || instruments || []).filter((i) => i.isactive));
 
-      setMastersLoaded(true); // ✅ mark as loaded
-    } catch (err) {
-      toast.error("❌ Failed to load master data");
-      console.error(err);
+        setMastersLoaded(true); // ✅ mark as loaded
+      } catch (err) {
+        toast.error("❌ Failed to load master data");
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
+
+  useEffect(() => {
+    const fetchInvestigation = async () => {
+      try {
+        const res = await viewInvestigation(id);
+
+        if (res) {
+          // 🧠 Parse accreditation names
+          const parsedAcreeditions = Array.isArray(res.acreeditionname)
+            ? res.acreeditionname.map((item) => {
+              if (typeof item === "string") {
+                try {
+                  const parsed = JSON.parse(item);
+                  return { name: parsed?.name || "", date: parsed?.date || "" };
+                } catch {
+                  return { name: "", date: "" };
+                }
+              } else return item;
+            })
+            : [];
+
+          // 🧠 Parse lab consumables
+          const parsedLabConsumables = Array.isArray(res.labconsumables)
+            ? res.labconsumables.map((item) => {
+              if (typeof item === "string") {
+                try {
+                  const parsed = JSON.parse(item);
+                  return { name: parsed?.name || "", qty: parsed?.qty || "" };
+                } catch {
+                  return { name: "", qty: "" };
+                }
+              } else return item;
+            })
+            : [];
+
+          // 🧠 Set states
+          setLabConsumables(parsedLabConsumables);
+
+          // Combine for form reset
+          const investigationData = {
+            ...res,
+            acreeditionname: parsedAcreeditions,
+            labconsumables: parsedLabConsumables,
+          };
+
+          reset(investigationData);
+        }
+      } catch (err) {
+        toast.error("❌ Failed to load investigation details");
+        console.error("Investigation load error:", err);
+      }
+    };
+
+    if (mastersLoaded && id) {
+      fetchInvestigation();
     }
-  };
+  }, [id, mastersLoaded, reset]);
 
-  fetchData();
-}, []);
+
+
   // state for investigation data
+
+
 
   const fetchInvestigationData = async () => {
     if (!id) {
@@ -157,6 +234,20 @@ useEffect(() => {
       setInstruction(data.instruction || "");
       setInterpretation(data.interpretation || "");
       setRemarks(data.remark || "");
+
+      setNormalValues(data.results?.[0]?.normalValues || []);
+
+
+      const existingMandatories = data.results?.[0]?.mandatories || [];
+      const formattedMandatories = existingMandatories.map((m) => ({
+        id: m.id,
+        resultName: m.resultname,
+        resultValue: m.resultvalue,
+      }));
+      setConditions(formattedMandatories);
+      console.log("formattedMandatories==", formattedMandatories);
+
+
     } catch (err) {
       toast.error("❌ Failed to load investigation data");
       console.error(err);
@@ -182,7 +273,6 @@ useEffect(() => {
       department: investigationData.departmentId || "",
       subdepartment: investigationData.subdepartment || "",
       roletype: investigationData.roletype || "",
-      reporttype: investigationData.reporttype || "",
       sampletype: investigationData.sampletype || "",
       sampleqty: investigationData.sampleqty || "",
       sampletemp: investigationData.sampletemp || "",
@@ -204,18 +294,10 @@ useEffect(() => {
       enableintermidiate: investigationData.enableintermidiate || false,
       enablestags: investigationData.enablestags || false,
       showtext: investigationData.showtext || false,
-      walkinprice: investigationData.walkinprice || "",
-      b2bprice: investigationData.b2bprice || "",
-      ppprice: investigationData.ppprice || "",
-      govtprice: investigationData.govtprice || "",
       normalprice: investigationData.normalprice || "",
       checkimage: investigationData.checkimage || false,
       template: investigationData.template || "",
       checkoutsrc: investigationData.checkoutsrc || false,
-      barcodelngt: investigationData.barcodelngt || "",
-      barcode: investigationData.barcode || "",
-      spbarcode: investigationData.spbarcode || "",
-      suffbarcode: investigationData.suffbarcode || "",
       tat: investigationData.tat || "",
       tatunit: investigationData.tatunit || "",
       stat: investigationData.stat || "",
@@ -242,23 +324,27 @@ useEffect(() => {
     if (!res?.normalValues) return;
 
     const mappedValues = res.normalValues.map((nv) => ({
-      id: nv.id,
+      id: nv.id || 0,
       type: nv.gender || "Both",
-      ageMinYear: nv.ageMin || 0,
-      ageMaxYear: nv.ageMax || 0,
-      ageMinMonth: 0,
-      ageMaxMonth: 0,
-      ageMinDay: 0,
-      ageMaxDay: 0,
-      rangeMin: nv.rangeMin || 0,
-      rangeMax: nv.rangeMax || 0,
-      rangeAbnormal: nv.isRangeAbnormal || false,
-      avoidRangeInReport: nv.avoidInReport || false,
-      validRangeMin: nv.validRangeMin || 0,
-      validRangeMax: nv.validRangeMax || 0,
-      criticalRangeLow: nv.criticalLow || 0,
-      criticalRangeHigh: nv.criticalHigh || 0,
+      age_min_yyyy: nv.age_min_yyyy || 0,
+      age_min_mm: nv.age_min_mm || 0,
+      age_min_dd: nv.age_min_dd || 0,
+      age_max_yyyy: nv.age_max_yyyy || 0,
+      age_max_mm: nv.age_max_mm || 0,
+      age_max_dd: nv.age_max_dd || 0,
+
+      range_min: nv.range_min || 0,
+      range_max: nv.range_max || 0,
+      isrange_abnormal: nv.isrange_abnormal || false,
+      avoid_in_report: nv.avoid_in_report || false,
+      valid_range_min: nv.valid_range_min || 0,
+      valid_range_max: nv.valid_range_max || 0,
+      critical_low: nv.critical_low || 0,
+      critical_high: nv.critical_high || 0,
+      resultId: nv.resultId || null,
     }));
+
+    console.log("mapped vales ==",);
 
     setNormalValues(mappedValues);
   }, [investigationData]);
@@ -450,11 +536,10 @@ useEffect(() => {
       <td className="border px-2 py-1" colSpan="2">
         <button
           onClick={(e) => handleAddItem(type, e)}
-          className={`px-3 py-1 rounded ${
-            editing.type === type
-              ? "bg-yellow-100 text-yellow-700 border-yellow-700"
-              : "bg-purple-100 text-purple-700 border-purple-700"
-          } border hover:opacity-90`}
+          className={`px-3 py-1 rounded ${editing.type === type
+            ? "bg-yellow-100 text-yellow-700 border-yellow-700"
+            : "bg-purple-100 text-purple-700 border-purple-700"
+            } border hover:opacity-90`}
         >
           {editing.type === type ? "Update" : "Add"}
         </button>
@@ -474,50 +559,61 @@ useEffect(() => {
 
   useEffect(() => {
     if (investigationData?.results?.length) {
-      const fetchedNormalValues =
-        investigationData.results[0].normalValues?.map((nv) => ({
+      const fetchedNormalValues = (investigationData.results[0].normalValues || []).map((nv) => {
+        console.log("nv==", nv);
+        return {
+          id: nv.id,
           type: nv.gender,
-          ageMinYear: nv.ageMin || 0,
-          ageMinMonth: 0,
-          ageMinDay: 0,
-          ageMaxYear: nv.ageMax || 0,
-          ageMaxMonth: 0,
-          ageMaxDay: 0,
-          rangeMin: nv.rangeMin || 0,
-          rangeMax: nv.rangeMax || 0,
-          rangeAbnormal: nv.isRangeAbnormal || false,
-          avoidRangeInReport: nv.avoidInReport || false,
-          validRangeMin: nv.validRangeMin || 0,
-          validRangeMax: nv.validRangeMax || 0,
-          criticalRangeLow: nv.criticalLow || 0,
-          criticalRangeHigh: nv.criticalHigh || 0,
-        }));
-      setNormalValues(fetchedNormalValues || []);
+          age_min_yyyy: nv.age_min_yyyy || 0,
+          age_min_mm: nv.age_min_mm || 0,
+          age_min_dd: nv.age_min_dd || 0,
+          age_max_yyyy: nv.age_max_yyyy || 0,
+          age_max_mm: nv.age_max_mm || 0,
+          age_max_dd: nv.age_max_dd || 0,
+          range_min: nv.range_min || 0,
+          range_max: nv.range_max || 0,
+          isrange_abnormal: nv.isrange_abnormal || false,
+          avoid_in_report: nv.avoid_in_report || false,
+          valid_range_min: nv.valid_range_min || 0,
+          valid_range_max: nv.valid_range_max || 0,
+          critical_low: nv.critical_low || 0,
+          critical_high: nv.critical_high || 0,
+          resultId: nv.resultId || null,
+        };
+      });
+
+      setNormalValues(fetchedNormalValues);
+      console.log("✅ first resultId:", investigationData.results[0]?.id);
+      console.log("✅ first normal value id:", investigationData.results[0]?.normalValues?.[0]?.id);
     }
   }, [investigationData]);
 
+
   const handleEditNormalValues = (index) => {
     const value = normalValues[index];
+    console.log("valu ====e ", value);
+
     setFormData({
       type: value.type,
-      ageMinYear: value.ageMinYear,
-      ageMinMonth: value.ageMinMonth,
-      ageMinDay: value.ageMinDay,
-      ageMaxYear: value.ageMaxYear,
-      ageMaxMonth: value.ageMaxMonth,
-      ageMaxDay: value.ageMaxDay,
-      rangeMin: value.rangeMin,
-      rangeMax: value.rangeMax,
-      rangeAbnormal: value.rangeAbnormal,
-      avoidRangeInReport: value.avoidRangeInReport,
-      validRangeMin: value.validRangeMin,
-      validRangeMax: value.validRangeMax,
-      criticalRangeLow: value.criticalRangeLow,
-      criticalRangeHigh: value.criticalRangeHigh,
+      age_max_yyyy: value.age_max_yyyy ?? "",
+      age_min_mm: value.age_min_mm ?? "",
+      age_min_dd: value.age_min_dd ?? "",
+      age_max_yyyy: value.age_max_yyyy ?? "",
+      age_max_mm: value.age_max_mm ?? "",
+      age_max_dd: value.age_max_dd ?? "",
+      range_min: value.range_min,
+      range_max: value.range_max,
+      isrange_abnormal: value.isrange_abnormal,
+      avoid_in_report: value.avoid_in_report,
+      valid_range_min: value.valid_range_min,
+      valid_range_max: value.valid_range_max,
+      critical_low: value.critical_low,
+      critical_high: value.critical_high,
+      resultId: value.resultId,
     });
     setSelectedIndex(index); // mark which entry is being edited
     // setShowModalNormalValues(true);
-    
+
   };
 
   const handleRemoveNormalValues = (index) => {
@@ -531,60 +627,151 @@ useEffect(() => {
     setShowModalNormalValues(false);
   };
 
-  
   const handleAddNormalValues = () => {
-    const newValue = { ...formData };
-
-    if (selectedIndex !== null) {
-      // Update existing
-      const updatedValues = [...normalValues];
-      updatedValues[selectedIndex] = newValue;
-      setNormalValues(updatedValues);
-    } else {
-      // Add new
-      setNormalValues([...normalValues, newValue]);
+    if (selectedIndex === null) {
+      alert("Please select a row to update.");
+      return;
     }
 
-    // Clear form & reset edit state
-    setFormData({});
+    setNormalValues((prev) => {
+      const updated = [...prev];
+
+      // ✅ Preserve the original id and resultId while updating other fields
+      updated[selectedIndex] = {
+        ...prev[selectedIndex], // keep old properties (id, resultId, etc.)
+        ...formData,            // overwrite only changed fields
+      };
+
+      return updated;
+    });
+
+    // ✅ Reset form after update
+    setFormData({
+      id: "",
+      type: "",
+      age_min_yyyy: "",
+      age_min_mm: "",
+      age_min_dd: "",
+      age_max_yyyy: "",
+      age_max_mm: "",
+      age_max_dd: "",
+      range_min: "",
+      range_max: "",
+      valid_range_min: "",
+      valid_range_max: "",
+      critical_low: "",
+      critical_high: "",
+      isrange_abnormal: false,
+      avoid_in_report: false,
+      resultId: "",
+    });
+
     setSelectedIndex(null);
-    handleSubmitNormalValues();
   };
 
-  const handleSubmitNormalValues = () => {
-    setNormalValues([...normalValues, formData]);
-    setFormData({
-      type: "",
-      ageMinYear: "",
-      ageMinMonth: "",
-      ageMinDay: "",
-      ageMaxYear: "",
-      ageMaxMonth: "",
-      ageMaxDay: "",
-      rangeMin: "",
-      rangeMax: "",
-      validRangeMin: "",
-      validRangeMax: "",
-      criticalRangeLow: "",
-      criticalRangeHigh: "",
-      rangeAbnormal: false,
-      avoidRangeInReport: false,
-    });
-  };
+
 
 
 
 
 
   const handleShowNormalValue = () => {
-    setShowModalNormalValues(true); // Opens the modal
+    setShowModalNormalValues(true);
     console.log("im hereee");
-    
+
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const handleSaveNormalValues = async (normalValues) => {
+    try {
+      setNewResult((prev) => ({
+        ...prev,
+        normalValues,
+      }));
+      setShowModalNormalValues(false);
+
+      const token = localStorage.getItem("authToken");
+      const resultId = investigationData?.results?.[0]?.id; // ✅ define resultId
+
+      if (!resultId) {
+        throw new Error("Result ID not found in investigationData");
+      }
+
+      if (normalValues?.length > 0) {
+        for (const nv of normalValues) {
+          // ✅ helper to convert safely to number or null
+          const toNumber = (value) => {
+            const num = Number(value);
+            return isNaN(num) ? null : num;
+          };
+
+          const normalValuePayload = {
+            gender: nv.type || "Both",
+            age_min_yyyy: toNumber(nv.age_min_yyyy),
+            age_min_mm: toNumber(nv.age_min_mm),
+            age_min_dd: toNumber(nv.age_min_dd),
+            age_max_yyyy: toNumber(nv.age_max_yyyy),
+            age_max_mm: toNumber(nv.age_max_mm),
+            age_max_dd: toNumber(nv.age_max_dd),
+            range_min: toNumber(nv.range_min),
+            range_max: toNumber(nv.range_max),
+            valid_range_min: toNumber(nv.valid_range_min),
+            valid_range_max: toNumber(nv.valid_range_max),
+            critical_low: toNumber(nv.critical_low),
+            critical_high: toNumber(nv.critical_high),
+            isrange_abnormal: !!nv.isrange_abnormal,
+            avoid_in_report: !!nv.avoid_in_report,
+            resultId: toNumber(resultId),
+          };
+
+          // ✅ use each normal value’s ID
+          const url = `https://asrlabs.asrhospitalindia.in/lims/master/update-normal/${resultId}/normal-values/${nv.id}`;
+
+          console.log("🔗 URL:", url);
+          console.log("📦 Payload:", normalValuePayload);
+
+          const res = await fetch(url, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(normalValuePayload),
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Failed to update normal value: ${res.status} - ${errText}`);
+          }
+        }
+
+        toast.success("All normal values updated successfully!");
+      } else {
+        toast.warn("⚠️ No normal values to update.");
+      }
+    } catch (error) {
+      console.error("❌ Update error details:", error);
+      toast.error(`❌ Failed to update normal values: ${error.message}`);
+    }
+  };
+
+
+
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
-
     const payload = {
       loniccode: data.loniccode || null,
       cptcode: data.cptcode || null,
@@ -595,7 +782,6 @@ useEffect(() => {
       departmentId: parseInt(data.department) || null,
       subdepartment: data.subdepartment || null,
       roletype: data.roletype || null,
-      reporttype: data.reporttype || null,
       sampletype: data.sampletype || null,
       sampleqty: data.sampleqty || null,
       sampletemp: data.sampletemp || null,
@@ -617,18 +803,10 @@ useEffect(() => {
       enableintermidiate: data.enableintermidiate || false,
       enablestags: data.enablestags || false,
       showtext: data.showtext || false,
-      walkinprice: parseFloat(data.walkinprice) || null,
-      b2bprice: parseFloat(data.b2bprice) || null,
-      ppprice: parseFloat(data.ppprice) || null,
-      govtprice: parseFloat(data.govtprice) || null,
-      normalprice: parseFloat(data.normalprice) || null,
+      normalprice: data.normalprice || null,
       checkimage: data.checkimage || false,
       template: data.template || null,
       checkoutsrc: data.checkoutsrc || false,
-      barcodelngt: parseInt(data.barcodelngt) || null,
-      barcode: data.barcode || null,
-      spbarcode: data.spbarcode || null,
-      suffbarcode: data.suffbarcode || null,
       tat: data.tat,
       tatunit: data.tatunit || null,
       stat: data.stat || null,
@@ -642,23 +820,37 @@ useEffect(() => {
 
     console.log("Submitting payload:", payload);
 
-    try {
-      await updateInvestigation(investigation.id, payload);
-      toast.success(" Investigation updated successfully");
-      fetchInvestigationData();
-      // reset();
+    // try {
+    //   await updateInvestigation(investigation.id, payload);
+    //   toast.success(" Investigation updated successfully");
+    //   fetchInvestigationData();
+    //   setTimeout(() => {
+    //     navigate("/view-investigation");
+    //   }, 1000);
+    // } catch (err) {
+    //   toast.error("❌ Failed to update investigation");
+    //   console.error(err);
+    // } finally {
+    //   setIsSubmitting(false);
+    // }
 
-      setTimeout(() => {
-         navigate("/view-investigation");
-      }, 1000);
+
+    try {
+      // 1️⃣ First update the main investigation
+      await updateInvestigation(investigation.id, payload);
+      toast.success("✅ Investigation updated successfully!");
+
+
+      await fetchInvestigationData();
+      setTimeout(() => navigate("/view-investigation"), 1000);
     } catch (err) {
-      toast.error("❌ Failed to update investigation");
-      console.error(err);
+      console.error("❌ Update failed:", err);
+      toast.error("Failed to update investigation or normal values");
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
 
 
   const [newResult, setNewResult] = useState({
@@ -677,29 +869,86 @@ useEffect(() => {
     showTrends: false,
   });
 
-  const handleSaveNormalValues = (normalValues) => {
-    setNewResult(prev => ({
-      ...prev,
-      normalValues: normalValues
-    }));
+
+
+
+
+  // mandatoryConditions
+
+  //  Show modal
+  const handleShowMandatoryConditions = () => {
+    setShowModalMandatoryCondition(true);
   };
 
+  //  Close modal
+  const handleCloseMandatoryConditions = () => {
+    setShowModalMandatoryCondition(false);
+  };
+
+  //  Handle input changes
+  const handleChangeMandatoryConditions = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+const handleAddMandatoryConditions = () => {
+  if (!formData.resultName || !formData.resultValue) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  setConditions((prevConditions) => {
+    const updated = [...prevConditions];
+
+    if (selectedIndex !== null) {
+      // ✅ Update the existing condition
+      updated[selectedIndex] = { ...formData };
+    } else {
+      // ✅ Add only if not editing
+      updated.push({ ...formData });
+    }
+
+    return updated;
+  });
+
+  // ✅ Reset form after save/update
+  setFormData({ resultName: "", resultValue: "" });
+  setSelectedIndex(null);
+};
+
+
+
+const handleEditMandatoryCondition = (index) => {
+  setFormData({ ...conditions[index] });
+  setSelectedIndex(index);
+};
+
+
+  const handleRemoveMandatoryConditions = (index) => {
+    if (window.confirm("Are you sure you want to remove this condition?")) {
+      setConditions(conditions.filter((_, i) => i !== index));
+    }
+  };
+
+
+
+  // mandatoryConditions
 
   const handleAddResult = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Validate required fields
     // if (!newResult.name.trim()) {
     //   alert("Result Name is required");
     //   return;
     // }
-    
+
     // if (!newResult.valueType) {
     //   alert("Value Type is required");
     //   return;
     // }
-    
+
     setResults([...results, newResult]);
 
     setNewResult({
@@ -721,13 +970,57 @@ useEffect(() => {
 
   const handleResultChange = (e, idx) => {
     const { name, value } = e.target;
-  
+
     const updatedResults = [...results];
     updatedResults[idx] = { ...updatedResults[idx], [name]: value };
     setResults(updatedResults);
   };
-  
-  
+
+
+
+  // ReflexTest 
+
+  // 👉 Show modal
+  const handleShowReflexTests = () => {
+    setShowModalReflexTests(true);
+  };
+
+  // 👉 Close modal
+  const handleCloseReflexTests = () => {
+    setShowModalReflexTests(false);
+  };
+
+  // 👉 Handle input change
+  const handleChangeReflexTests = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // 👉 Add test to list
+  const handleAddReflexTests = () => {
+    if (!formData.reflexTest) return;
+    setSelectedTests((prev) => [...prev, formData.reflexTest]);
+    setFormData((prev) => ({ ...prev, reflexTest: "" }));
+  };
+
+  // 👉 Remove test
+  const handleRemoveReflexTests = (index) => {
+    setSelectedTests((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // 👉 Submit and close
+  const handleSubmitAndClose = () => {
+    console.log("Submitted data:", {
+      triggerParameter: formData.triggerParameter,
+      selectedTests,
+    });
+    handleCloseReflexTests();
+  };
+
+
   return (
     <>
       <div className="fixed top-[61px] w-full z-10">
@@ -889,7 +1182,7 @@ useEffect(() => {
                   className="w-full border px-3 py-2 rounded"
                 >
                   {subDepartments.map((d, i) => (
-                    <option key={i} value={d.id}>
+                    <option key={i} value={d.subdptname}>
                       {d.subdptname}
                     </option>
                   ))}
@@ -1181,10 +1474,7 @@ useEffect(() => {
             </div>
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[
-                // { label: "Walk-in Price", name: "walkInPrice" },
-                // { label: "B2B Price", name: "b2bPrice" },
-                // { label: "PPP Price", name: "pppPrice" },
-                // { label: "Govt. Price", name: "govtPrice" },
+
                 { label: "Normal Price", name: "normalprice" },
               ].map((price) => (
                 <div key={price.name}>
@@ -1248,12 +1538,12 @@ useEffect(() => {
                   <tbody>
                     {results.map((result, index) => (
                       <tr key={index} className="bg-white hover:bg-gray-50">
-                        <td className="border px-2 py-1">{result.name}</td>
+                        <td className="border px-2 py-1">{result.resultname}</td>
                         <td className="border px-2 py-1">
                           {result.otherLanguageName}
                         </td>
                         <td className="border px-2 py-1">
-                          {result.extResultId}
+                          {result.extrsltid}
                         </td>
                         <td className="border px-2 py-1">{result.order}</td>
                         <td className="border px-2 py-1">{result.unit}</td>
@@ -1461,31 +1751,25 @@ useEffect(() => {
                     </div>
                     <div></div>
                     <div></div>
-                    <div></div>
-                    <div className="">
+
+
+                    <div className="col-span-full text-center">
+
                       <button
                         type="button"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          handleShowNormalValue(); // This now exists
+                          handleShowNormalValue();
                         }}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 mt-5 w-full"
+                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-teal-700 mr-3"
                       >
                         Update Normal Values
                       </button>
 
-                      {/* <AddInvestigationResultNormalValueModal
-                        showModal={showNormalValueModal}
-                        handleClose={handleCloseNormalValue}
-                        onDataUpdate={handleNormalValuesUpdate}
-                      /> */}
-
-                      {/* AddInvestigation starts */}
                       <div
-                        className={`${
-                          showModalNormalValues ? "block" : "hidden"
-                        } fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75`}
+                        className={`${showModalNormalValues ? "block" : "hidden"
+                          } fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75`}
                       >
                         <div className="bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-6xl p-1">
                           <div className="border bottom-5 border-green-400 p-3">
@@ -1494,8 +1778,7 @@ useEffect(() => {
                             </h2>
                           </div>
                           <div className="p-6 overflow-auto max-h-90">
-                            <form
-                            // onClick={handleAddNormalValues}
+                            <div
                               onSubmit={(e) => {
                                 e.preventDefault();
                                 handleAddNormalValues();
@@ -1504,67 +1787,59 @@ useEffect(() => {
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                                 <div>
                                   {/* Type */}
-                                  <div className="mb-4">
-                                    <label className="block text-gray-700">
-                                      Type
-                                    </label>
-                                    <select
-                                      name="type"
-                                      className="mt-2 block w-full p-2 border border-gray-300 rounded"
-                                      value={formData.type}
-                                      onChange={(e) =>
-                                        setFormData({
-                                          ...formData,
-                                          type: e.target.value,
-                                        })
-                                      }
-                                      required
-                                    >
-                                      <option value="">Select Type</option>
-                                      <option value="Male">Male</option>
-                                      <option value="Female">Female</option>
-                                      <option value="Child">Child</option>
-                                      <option value="Adult">Adult</option>
-                                      <option value="Elderly">Elderly</option>
-                                      <option value="General">General</option>
-                                    </select>
-                                    <p className="text-gray-500 text-sm">
-                                      Leave blank if range does not depend on
-                                      type
-                                    </p>
-                                  </div>
+                                  <select
+                                    name="type"
+                                    className="mt-2 block w-full p-2 border border-gray-300 rounded"
+                                    value={formData.type}
+                                    onChange={(e) =>
+                                      setFormData({
+                                        ...formData,
+                                        type: e.target.value,
+                                      })
+                                    }
+                                  >
+                                    <option value="">Select Type</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Child">Child</option>
+                                    <option value="Adult">Adult</option>
+                                    <option value="Elderly">Elderly</option>
+                                    <option value="General">General</option>
+                                  </select>
+
 
                                   {/* Age Min / Max */}
-                                  {["Min", "Max"].map((label) => (
+                                  {["min", "max"].map((label) => (
                                     <div className="mb-4" key={label}>
                                       <label className="block text-gray-700">
-                                        Age {label}
+                                        Age {label.charAt(0).toUpperCase() + label.slice(1)}
                                       </label>
                                       <div className="grid grid-cols-3 gap-4">
-                                        {["Year", "Month", "Day"].map(
-                                          (unit) => (
-                                            <input
-                                              key={unit}
-                                              name={`age${label}${unit}`}
-                                              type="number"
-                                              placeholder={unit}
-                                              className="block w-full p-2 border border-gray-300 rounded"
-                                              value={
-                                                formData[`age${label}${unit}`]
-                                              }
-                                              onChange={(e) =>
-                                                setFormData({
-                                                  ...formData,
-                                                  [`age${label}${unit}`]:
-                                                    e.target.value,
-                                                })
-                                              }
-                                            />
-                                          )
-                                        )}
+                                        {[
+                                          { unit: "yyyy", placeholder: "Year" },
+                                          { unit: "mm", placeholder: "Month" },
+                                          { unit: "dd", placeholder: "Day" },
+                                        ].map(({ unit, placeholder }) => (
+                                          <input
+                                            key={unit}
+                                            name={`age_${label}_${unit}`}
+                                            type="number"
+                                            placeholder={placeholder}
+                                            className="block w-full p-2 border border-gray-300 rounded"
+                                            value={formData[`age_${label}_${unit}`] ?? ""}
+                                            onChange={(e) =>
+                                              setFormData({
+                                                ...formData,
+                                                [`age_${label}_${unit}`]: e.target.value,
+                                              })
+                                            }
+                                          />
+                                        ))}
                                       </div>
                                     </div>
                                   ))}
+
+
                                 </div>
 
                                 <div>
@@ -1575,28 +1850,28 @@ useEffect(() => {
                                     </label>
                                     <div className="grid grid-cols-2 gap-4">
                                       <input
-                                        name="rangeMin"
+                                        name="range_min"
                                         type="number"
                                         placeholder="Min"
                                         className="block w-full p-2 border border-gray-300 rounded"
-                                        value={formData.rangeMin}
+                                        value={formData.range_min}
                                         onChange={(e) =>
                                           setFormData({
                                             ...formData,
-                                            rangeMin: e.target.value,
+                                            range_min: e.target.value,
                                           })
                                         }
                                       />
                                       <input
-                                        name="rangeMax"
+                                        name="range_max"
                                         type="number"
                                         placeholder="Max"
                                         className="block w-full p-2 border border-gray-300 rounded"
-                                        value={formData.rangeMax}
+                                        value={formData.range_max}
                                         onChange={(e) =>
                                           setFormData({
                                             ...formData,
-                                            rangeMax: e.target.value,
+                                            range_max: e.target.value,
                                           })
                                         }
                                       />
@@ -1607,10 +1882,10 @@ useEffect(() => {
                                         <input
                                           type="checkbox"
                                           className="form-checkbox"
-                                          checked={formData.rangeAbnormal}
+                                          checked={formData.isrange_abnormal}
                                           onChange={(e) =>
                                             setFormData({
-                                              ...formData,
+                                              ...isrange_abnormal,
                                               rangeAbnormal: e.target.checked,
                                             })
                                           }
@@ -1623,11 +1898,11 @@ useEffect(() => {
                                         <input
                                           type="checkbox"
                                           className="form-checkbox"
-                                          checked={formData.avoidRangeInReport}
+                                          checked={formData.avoid_in_report}
                                           onChange={(e) =>
                                             setFormData({
                                               ...formData,
-                                              avoidRangeInReport:
+                                              avoid_in_report:
                                                 e.target.checked,
                                             })
                                           }
@@ -1646,28 +1921,28 @@ useEffect(() => {
                                     </label>
                                     <div className="grid grid-cols-2 gap-4">
                                       <input
-                                        name="validRangeMin"
+                                        name="valid_range_min"
                                         type="number"
                                         placeholder="Min"
                                         className="block w-full p-2 border border-gray-300 rounded"
-                                        value={formData.validRangeMin}
+                                        value={formData.valid_range_min}
                                         onChange={(e) =>
                                           setFormData({
                                             ...formData,
-                                            validRangeMin: e.target.value,
+                                            valid_range_min: e.target.value,
                                           })
                                         }
                                       />
                                       <input
-                                        name="validRangeMax"
+                                        name="valid_range_max"
                                         type="number"
                                         placeholder="Max"
                                         className="block w-full p-2 border border-gray-300 rounded"
-                                        value={formData.validRangeMax}
+                                        value={formData.valid_range_max}
                                         onChange={(e) =>
                                           setFormData({
                                             ...formData,
-                                            validRangeMax: e.target.value,
+                                            valid_range_max: e.target.value,
                                           })
                                         }
                                       />
@@ -1681,26 +1956,26 @@ useEffect(() => {
                                     </label>
                                     <div className="grid grid-cols-2 gap-4">
                                       <input
-                                        name="criticalRangeLow"
+                                        name="critical_low"
                                         placeholder="Low (<)"
                                         className="block w-full p-2 border border-gray-300 rounded"
-                                        value={formData.criticalRangeLow}
+                                        value={formData.critical_low}
                                         onChange={(e) =>
                                           setFormData({
                                             ...formData,
-                                            criticalRangeLow: e.target.value,
+                                            critical_low: e.target.value,
                                           })
                                         }
                                       />
                                       <input
-                                        name="criticalRangeHigh"
+                                        name="critical_high"
                                         placeholder="High (>)"
                                         className="block w-full p-2 border border-gray-300 rounded"
-                                        value={formData.criticalRangeHigh}
+                                        value={formData.critical_high}
                                         onChange={(e) =>
                                           setFormData({
                                             ...formData,
-                                            criticalRangeHigh: e.target.value,
+                                            critical_high: e.target.value,
                                           })
                                         }
                                       />
@@ -1708,17 +1983,17 @@ useEffect(() => {
                                   </div>
                                 </div>
                               </div>
-
                               <div className="flex justify-center mt-4">
                                 <button
-                                  type="submit"
-                                  className="bg-orange-500 text-white rounded-lg py-2 px-8 hover:bg-orange-600"
+                                  type="button"
                                   onClick={handleAddNormalValues}
+                                  className="bg-orange-500 text-white rounded-lg py-2 px-8 hover:bg-orange-600"
                                 >
-                                  {selectedIndex !== null ? "Update" : "Add"}
+                                  {selectedIndex !== null ? "Update" : "Update"}
                                 </button>
                               </div>
-                            </form>
+
+                            </div>
                           </div>
 
                           {/* Display Table */}
@@ -1730,85 +2005,58 @@ useEffect(() => {
                               <thead>
                                 <tr>
                                   <th className="border px-4 py-2">Type</th>
-                                  <th className="border px-4 py-2">
-                                    Age (Min)
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Age (Max)
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Range (Min)
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Range (Max)
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Range is Abnormal
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Avoid Range in Report
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Valid Range (Min)
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Valid Range (Max)
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Critical Range (Low)
-                                  </th>
-                                  <th className="border px-4 py-2">
-                                    Critical Range (High)
-                                  </th>
+                                  <th className="border px-4 py-2">Age (Min)</th>
+                                  <th className="border px-4 py-2">Age (Max)</th>
+                                  <th className="border px-4 py-2">Range (Min)</th>
+                                  <th className="border px-4 py-2">Range (Max)</th>
+                                  <th className="border px-4 py-2">Range is Abnormal</th>
+                                  <th className="border px-4 py-2">Avoid Range in Report</th>
+                                  <th className="border px-4 py-2">Valid Range (Min)</th>
+                                  <th className="border px-4 py-2">Valid Range (Max)</th>
+                                  <th className="border px-4 py-2">Critical Range (Low)</th>
+                                  <th className="border px-4 py-2">Critical Range (High)</th>
                                   <th className="border px-4 py-2">Actions</th>
                                 </tr>
                               </thead>
+
                               <tbody>
                                 {normalValues.map((value, index) => (
                                   <tr key={index}>
+                                    <td className="border px-4 py-2">{value.type || "—"}</td>
                                     <td className="border px-4 py-2">
-                                      {value.type}
-                                    </td>
-                                    <td className="border px-4 py-2">{`${value.ageMinYear}Y ${value.ageMinMonth}M ${value.ageMinDay}D`}</td>
-                                    <td className="border px-4 py-2">{`${value.ageMaxYear}Y ${value.ageMaxMonth}M ${value.ageMaxDay}D`}</td>
-                                    <td className="border px-4 py-2">
-                                      {value.rangeMin}
+                                      {value.age_min_yyyy || value.age_min_mm || value.age_min_dd
+                                        ? `${value.age_min_yyyy || ""}/${value.age_min_mm || ""}/${value.age_min_dd || ""}`
+                                        : "—"}
                                     </td>
                                     <td className="border px-4 py-2">
-                                      {value.rangeMax}
+                                      {value.age_max_yyyy || value.age_max_mm || value.age_max_dd
+                                        ? `${value.age_max_yyyy || ""}/${value.age_max_mm || ""}/${value.age_max_dd || ""}`
+                                        : "—"}
+                                    </td>
+                                    <td className="border px-4 py-2">{value.range_min ?? "—"}</td>
+                                    <td className="border px-4 py-2">{value.range_max ?? "—"}</td>
+                                    <td className="border px-4 py-2">
+                                      {value.isRangeAbnormal ? "Yes" : "No"}
                                     </td>
                                     <td className="border px-4 py-2">
-                                      {value.rangeAbnormal ? "Yes" : "No"}
+                                      {value.avoidInReport ? "Yes" : "No"}
                                     </td>
-                                    <td className="border px-4 py-2">
-                                      {value.avoidRangeInReport ? "Yes" : "No"}
-                                    </td>
-                                    <td className="border px-4 py-2">
-                                      {value.validRangeMin}
-                                    </td>
-                                    <td className="border px-4 py-2">
-                                      {value.validRangeMax}
-                                    </td>
-                                    <td className="border px-4 py-2">
-                                      {value.criticalRangeLow}
-                                    </td>
-                                    <td className="border px-4 py-2">
-                                      {value.criticalRangeHigh}
-                                    </td>
+                                    <td className="border px-4 py-2">{value.valid_range_min ?? "—"}</td>
+                                    <td className="border px-4 py-2">{value.valid_range_max ?? "—"}</td>
+                                    <td className="border px-4 py-2">{value.critical_low ?? "—"}</td>
+                                    <td className="border px-4 py-2">{value.critical_high ?? "—"}</td>
                                     <td className="border px-4 py-2 space-x-2">
                                       <button
+                                        type="button"
                                         className="text-blue-500 hover:underline"
-                                        onClick={() =>
-                                          handleEditNormalValues(index)
-                                        }
+                                        onClick={() => handleEditNormalValues(index)}
                                       >
                                         Edit
                                       </button>
                                       <button
+                                        type="button"
                                         className="text-red-500 hover:underline"
-                                        onClick={() =>
-                                          handleRemoveNormalValues(index)
-                                        }
+                                        onClick={() => handleRemoveNormalValues(index)}
                                       >
                                         Remove
                                       </button>
@@ -1817,12 +2065,13 @@ useEffect(() => {
                                 ))}
                               </tbody>
                             </table>
+
                           </div>
 
                           {/* Footer */}
                           <div className="p-4 bg-gray-200 space-x-2 flex justify-between">
                             <button
-                            type="button"  
+                              type="button"
                               className="bg-gray-500 text-white rounded-lg w-1/2 py-2 hover:bg-gray-600"
                               onClick={handleCloseNormalValue}
                             >
@@ -1831,18 +2080,14 @@ useEffect(() => {
                             <button
                               type="button"
                               className="bg-green-500 text-white rounded-lg w-1/2 py-2 hover:bg-green-600"
-                              onClick={handleSaveNormalValues}
+                              onClick={() => handleSaveNormalValues(normalValues)}
                             >
-                              Submit123
+                              Submit
                             </button>
                           </div>
                         </div>
                       </div>
 
-                      {/* AddInvestigation ends */}
-                    </div>
-
-                    {/* <div className="">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -1850,18 +2095,114 @@ useEffect(() => {
                           e.stopPropagation();
                           handleShowMandatoryConditions();
                         }}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 mt-5 w-full"
+                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-teal-700 mr-3"
                       >
                         Add Mandatory Conditions
                       </button>
-                      <AddInvestigationResultMandatoryConditions
-                        showModal={showMandatoryConditionsModal}
-                        handleClose={handleCloseMandatoryConditions}
-                        onDataUpdate={handleMandatoryConditionsUpdate}
-                      />
-                    </div>
 
-                    <div className="">
+                      <div
+                        className={`${showModalMandatoryCondition ? 'block' : 'hidden'} fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75`}
+                      >
+                        <div className="bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-3xl p-6">
+                          <div className="border-b border-green-400 pb-3 relative">
+                            <h2 className="text-xl font-semibold text-center">Mandatory Conditions</h2>
+                            <button
+                              type="button"
+                              className="absolute right-2 top-0 text-gray-600 hover:text-red-500"
+                              onClick={handleCloseMandatoryConditions}
+                            >
+                              ✖
+                            </button>
+                          </div>
+
+                          {/* ✅ NOT a form tag */}
+                          <div className="mt-4">
+                            <div className="mb-4">
+                              <label className="block text-gray-700 font-medium">Result Name</label>
+                              <select
+                                name="resultName"
+                                className="mt-2 block w-full p-2 border border-gray-300 rounded"
+                                onChange={handleChangeMandatoryConditions}
+                                value={formData.resultName || ""}
+                              >
+                                <option value="">Select Result</option>
+                                {investigationData?.results?.map((res) => (
+                                  <option key={res.id} value={res.formula || res.resultname}>
+                                    {res.formula || res.resultname}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="mb-4">
+                              <label className="block text-gray-700 font-medium">Result Value</label>
+                              <input
+                                name="resultValue"
+                                type="text"
+                                placeholder="Enter result value"
+                                className="mt-2 block w-full p-2 border border-gray-300 rounded"
+                                onChange={handleChangeMandatoryConditions}
+                                value={formData.resultValue || ""}
+                              />
+                            </div>
+
+                            <div className="flex justify-between mt-4">
+                              <button
+                                type="button" // ✅ prevents submit
+                                className="bg-orange-500 text-white rounded-lg py-2 px-4 hover:bg-orange-600"
+                                onClick={handleAddMandatoryConditions} // ✅ calls function directly
+                              >
+                                {selectedIndex !== null ? "Update Condition" : "Add Condition"}
+                              </button>
+                              <button
+                                type="button"
+                                className="bg-gray-500 text-white rounded-lg py-2 px-4 hover:bg-gray-600"
+                                onClick={handleCloseMandatoryConditions}
+                              >
+                                Close
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="mt-6">
+                            <h3 className="text-lg font-semibold mb-2">Updated Conditions</h3>
+                            {conditions.length > 0 ? (
+                              <ul>
+                                {conditions.map((condition, index) => (
+                                  <li
+                                    key={index}
+                                    className="flex justify-between items-center border-b py-2"
+                                  >
+                                    <span>
+                                      <strong>{condition.resultName}</strong>: {condition.resultValue}
+                                    </span>
+                                    <div className="flex gap-2">
+                                      <button
+                                        className="text-blue-600 hover:underline"
+                                        onClick={() => handleEditMandatoryCondition(index)}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        className="text-red-500 hover:underline"
+                                        onClick={() => handleRemoveMandatoryConditions(index)}
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-gray-500 text-sm">No conditions added yet.</p>
+                            )}
+                          </div>
+                        </div>
+
+
+                      </div>
+
+
                       <button
                         type="button"
                         onClick={(e) => {
@@ -1869,16 +2210,118 @@ useEffect(() => {
                           e.stopPropagation();
                           handleShowReflexTests();
                         }}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 mt-5 w-full"
+                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-teal-700"
                       >
                         Add Reflex Tests
                       </button>
-                      <AddInvestigationResultReflexTests
-                        showModal={showReflexTestsModal}
-                        handleClose={handleCloseReflexTests}
-                        onDataUpdate={handleReflexTestsUpdate}
-                      />
-                    </div> */}
+                      <div className={`${showModalReflexTests ? 'block' : 'hidden'} fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75`}>
+                        <div className="bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-3xl p-6">
+                          <div className="border-b border-green-400 pb-3">
+                            <h2 className="text-xl font-semibold text-center">Reflex Tests</h2>
+                            <button className="text-gray-600 float-right" onClick={handleCloseReflexTests}>
+                              ✖
+                            </button>
+                          </div>
+                          <form onSubmit={handleAddReflexTests} className="mt-4">
+                            <div className="mb-4">
+                              <label className="inline-block text-gray-700">Trigger Parameter *</label>
+
+                              <div className="justify-evenly flex">
+                                <label className="inline-flex items-center ">
+                                  <input
+                                    type="radio"
+                                    name="triggerParameter"
+                                    value="critical"
+                                    onChange={handleChangeReflexTests}
+                                    className="form-radio"
+                                  />
+                                  <span className="ml-2">Critical Range</span>
+                                </label>
+                                <label className="inline-flex items-center ml-4">
+                                  <input
+                                    type="radio"
+                                    name="triggerParameter"
+                                    value="abnormal"
+                                    onChange={handleChangeReflexTests}
+                                    className="form-radio"
+                                  />
+                                  <span className="ml-2">Abnormal Range</span>
+                                </label>
+                              </div>
+                            </div>
+
+                            <div className="mb-4">
+                              <label className="block text-gray-700">Choose Reflex Tests *</label>
+                              <select
+                                name="reflexTest"
+                                className="mt-2 block w-full p-2 border border-gray-300 rounded 55"
+                                onChange={handleChangeReflexTests}
+                                value={formData.reflexTest}
+                              >
+                                <option value="">Select Test</option>
+                                <option value="Test C">Test C</option>
+                              </select>
+                            </div>
+
+                            <div className="flex justify-between mt-4">
+                              <button
+                                type="button"
+                                className="bg-orange-500 text-white rounded-lg py-2 px-4 hover:bg-orange-600"
+                                onClick={handleAddReflexTests}
+                              >
+                                Add
+                              </button>
+                              <button
+                                type="button"
+                                className="bg-gray-500 text-white rounded-lg py-2 px-4 hover:bg-gray-600"
+                                onClick={handleCloseReflexTests}
+                              >
+                                Submit & Close
+                              </button>
+                            </div>
+                          </form>
+
+                          <div className="mt-4">
+                            <h3 className="text-lg font-semibold">Selected Tests</h3>
+                            <ul>
+                              {selectedTests.map((test, index) => (
+                                <li key={index} className="flex justify-between border-b py-2">
+                                  <span>{`${index + 1}. ${test}`}</span>
+                                  <button
+                                    className="text-red-500 hover:underline"
+                                    onClick={() => handleRemoveReflexTests(index)}
+                                  >
+                                    Remove
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+
+                    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                     <div className="col-span-full text-center">
                       <button
                         type="button"
@@ -2102,7 +2545,7 @@ useEffect(() => {
               </div>
 
               {/* Consumables Section */}
-              <div className="col-span-full">
+              {/* <div className="col-span-full">
                 <h3 className="font-bold mb-2">Add Consumables</h3>
                 <table className="mb-4 w-full border">
                   <thead>
@@ -2121,29 +2564,106 @@ useEffect(() => {
                     {renderRows("consumable")}
                   </tbody>
                 </table>
-              </div>
+              </div> */}
 
               {/* Lab Consumables Section */}
               <div className="col-span-full">
                 <h3 className="font-bold mb-2">Lab Consumables</h3>
-                <table className="w-full border">
+                <table className="w-full border border-gray-200">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border px-2 py-1 text-orange-600">
-                        Product
-                      </th>
+                    <tr className="bg-gray-100 text-sm text-gray-700">
+                      <th className="border px-2 py-1 text-orange-600">Product</th>
                       <th className="border px-2 py-1 text-orange-600">Qty</th>
-                      <th className="border px-2 py-1" colSpan="2">
+                      <th className="border px-2 py-1 text-center text-orange-600">
                         Actions
                       </th>
                     </tr>
                   </thead>
+
                   <tbody>
-                    {renderFormFields("labConsumable")}
-                    {renderRows("labConsumable")}
+                    {labConsumables && labConsumables.length > 0 ? (
+                      labConsumables.map((item, index) => (
+                        <tr key={index} className="text-sm hover:bg-gray-50">
+                          <td className="border px-2 py-1">
+                            <input
+                              type="text"
+                              value={item.name || ""}
+                              onChange={(e) =>
+                                handleEditChange(e, index, "name", "labConsumables")
+                              }
+                              placeholder="Product Name"
+                              className="w-full border px-2 py-1 rounded-md"
+                            />
+                          </td>
+
+                          <td className="border px-2 py-1">
+                            <input
+                              type="number"
+                              value={item.qty || ""}
+                              onChange={(e) =>
+                                handleEditChange(e, index, "qty", "labConsumables")
+                              }
+                              placeholder="Quantity"
+                              className="w-full border px-2 py-1 rounded-md"
+                            />
+                          </td>
+
+                          <td className="border px-2 py-1 text-center">
+                            <button
+                              type="button"
+                              className="text-red-500 hover:underline"
+                              onClick={() => handleRemove("labConsumables", index)}
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="3"
+                          className="text-center text-gray-500 py-2 border"
+                        >
+                          No lab consumables added
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Form fields to add new consumables */}
+                    <tr>
+                      <td className="border px-2 py-1">
+                        <input
+                          type="text"
+                          value={newLabConsumable.name}
+                          onChange={(e) => handleAddChange(e, "name", "labConsumables")}
+                          placeholder="Enter Product"
+                          className="w-full border px-2 py-1 rounded-md"
+                        />
+                      </td>
+                      <td className="border px-2 py-1">
+                        <input
+                          type="number"
+                          value={newLabConsumable.qty}
+                          onChange={(e) => handleAddChange(e, "qty", "labConsumables")}
+                          placeholder="Enter Qty"
+                          className="w-full border px-2 py-1 rounded-md"
+                        />
+                      </td>
+                      <td className="border px-2 py-1 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleAdd("labConsumables")}
+                          className="text-green-600 hover:underline"
+                        >
+                          Add
+                        </button>
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
+
             </div>
 
             {/* Instruction */}

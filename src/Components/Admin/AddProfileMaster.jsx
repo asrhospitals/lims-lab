@@ -73,9 +73,13 @@ const AddProfileMaster = () => {
     }
   };
 
-  const removeTest = (test) => {
+const removeTest = (test) => {
+  const confirmRemove = window.confirm("Are you sure you want to remove this test?");
+  if (confirmRemove) {
     setSelectedTests(selectedTests.filter((t) => t.id !== test.id));
-  };
+  }
+};
+
 
   const handleReset = () => {
     setSelectedProfile("");

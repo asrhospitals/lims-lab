@@ -38,36 +38,6 @@ const AddInvestigation = () => {
 
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const [dept, subDept, role, spec, instruments] = await Promise.all([
-  //         viewDepartments(),
-  //         viewSubDepartments(),
-  //         viewRoles(),
-  //         viewSpecimenTypes(),
-  //         viewInstruments(),
-  //       ]);
-
-  //       console.log(dept, subDept, role, spec, instruments);
-
-  //       setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
-  //       setSubDepartments(
-  //         (subDept?.data || subDept || []).filter((d) => d.isactive)
-  //       );
-  //       setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
-  //       setSpecimens((spec || []).filter((s) => s.isactive));
-  //       setInstruments(
-  //         (instruments?.data || instruments || []).filter((i) => i.isactive)
-  //       );
-  //     } catch (err) {
-  //       toast.error("❌ Failed to load master data");
-  //       console.error(err);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, []);
 
   // Fetch Departments
   useEffect(() => {
@@ -83,29 +53,6 @@ const AddInvestigation = () => {
     };
     fetchDepartments();
   }, []);
-
-  // useEffect(() => {
-  //   const fetchSpecimens = async () => {
-  //     try {
-  //   const token = localStorage.getItem("authToken");
-
-
-  //       const res = await axios.get(
-  //         "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",   {
-  //           headers: { Authorization: `Bearer ${token}` },
-  //         }
-  //       );
-
-  //       console.log("Specimens API Response:", res.data);
-
-  //       setSpecimens(res.data.data || []);
-  //     } catch (err) {
-  //       console.error("Failed to fetch specimens:", err);
-  //     }
-  //   };
-
-  //   fetchSpecimens();
-  // }, []);
 
   useEffect(() => {
     const fetchSpecimens = async () => {
@@ -204,111 +151,6 @@ const AddInvestigation = () => {
       return;
     }
 
-    // const payload = {
-    //   loniccode: data.loincCode || null,
-    //   cptcode: data.cptCode || null,
-    //   testname: data.testName,
-    //   testcategory: data.testCategory,
-    //   shortname: data.shortName || null,
-    //   shortcode: data.shortCode ? parseInt(data.shortCode) : null,
-    //   departmentId: data.department || null,
-    //   subdepartment: data.subDepartment || null,
-    //   roletype: data.roleType || null,
-    //   reporttype: data.reportType || null,
-    //   sample: data.specimenType || null,
-    //   sampleqty: data.sampleQuantity || null,
-    //   sampletemp: data.sampleTemperature || null,
-    //   method: data.method || null,
-    //   instrumenttype: data.instrumentType || null,
-    //   description: data.description || null,
-    //   sac: data.sac || null,
-    //   order: data.order || null,
-    //   derivedtest: data.derivedTest || null,
-    //   extranal_test_id: data.externalTestId || null,
-    //   containertype: data.container_selection || null,
-    //   seperateprint: data.separatePrint || false,
-    //   qrcode: data.qrCode || false,
-    //   labreg: data.labRegNo || false,
-    //   noheader: data.noHeaderReport || false,
-    //   enableautoemail: data.enableAutoEmailAtApproval || false,
-    //   enaautosms: data.enableAutoSMSAtApproval || false,
-    //   enableautowhatsap: data.enableAutoWhatsappAtApproval || false,
-    //   enableintermidiate: data.enableIntermediateResult || false,
-    //   enablestags: data.enableStages || false,
-    //   showtext: data.showTestDocs || false,
-    //   // walkinprice: data.walkInPrice ? parseFloat(data.walkInPrice) : null,
-    //   // b2bprice: data.b2bPrice ? parseFloat(data.b2bPrice) : null,
-    //   // ppprice: data.pppPrice ? parseFloat(data.pppPrice) : null,
-    //   // govtprice: data.govtPrice ? parseFloat(data.govtPrice) : null,
-    //   price: data.normalPrice ? parseFloat(data.normalPrice) : null,
-    //   checkimage: data.showImagesSide || false,
-    //   template: data.template || null,
-    //   checkoutsrc: data.isOutsourced || false,
-    //   barcodelngt: 8, // Required field, ensure it's an integer
-    //   barcode: data.barcode ? parseInt(data.barcode) : null,
-    //   spbarcode: data.separateBarcode || null,
-    //   suffbarcode: data.suffixedBarcodes || null,
-    //   tat: Number(data.tatValue), // Required field
-    //   tat_unit: data.tatUnit || null,
-    //   stat: data.statValue || null,
-    //   statunit: data.statUnit || null,
-    //   status: data.status || "Active",
-    //   instruction: instruction || null,
-    //   interpretation: interpretation || null,
-    //   remark: remarks || null,
-    //   test_collection: data.colelctioncenter || "No",
-    //   results: results.map((result) => ({
-    //     resultname: result.name,
-    //     unit: result.unit,
-    //     valueType: result.valueType,
-    //     formula: result.formula,
-    //     order: result.order ? parseInt(result.order) : null,
-    //     roundOff: result.roundOff ? parseInt(result.roundOff) : null,
-    //     showTrends: result.showTrends || false,
-    //     defaultValue: result.defaultValue ? parseInt(result.defaultValue): null, // Ensure integer type
-    //     normalValues: [
-    //       {
-    //           "rangeMax": 200
-    //       }
-    //   ],
-    //     // normalValues: result.normalValues.map((nv) => ({
-    //     //   gender: nv.type || null,
-    //     //   ageMin: nv.ageMinYear ? parseInt(nv.ageMinYear) : null,
-    //     //   ageMax: nv.ageMaxYear ? parseInt(nv.ageMaxYear) : null,
-    //     //   rangeMin: nv.rangeMin ? parseFloat(nv.rangeMin) : null,
-    //     //   rangeMax: nv.rangeMax ? parseFloat(nv.rangeMax) : null,
-    //     //   validRangeMin: nv.validRangeMin ? parseFloat(nv.validRangeMin) : null,
-    //     //   validRangeMax: nv.validRangeMax ? parseFloat(nv.validRangeMax) : null,
-    //     //   criticalLow: nv.criticalRangeLow
-    //     //     ? parseFloat(nv.criticalRangeLow)
-    //     //     : null,
-    //     //   criticalHigh: nv.criticalRangeHigh
-    //     //     ? parseFloat(nv.criticalRangeHigh)
-    //     //     : null,
-    //     //   isRangeAbnormal: nv.rangeAbnormal || false,
-    //     //   avoidInReport: nv.avoidRangeInReport || false,
-    //     // })),
-    //     mandatories: [
-    //       {
-    //         resultname: "Total Protine level",
-    //         resultvalue: "12345"
-    //     }
-    //     ],
-    //     reflexTests:[
-    //       {
-    //         triggerparams: "Critical Range",
-    //         reflextest: [
-    //             "TROPONIN I"
-    //         ]
-    //     }
-    //     ],
-    //   })),
-    //   acreeditionname: accreditationItems,
-    //   acreeditiondate :"2025/08/29",
-    //   consumableitems: consumableItems,
-    //   labconsumables: labConsumableItems,
-    // };
-
 
     const payload = {
       loniccode: data.loincCode || null,
@@ -320,17 +162,16 @@ const AddInvestigation = () => {
       departmentId: data.department || null,
       subdepartment: data.subDepartment || null,
       roletype: data.roleType || null,
-      reporttype: data.reportType || null,
-      sample: data.specimenType || null,
+      sampletype: data.specimenType || null,
       sampleqty: data.sampleQuantity || null,
       sampletemp: data.sampleTemperature || null,
-      method: data.method || null,
+      testmethod: data.method || null,
       instrumenttype: data.instrumentType || null,
       description: data.description || null,
       sac: data.sac || null,
       order: data.order || null,
       derivedtest: data.derivedTest || null,
-      extranal_test_id: data.externalTestId || null,
+      extranaltest: data.externalTestId || null,
       containertype: data.container_selection || null,
       seperateprint: data.separatePrint || false,
       qrcode: data.qrCode || false,
@@ -342,16 +183,13 @@ const AddInvestigation = () => {
       enableintermidiate: data.enableIntermediateResult || false,
       enablestags: data.enableStages || false,
       showtext: data.showTestDocs || false,
-      price: data.normalPrice ? parseFloat(data.normalPrice) : null,
+      normalprice: data.normalPrice || null,
       checkimage: data.showImagesSide || false,
       template: data.template || null,
       checkoutsrc: data.isOutsourced || false,
-      barcodelngt: 8, // Required integer
-      barcode: data.barcode ? String(data.barcode) : null, // Store as string
-      spbarcode: data.separateBarcode || null,
-      suffbarcode: data.suffixedBarcodes || null,
+
       tat: Number(data.tatValue) || 0, // Required numeric
-      tat_unit: data.tatUnit || null,
+      tatunit: data.tatUnit || null,
       stat: data.statValue || null,
       statunit: data.statUnit || null,
       status: data.status || "Active",
@@ -359,45 +197,70 @@ const AddInvestigation = () => {
       interpretation: interpretation || null,
       remark: remarks || null,
       test_collection: data.colelctioncenter || "No", // ENUM: Yes/No
+
       results: results.map((result) => ({
         resultname: result.name,
         unit: result.unit,
         valueType: result.valueType,
-        formula: result.formula || null,
+        formula: result.formula || "",
         order: result.order ? parseInt(result.order) : null,
         roundOff: result.roundOff ? parseInt(result.roundOff) : null,
         showTrends: result.showTrends || false,
-        defaultValue: result.defaultValue ? parseInt(result.defaultValue) : null,
-        normalValues: [
+        defaultValue: result.defaultValue || "",
+
+        normalValues:
+          result.normalValues?.length > 0
+            // ? result.normalValues.map((n) => ({
+            //   gender: n.type,
+            //   ageMinYear: n.ageMinYear,
+            //   ageMinMonth: n.ageMinMonth,
+            //   ageMinDay: n.ageMinDay,
+            //   ageMaxYear: n.ageMaxYear,
+            //   ageMaxMonth: n.ageMaxMonth,
+            //   ageMaxDay: n.ageMaxDay,
+            //   rangeMin: n.rangeMin,
+            //   rangeMax: n.rangeMax,
+            //   validRangeMin: n.validRangeMin,
+            //   validRangeMax: n.validRangeMax,
+            //   criticalRangeLow: n.criticalRangeLow,
+            //   criticalRangeHigh: n.criticalRangeHigh,
+            //   rangeAbnormal: n.rangeAbnormal,
+            //   avoidRangeInReport: n.avoidRangeInReport,
+            // }))
+             ? result.normalValues.map((n) => ({
+              gender: n.type,
+              age_min_yyyy: n.ageMinYear,
+              age_min_mm: n.ageMinMonth,
+              age_min_dd: n.ageMinDay,
+              age_max_yyyy: n.ageMaxYear,
+              age_max_mm: n.ageMaxMonth,
+              age_max_dd: n.ageMaxDay,
+              range_min: n.rangeMin,
+              range_max: n.rangeMax,
+              valid_range_min: n.validRangeMin,
+              valid_range_max: n.validRangeMax,
+              critical_low: n.criticalRangeLow,
+              critical_high: n.criticalRangeHigh,
+              isrange_abnormal: n.rangeAbnormal,
+              avoid_in_report: n.avoidRangeInReport,
+            }))
+            : [],
+
+        mandatories: result.mandatoryConditions || [
           {
-            gender: "Both",
-            ageMin: 0,
-            ageMax: 120,
-            rangeMin: 0,
-            rangeMax: 200,
-            validRangeMin: 0,
-            validRangeMax: 200,
-            criticalLow: 0,
-            criticalHigh: 200,
-            isRangeAbnormal: false,
-            avoidInReport: false,
-            resultId: result.id || null
-          }
+            resultname: result.name || null,
+            resultvalue: result.resultValue || null,
+            resultId: result.id || null,
+          },
         ],
-        mandatories: [
+
+        reflexTests: result.reflexTests || [
           {
-            resultname: result.name,
-            resultvalue: "12345",
-            resultId: result.id || null
-          }
+            triggerparams: result.triggerParameter,
+            reflextest: result.selectedTests,
+            resultId: result.id || null,
+          },
         ],
-        reflexTests: [
-          {
-            triggerparams: "Critical Range",
-            reflextest: ["TROPONIN I"],
-            resultId: result.id || null
-          }
-        ]
       })),
       acreeditionname: accreditationItems || [],
       acreeditiondate: [new Date("2025-08-29")], // Proper Date array
@@ -409,7 +272,6 @@ const AddInvestigation = () => {
     console.log("Complete payload being sent to API:", payload);
 
     try {
-      await addInvestigation(payload);
       toast.success("Investigation added successfully");
       reset();
       // Reset child component states
@@ -677,8 +539,8 @@ const AddInvestigation = () => {
           type="button"
           onClick={(e) => handleAddItem(type, e)}
           className={`px-3 py-1 rounded ${editing.type === type ?
-              "bg-yellow-100 text-yellow-700 border-yellow-700" :
-              "bg-purple-100 text-purple-700 border-purple-700"
+            "bg-yellow-100 text-yellow-700 border-yellow-700" :
+            "bg-purple-100 text-purple-700 border-purple-700"
             } border hover:opacity-90`}
         >
           {editing.type === type ? "Update" : "Add"}
@@ -1198,20 +1060,17 @@ const AddInvestigation = () => {
           </div>
 
           {/* Test Price for Different Categories */}
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div className="col-span-full">
               <h2 className="text-lg font-semibold text-gray-800 mb-2">
                 Test Price
               </h2>
               <div className="col-span-full border-b border-gray-300"></div>
             </div>
-          </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          </div> */}
+          {/* <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[
-              // { label: "Walk-in Price", name: "walkInPrice" },
-              // { label: "B2B Price", name: "b2bPrice" },
-              // { label: "PPP Price", name: "pppPrice" },
-              // { label: "Govt. Price", name: "govtPrice" },
+           
               { label: "Normal Price", name: "normalPrice" },
             ].map((price) => (
               <div key={price.name}>
@@ -1243,9 +1102,44 @@ const AddInvestigation = () => {
                 )}
               </div>
             ))}
+          </div> */}
+
+
+
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 m-4">
+              Normal Price
+            </label>
+            <div className="flex gap-0">
+              <input
+                {...register("normalPrice", {
+                  validate: (value) => {
+                    if (value && isNaN(parseFloat(value))) {
+                      return "price must be in number";
+                    }
+                    return true;
+                  },
+                })}
+                type="number"
+                step="0.01"
+                placeholder="Enter price"
+                className="max-w-40 border m-4 px-3 py-2 rounded"
+              />
+            </div>
+            {errors.sampleQuantity && (
+              <p className="text-red-600 text-xs mt-1">
+                {errors.sampleQuantity.message}
+              </p>
+            )}
           </div>
 
           <AddInvestigationResult results={results} setResults={setResults} />
+
+
+
+
+
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div className="col-span-full">

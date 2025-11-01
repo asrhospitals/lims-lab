@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, Link } from "react-router-dom";
 
 const AddColor = () => {
-  const [selectedColor, setSelectedColor] = useState("#ff0000");
+  const [selectedColor, setSelectedColor] = useState("#000000");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const navigate = useNavigate();
 
@@ -81,7 +81,7 @@ const AddColor = () => {
 
       toast.success("✅ Color added successfully!");
       reset();
-      setSelectedColor("#ff0000");
+      setSelectedColor("#000000");
       setTimeout(() => navigate("/view-color"), 2000);
     } catch (error) {
       console.error("Add color error:", error);
@@ -216,7 +216,7 @@ const AddColor = () => {
                 type="button"
                 onClick={() => {
                   reset();
-                  setSelectedColor("#ff0000");
+                  setSelectedColor("#000000");
                 }}
                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
               >
