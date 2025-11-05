@@ -3,13 +3,15 @@ import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import AdminContext from "../../context/adminContext";
 
 const UpdateColor = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { colorToUpdate, setColorToUpdate } = useContext(AdminContext);
+  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { colorToUpdate, setColorToUpdate } = useContext(AdminContext);
 
   const {
     register,
@@ -20,69 +22,93 @@ const UpdateColor = () => {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      color_code: "",
-      color_status: "",
+      status_of_color: "",
+      colorcode: "",
     },
   });
 
+  // ----------------- AUTO FILL LOGIC -----------------
   useEffect(() => {
-    if (!colorToUpdate) {
-      const stored = localStorage.getItem("colorToUpdate");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setColorToUpdate(parsed);
-          reset({
-            color_code: parsed.color_code || "",
-            color_status: parsed.color_status || "",
-          });
-        } catch (err) {
-          console.error("Failed to parse color from localStorage", err);
-        }
+    const fetchColorFallback = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        // Fetch all colors and find the one with matching ID
+        const res = await axios.get(
+          "https://asrlabs.asrhospitalindia.in/lims/master/get-color",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { page: 1, limit: 100 },
+          }
+        );
+        const allColors = res.data?.data || [];
+        const data = allColors.find((c) => c.id === Number(id));
+
+        if (!data) throw new Error("Color not found");
+
+        const colorcode =
+          typeof data.colorcode === "string"
+            ? data.colorcode.startsWith("#")
+              ? data.colorcode
+              : `#${data.colorcode}`
+            : "#000000";
+
+        reset({
+          status_of_color: data.status_of_color || "unknown",
+          colorcode,
+        });
+      } catch (error) {
+        console.error("Failed to fetch color:", error);
+        toast.error("❌ Failed to load color details.");
+        setTimeout(() => navigate("/view-color"), 2000);
+      } finally {
+        setLoading(false);
       }
-    } else {
+    };
+
+    if (colorToUpdate) {
+      const data = colorToUpdate;
+      const colorcode =
+        typeof data.colorcode === "string"
+          ? data.colorcode.startsWith("#")
+            ? data.colorcode
+            : `#${data.colorcode}`
+          : "#000000";
+
       reset({
-        color_code: colorToUpdate.color_code || "",
-        color_status: colorToUpdate.color_status || "",
+        status_of_color: data.status_of_color || "unknown",
+        colorcode,
       });
+      setLoading(false);
+    } else {
+      fetchColorFallback();
     }
-  }, [colorToUpdate, reset, setColorToUpdate]);
+  }, [colorToUpdate, id, navigate, reset]);
+  // ---------------------------------------------------
 
-
-  
-
-  const onSubmit = async (data) => {
-    if (!colorToUpdate?.color_id) {
-      toast.error("❌ Missing color ID for update.");
-      return;
-    }
-
+  const onSubmit = async (formData) => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("authToken");
 
+      const payload = {
+        status_of_color: formData.status_of_color,
+        colorcode: formData.colorcode,
+      };
+
       await axios.put(
-        `https://asrlabs.asrhospitalindia.in/lims/master/update-color/${colorToUpdate.color_id}`,
+        `https://asrlabs.asrhospitalindia.in/lims/master/update-color/${id}`,
+        payload,
         {
-          color_code: data.color_code,
-          color_status: data.color_status,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       toast.success("✅ Color updated successfully!");
       setColorToUpdate(null);
-      localStorage.removeItem("colorToUpdate");
-      navigate("/view-colors");
+      setTimeout(() => navigate("/view-color"), 1500);
     } catch (error) {
-      console.error("Error updating color:", error);
-      toast.error(
-        error.response?.data?.message || "❌ Failed to update color."
-      );
+      console.error("Update failed:", error);
+      toast.error(error.response?.data?.message || "❌ Failed to update color.");
     } finally {
       setIsSubmitting(false);
     }
@@ -90,11 +116,11 @@ const UpdateColor = () => {
 
   const fields = [
     {
-      name: "color_code",
-      label: "Color Code",
-      placeholder: "e.g., Red",
+      name: "status_of_color",
+      label: "Status of Color",
+      placeholder: "e.g., Green",
       validation: {
-        required: "Color code is required",
+        required: "Status of color is required",
         pattern: {
           value: /^[A-Za-z\s]+$/i,
           message: "Only alphabets allowed",
@@ -102,25 +128,66 @@ const UpdateColor = () => {
       },
     },
     {
-      name: "color_status",
-      label: "Color Status",
-      placeholder: "e.g., Accept / Reject",
+      name: "colorcode",
+      label: "Color Code",
+      placeholder: "#00FF00",
       validation: {
-        required: "Status is required",
+        required: "Color code is required",
         pattern: {
-          value: /^[A-Za-z\s]+$/i,
-          message: "Only alphabets allowed",
+          value: /^#([0-9A-Fa-f]{3}){1,2}$/i,
+          message: "Must be a valid hex color",
         },
       },
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[70vh] text-gray-500">
+        Loading color details...
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-7xl mx-auto w-full mt-6 px-2 sm:px-4 text-sm">
       <ToastContainer />
+
+      {/* Breadcrumb */}
+      <div className="fixed top-[61px] w-full z-10">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+            <li>
+              <Link
+                to="/"
+                className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                🏠︎ Home
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link
+                to="/view-color"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                Colors
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li aria-current="page" className="text-gray-500">
+              Update Color
+            </li>
+          </ol>
+        </nav>
+      </div>
+
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
+        className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200 mt-14"
       >
         <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
           <h4 className="font-semibold text-white">Update Color</h4>
@@ -136,8 +203,9 @@ const UpdateColor = () => {
                     <span className="text-red-500">*</span>
                   )}
                 </label>
+
                 <input
-                  type="text"
+                  type={name === "colorcode" ? "color" : "text"}
                   {...register(name, validation)}
                   onBlur={() => trigger(name)}
                   placeholder={placeholder}
@@ -147,6 +215,7 @@ const UpdateColor = () => {
                       : "border-gray-300 focus:ring-teal-500"
                   } focus:ring-2 focus:border-transparent transition`}
                 />
+
                 {errors[name] && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors[name].message}
@@ -164,6 +233,7 @@ const UpdateColor = () => {
             >
               Reset
             </button>
+
             <button
               type="submit"
               disabled={isSubmitting}

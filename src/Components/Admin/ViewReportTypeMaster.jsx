@@ -11,26 +11,33 @@ const ViewReportTypeMaster = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { setTechnicianToUpdate } = useContext(AdminContext); // optional
+  const { setTechnicianToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchReportTypes = async () => {
+      setLoading(true);
       try {
         const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
+        const res = await axios.get(
           "https://asrlabs.asrhospitalindia.in/lims/master/get-report",
           {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
+            headers: { Authorization: `Bearer ${authToken}` },
+            params: { page: currentPage, limit: itemsPerPage },
           }
         );
 
-        const data = (response.data || []).sort((a, b) => Number(a.id) - Number(b.id));
+        const data = (res.data?.data || []).sort((a, b) => Number(a.id) - Number(b.id));
         setReportTypes(data);
         setFilteredReportTypes(data);
+
+        setTotalPages(res?.data?.meta?.totalPages || 1);
+        setTotalItems(res?.data?.meta?.totalItems || data.length);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch Report Types.");
       } finally {
@@ -39,8 +46,9 @@ const ViewReportTypeMaster = () => {
     };
 
     fetchReportTypes();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
+  // Search filter
   useEffect(() => {
     if (!search.trim()) {
       setFilteredReportTypes(reportTypes);
@@ -55,8 +63,14 @@ const ViewReportTypeMaster = () => {
     }
   }, [search, reportTypes]);
 
+  const handlePageChange = (page) => setCurrentPage(page);
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
+  };
+
   const handleUpdate = (reportType) => {
-    setTechnicianToUpdate(reportType); // reuse context if needed
+    setTechnicianToUpdate(reportType);
     localStorage.setItem("reportTypeToUpdate", JSON.stringify(reportType));
     navigate("/update-report-type-master");
   };
@@ -68,18 +82,15 @@ const ViewReportTypeMaster = () => {
     { key: "entrytype", label: "Entry Type" },
     { key: "entryvalues", label: "Entry Values" },
     { key: "status", label: "Status" },
-
-
-    // { key: "createdAt", label: "Created At" },
-    // { key: "updatedAt", label: "Updated At" },
   ];
 
-  const mappedItems = filteredReportTypes.map((r) => ({
-    ...r,
-    entryvalues: (r.entryvalues || []).join(", "),
-    createdAt: new Date(r.createdAt).toLocaleString("en-IN"),
-    updatedAt: new Date(r.updatedAt).toLocaleString("en-IN"),
-    status: r.isactive ? "Active" : "Inactive",
+  const mappedItems = filteredReportTypes.map((rt) => ({
+    id: rt.id,
+    reporttype: rt.reporttype,
+    reportdescription: rt.reportdescription,
+    entrytype: rt.entrytype,
+    entryvalues: Array.isArray(rt.entryvalues) ? rt.entryvalues.join(", ") : rt.entryvalues || "",
+    status: rt.isactive ? "Active" : "Inactive",
   }));
 
   return (
@@ -87,7 +98,7 @@ const ViewReportTypeMaster = () => {
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
-          className="flex items-center text-semivold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          className="flex items-center text-semibold font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
@@ -116,7 +127,7 @@ const ViewReportTypeMaster = () => {
         </nav>
       </div>
 
-      <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
+      <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
@@ -135,6 +146,15 @@ const ViewReportTypeMaster = () => {
                 <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
               </div>
             </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex flex-wrap gap-2 mb-4 text-sm text-gray-600">
+            <span>Total: {totalItems} items</span>
+            <span>•</span>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
           </div>
 
           {/* Add New */}
@@ -160,7 +180,13 @@ const ViewReportTypeMaster = () => {
             <DataTable
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />

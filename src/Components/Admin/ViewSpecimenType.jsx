@@ -1,9 +1,8 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import AdminContext from "../../context/adminContext";
 import DataTable from "../utils/DataTable";
+import axios from "axios";
 
 const ViewSpecimenType = () => {
   const [specimenTypes, setSpecimenTypes] = useState([]);
@@ -11,62 +10,84 @@ const ViewSpecimenType = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { setSpecimenTypeToUpdate } = useContext(AdminContext);
   const navigate = useNavigate();
 
-  // Fetch data
+  // Fetch data with server-side pagination
   useEffect(() => {
     const fetchSpecimenTypes = async () => {
-      try {
-        const authToken = localStorage.getItem("authToken");
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
+      setLoading(true);
+      const token = localStorage.getItem("authToken");
 
-        const data = (response.data || []).sort((a, b) => Number(a.id) - Number(b.id));
+      try {
+        const params = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        const queryString = new URLSearchParams(params).toString();
+        const url = `https://asrlabs.asrhospitalindia.in/lims/master/get-specimen?${queryString}`;
+
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = response.data.data || [];
+        const meta = response.data.meta || { totalItems: data.length, totalPages: 1 };
+
         setSpecimenTypes(data);
         setFilteredSpecimenTypes(data);
+
+        setTotalItems(meta.totalItems);
+        setTotalPages(meta.totalPages);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch Specimen Types.");
+        console.error("Error fetching specimen types:", err);
+        setError("Failed to fetch specimen types.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchSpecimenTypes();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
-  // Search filter
+  // Client-side search filter
   useEffect(() => {
     if (!search.trim()) {
       setFilteredSpecimenTypes(specimenTypes);
     } else {
       const lower = search.toLowerCase();
-      const filtered = specimenTypes.filter((item) =>
-        (item.specimenname || "").toLowerCase().includes(lower) ||
-        (item.specimendes || "").toLowerCase().includes(lower)
+      const filtered = specimenTypes.filter(
+        (item) =>
+          (item.specimenname || "").toLowerCase().includes(lower) ||
+          (item.specimendes || "").toLowerCase().includes(lower)
       );
       setFilteredSpecimenTypes(filtered);
     }
   }, [search, specimenTypes]);
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
+  };
+
   const handleUpdate = (specimenType) => {
-    setSpecimenTypeToUpdate(specimenType);
-    localStorage.setItem("specimenTypeToUpdate", JSON.stringify(specimenType));
-    navigate("/update-specimen-type");
+    console.log("Update specimen type:", specimenType?.id);
+    navigate(`/update-specimen-type/${specimenType.id}`);
   };
 
   const columns = [
     { key: "id", label: "ID" },
     { key: "specimenname", label: "Specimen Name" },
     { key: "specimendes", label: "Description" },
-    // { key: "status", label: "Status" },
     { key: "status", label: "Status" },
   ];
 
@@ -79,10 +100,13 @@ const ViewSpecimenType = () => {
     <>
       {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center text-sm font-medium px-4 py-2 bg-gray-50 border-b shadow-md">
-          <ol className="inline-flex items-center space-x-2 sm:space-x-3">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg transition-colors"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
-              <Link to="/" className="text-gray-700 hover:text-teal-600">
+              <Link to="/admin-dashboard" className="text-gray-700 hover:text-teal-600">
                 🏠︎ Home
               </Link>
             </li>
@@ -100,7 +124,6 @@ const ViewSpecimenType = () => {
 
       <div className="w-full mt-16 px-2 sm:px-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4 space-y-4">
-
           {/* Header + Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-xl font-bold text-gray-800">Specimen Type List</h2>
@@ -145,9 +168,16 @@ const ViewSpecimenType = () => {
             <div className="text-center py-6 text-gray-500">No Specimen Types found.</div>
           ) : (
             <DataTable
+              key={mappedItems.length} // force re-render on items change
               items={mappedItems}
               columns={columns}
-              itemsPerPage={10}
+              serverSidePagination={true}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
               showDetailsButtons={false}
               onUpdate={handleUpdate}
             />
