@@ -925,6 +925,7 @@ const UpdateInvestigation = () => {
       await updateReflexTest(resultId, reflexTestsId, payload);
 
       toast.success(" Reflex test updated successfully");
+     setShowModalReflexTests(false);
 
       //  Refresh the latest data from backend
       fetchInvestigationData();
