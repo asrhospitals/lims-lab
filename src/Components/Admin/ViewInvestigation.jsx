@@ -48,19 +48,39 @@ const ViewInvestigation = () => {
     fetchInvestigations();
   }, [currentPage, itemsPerPage]);
 
-  useEffect(() => {
-    if (!search.trim()) {
-      setFilteredInvestigations(investigations);
-    } else {
-      const lower = search.toLowerCase();
-      const filtered = (investigations || []).filter(
-        (item) =>
-          (item.testname || "").toLowerCase().includes(lower) ||
-          (item.department || "").toLowerCase().includes(lower)
+useEffect(() => {
+  if (!search.trim()) {
+    setFilteredInvestigations(investigations);
+  } else {
+    const lower = search.toLowerCase();
+
+    const filtered = (investigations || []).filter((item) => {
+      const testname =
+        typeof item.testname === "string" ? item.testname.toLowerCase() : "";
+
+      let department = "";
+      if (item.department) {
+        if (typeof item.department === "string") {
+          department = item.department.toLowerCase();
+        } else if (
+          typeof item.department === "object" &&
+          typeof item.department.dptname === "string"
+        ) {
+          // Handles case when department is an object with a dptname property
+          department = item.department.dptname.toLowerCase();
+        }
+      }
+
+      return (
+        testname.includes(lower) ||
+        department.includes(lower)
       );
-      setFilteredInvestigations(filtered);
-    }
-  }, [search, investigations]);
+    });
+
+    setFilteredInvestigations(filtered);
+  }
+}, [search, investigations]);
+
 
   const handleUpdate = (investigation) => {
     //  id is the investigation_id only

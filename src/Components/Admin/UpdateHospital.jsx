@@ -6,11 +6,11 @@ import "react-toastify/dist/ReactToastify.css";
 import {
   updateHospital,
   viewHospital,
-  viewHospitalTypes,
+  viewAllHospitalType,
   viewHospitals,
 } from "../../services/apiService";
 
-const UpdateHospital = () => {
+const UpdateHospital = () => { 
   const [hospitalToUpdate, setHospitalToUpdate] = useState(null);
   const [hospitalTypes, setHospitalTypes] = useState([]);
   const [existingHospitals, setExistingHospitals] = useState([]);
@@ -39,9 +39,9 @@ const UpdateHospital = () => {
       setIsLoading(true);
       try {
         const [hospitalTypesResponse, hospitalResponse, hospitalsRes] =
-          await Promise.all([viewHospitalTypes(), viewHospital(id), viewHospitals()]);
+          await Promise.all([viewAllHospitalType(), viewHospital(id), viewHospitals()]);
 
-        setHospitalTypes(hospitalTypesResponse.data || []);
+        setHospitalTypes(hospitalTypesResponse || []);
         setExistingHospitals(hospitalsRes.data || []);
 
         const hospitalData = hospitalResponse;

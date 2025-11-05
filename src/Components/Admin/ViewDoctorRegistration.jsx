@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import DataTable from "../utils/DataTable";
+import ImageDIsplatDataTable from "../utils/ImageDIsplatDataTable";
 
 const stringToColor = (str) => {
   let hash = 0;
@@ -77,66 +77,50 @@ const ViewDoctorRegistration = () => {
   const handleUpdate = (doctor) => {
     navigate(`/update-doctor-registration/${doctor.id}`);
   };
-const columns = [
-  { key: "id", label: "ID" },
-  { key: "dname", label: "Name" },
-  { key: "dqlf", label: "Qualification" },
-  { key: "dspclty", label: "Specialty" },
-  { key: "ddpt", label: "Department" },
-  { key: "dregno", label: "Reg. Number" },
-  { key: "dcnt", label: "Phone" },
-  { key: "demail", label: "Email" },
-  {
-    key: "dphoto",
-    label: "Profile Image",
-    render: (d) => {
-      const color = stringToColor(d.dname || "Doctor");
-      const initials = d.dname
-        ? d.dname.split(" ").map((n) => n[0]).join("").toUpperCase()
-        : "?";
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "dname", label: "Name" },
+    { key: "dqlf", label: "Qualification" },
+    { key: "dspclty", label: "Specialty" },
+    { key: "ddpt", label: "Department" },
+    { key: "dregno", label: "Reg. Number" },
+    { key: "dcnt", label: "Phone" },
+    { key: "demail", label: "Email" },
+    {
+      key: "dphoto",
+      label: "Profile Image",
+      render: (d) => {
+        const color = stringToColor(d.dname || "Doctor");
+        const initials = d.dname
+          ? d.dname.split(" ").map((n) => n[0]).join("").toUpperCase()
+          : "?";
 
-      const photoUrl =
-        d.dphoto && (d.dphoto.startsWith("http")
-          ? encodeURI(d.dphoto)
-          : `https://asrlabs.asrhospitalindia.in/${encodeURI(d.dphoto)}`);
+        const photoUrl =
+          d.dphoto && (d.dphoto.startsWith("http")
+            ? encodeURI(d.dphoto)
+            : `https://asrlabs.asrhospitalindia.in/${encodeURI(d.dphoto)}`);
 
-      return photoUrl ? (
-        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border border-gray-200">
-          <img
-            src={photoUrl}
-            alt={d.dname}
-            className="w-full h-full object-cover rounded-full"
-          />
-        </div>
-      ) : (
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs border border-gray-200"
-          style={{ backgroundColor: color }}
-        >
-          {initials}
-        </div>
-      );
+        return photoUrl ? (
+          <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border border-gray-200">
+            <img
+              src={photoUrl}
+              alt={d.dname}
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
+        ) : (
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs border border-gray-200"
+            style={{ backgroundColor: color }}
+          >
+            {initials}
+          </div>
+        );
+      },
     },
-  },
-  { key: "dstatus", label: "Status" },
-  {
-    key: "actions",
-    label: "Actions",
-    render: (doctor) => (
-      <button
-        onClick={() => handleUpdate(doctor)}
-        className="px-3 py-1 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 transition"
-      >
-        Edit
-      </button>
-    ),
-  },
-];
+    { key: "dstatus", label: "Status" },
 
-
-
-
-
+  ];
 
   // Map data to include Status and Actions for DataTable
   const mappedDoctors = (filteredDoctors || []).map((d) => ({
@@ -166,10 +150,7 @@ const columns = [
                 Doctors
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
-            <li aria-current="page" className="text-gray-500">
-              View Doctors
-            </li>
+
           </ol>
         </nav>
       </div>
@@ -202,7 +183,7 @@ const columns = [
 
           <div className="flex flex-wrap gap-2 mb-4">
             <button
-              onClick={() => navigate("/add-doctor")}
+              onClick={() => navigate("/doctor-registration")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
@@ -220,7 +201,7 @@ const columns = [
           ) : (
             <div className="overflow-x-auto">
               <div className="min-w-[1000px]">
-                <DataTable
+                <ImageDIsplatDataTable
                   items={mappedDoctors}
                   columns={columns}
                   serverSidePagination

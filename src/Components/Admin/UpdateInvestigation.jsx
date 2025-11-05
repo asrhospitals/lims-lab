@@ -14,6 +14,8 @@ import {
   viewAllROles,
   viewSpecimenTypes,
   viewAllInstrument,
+  updateMandatoryCondition,
+  updateReflexTest
 } from "../../services/apiService";
 import AddInvestigationResultMandatoryConditions from "./AddInvestigationResultMandatoryConditions";
 
@@ -48,6 +50,7 @@ const UpdateInvestigation = () => {
   const [conditions, setConditions] = useState([]);
   const [showModalReflexTests, setShowModalReflexTests] = useState(false);
   const [selectedTests, setSelectedTests] = useState([]);
+  const [reflexTests, setReflexTests] = useState([]);
 
   const [formData, setFormData] = useState({
     id: "",
@@ -71,6 +74,8 @@ const UpdateInvestigation = () => {
     triggerParameter: "",
     reflexTest: "",
     resultId: "",
+    triggerParameter: "",
+    reflexTest: "",
   });
 
   const {
@@ -236,7 +241,14 @@ const UpdateInvestigation = () => {
       setRemarks(data.remark || "");
 
       setNormalValues(data.results?.[0]?.normalValues || []);
-
+      // setReflexTests(data.results?.[0]?.reflexTests || []);
+      const reflexData = data.results?.[0]?.reflexTests?.[0];
+      if (reflexData) {
+        setFormData({
+          triggerParameter: reflexData.triggerparams === "Critical Range" ? "critical" : "abnormal",
+          reflexTest: reflexData.reflextest?.[0] || "",
+        });
+      }
 
       const existingMandatories = data.results?.[0]?.mandatories || [];
       const formattedMandatories = existingMandatories.map((m) => ({
@@ -768,6 +780,52 @@ const UpdateInvestigation = () => {
   };
 
 
+  const handleAddMandatoryConditions = async () => {
+    if (!formData.resultName || !formData.resultValue) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    try {
+      const payload = {
+        resultname: formData.resultName,
+        resultvalue: formData.resultValue,
+      };
+
+      //  Decide which ID to use
+      const investigationId = investigationData?.id;
+      const mandatoryId =
+        formData.id ||
+        investigationData?.results?.[0]?.mandatories?.[0]?.id;
+
+      if (!mandatoryId) {
+        toast.error("❌ Mandatory ID not found");
+        return;
+      }
+
+      const resultId = investigationData?.results?.[0]?.id;
+      //  Call centralized API
+      await updateMandatoryCondition(resultId, mandatoryId, payload);
+
+      //  Update UI
+      setConditions((prevConditions) => {
+        const updated = [...prevConditions];
+        if (selectedIndex !== null) {
+          updated[selectedIndex] = { ...formData };
+        } else {
+          updated.push({ ...formData });
+        }
+        return updated;
+      });
+      setShowModalMandatoryCondition(false);
+      setFormData({ resultName: "", resultValue: "" });
+      setSelectedIndex(null);
+      toast.success(" Mandatory condition updated successfully!");
+    } catch (error) {
+      console.error("Error saving mandatory condition:", error);
+      toast.error("❌ Failed to save mandatory condition");
+    }
+  };
 
 
   const onSubmit = async (data) => {
@@ -891,37 +949,14 @@ const UpdateInvestigation = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-const handleAddMandatoryConditions = () => {
-  if (!formData.resultName || !formData.resultValue) {
-    alert("Please fill all fields");
-    return;
-  }
-
-  setConditions((prevConditions) => {
-    const updated = [...prevConditions];
-
-    if (selectedIndex !== null) {
-      // ✅ Update the existing condition
-      updated[selectedIndex] = { ...formData };
-    } else {
-      // ✅ Add only if not editing
-      updated.push({ ...formData });
-    }
-
-    return updated;
-  });
-
-  // ✅ Reset form after save/update
-  setFormData({ resultName: "", resultValue: "" });
-  setSelectedIndex(null);
-};
 
 
-
-const handleEditMandatoryCondition = (index) => {
-  setFormData({ ...conditions[index] });
-  setSelectedIndex(index);
-};
+  const handleEditMandatoryCondition = (index, e) => {
+    e.preventDefault(); //  prevent form submission
+    e.stopPropagation(); //  stop bubbling up to parent form handlers
+    setFormData({ ...conditions[index] });
+    setSelectedIndex(index);
+  };
 
 
   const handleRemoveMandatoryConditions = (index) => {
@@ -993,18 +1028,31 @@ const handleEditMandatoryCondition = (index) => {
   // 👉 Handle input change
   const handleChangeReflexTests = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // 👉 Add test to list
-  const handleAddReflexTests = () => {
-    if (!formData.reflexTest) return;
-    setSelectedTests((prev) => [...prev, formData.reflexTest]);
-    setFormData((prev) => ({ ...prev, reflexTest: "" }));
+  const handleAddReflexTests = async () => {
+    try {
+    const payload = {
+      triggerparams: formData.triggerParameter === "critical" ? "Critical Range" : "Abnormal Range",
+      reflextest: [formData.reflexTest],
+    };
+
+      await updateReflexTest(id, payload); // your PUT API call
+
+      toast.success("✅ Reflex test updated successfully");
+
+      // Refresh latest data from backend
+      fetchInvestigationData();
+    } catch (err) {
+      console.error("Error updating reflex test:", err);
+      toast.error("❌ Failed to update reflex test");
+    }
   };
+
+
+
 
   // 👉 Remove test
   const handleRemoveReflexTests = (index) => {
@@ -2148,9 +2196,9 @@ const handleEditMandatoryCondition = (index) => {
 
                             <div className="flex justify-between mt-4">
                               <button
-                                type="button" // ✅ prevents submit
+                                type="button"
                                 className="bg-orange-500 text-white rounded-lg py-2 px-4 hover:bg-orange-600"
-                                onClick={handleAddMandatoryConditions} // ✅ calls function directly
+                                onClick={handleAddMandatoryConditions}
                               >
                                 {selectedIndex !== null ? "Update Condition" : "Add Condition"}
                               </button>
@@ -2178,8 +2226,9 @@ const handleEditMandatoryCondition = (index) => {
                                     </span>
                                     <div className="flex gap-2">
                                       <button
+                                        type="button"
                                         className="text-blue-600 hover:underline"
-                                        onClick={() => handleEditMandatoryCondition(index)}
+                                        onClick={(e) => handleEditMandatoryCondition(index, e)}
                                       >
                                         Edit
                                       </button>
@@ -2218,21 +2267,19 @@ const handleEditMandatoryCondition = (index) => {
                         <div className="bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-3xl p-6">
                           <div className="border-b border-green-400 pb-3">
                             <h2 className="text-xl font-semibold text-center">Reflex Tests</h2>
-                            <button className="text-gray-600 float-right" onClick={handleCloseReflexTests}>
-                              ✖
-                            </button>
                           </div>
                           <form onSubmit={handleAddReflexTests} className="mt-4">
                             <div className="mb-4">
                               <label className="inline-block text-gray-700">Trigger Parameter *</label>
 
                               <div className="justify-evenly flex">
-                                <label className="inline-flex items-center ">
+                                <label className="inline-flex items-center">
                                   <input
                                     type="radio"
                                     name="triggerParameter"
                                     value="critical"
                                     onChange={handleChangeReflexTests}
+                                    checked={formData.triggerParameter === "critical"}
                                     className="form-radio"
                                   />
                                   <span className="ml-2">Critical Range</span>
@@ -2243,25 +2290,29 @@ const handleEditMandatoryCondition = (index) => {
                                     name="triggerParameter"
                                     value="abnormal"
                                     onChange={handleChangeReflexTests}
+                                    checked={formData.triggerParameter === "abnormal"}
                                     className="form-radio"
                                   />
                                   <span className="ml-2">Abnormal Range</span>
                                 </label>
                               </div>
+
+                              <div className="mb-4">
+                                <label className="block text-gray-700">Choose Reflex Tests *</label>
+                                <select
+                                  name="reflexTest"
+                                  className="mt-2 block w-full p-2 border border-gray-300 rounded"
+                                  onChange={handleChangeReflexTests}
+                                  value={formData.reflexTest}
+                                >
+                                  <option value="">Select Test</option>
+                                  <option value="Test C">Test C</option>
+                                  <option value="TROPONIN I">TROPONIN I</option>
+                                </select>
+                              </div>
+
                             </div>
 
-                            <div className="mb-4">
-                              <label className="block text-gray-700">Choose Reflex Tests *</label>
-                              <select
-                                name="reflexTest"
-                                className="mt-2 block w-full p-2 border border-gray-300 rounded 55"
-                                onChange={handleChangeReflexTests}
-                                value={formData.reflexTest}
-                              >
-                                <option value="">Select Test</option>
-                                <option value="Test C">Test C</option>
-                              </select>
-                            </div>
 
                             <div className="flex justify-between mt-4">
                               <button
@@ -2269,14 +2320,14 @@ const handleEditMandatoryCondition = (index) => {
                                 className="bg-orange-500 text-white rounded-lg py-2 px-4 hover:bg-orange-600"
                                 onClick={handleAddReflexTests}
                               >
-                                Add
+                                Update
                               </button>
                               <button
                                 type="button"
                                 className="bg-gray-500 text-white rounded-lg py-2 px-4 hover:bg-gray-600"
                                 onClick={handleCloseReflexTests}
                               >
-                                Submit & Close
+                                Close
                               </button>
                             </div>
                           </form>
@@ -2284,19 +2335,18 @@ const handleEditMandatoryCondition = (index) => {
                           <div className="mt-4">
                             <h3 className="text-lg font-semibold">Selected Tests</h3>
                             <ul>
-                              {selectedTests.map((test, index) => (
-                                <li key={index} className="flex justify-between border-b py-2">
-                                  <span>{`${index + 1}. ${test}`}</span>
-                                  <button
-                                    className="text-red-500 hover:underline"
-                                    onClick={() => handleRemoveReflexTests(index)}
-                                  >
-                                    Remove
-                                  </button>
-                                </li>
-                              ))}
+                              {reflexTests.length > 0 ? (
+                                reflexTests.map((test, index) => (
+                                  <li key={index} className="flex justify-between border-b py-2">
+                                    <span>{`${index + 1}. ${test.reflextest.join(", ")}`}</span>
+                                  </li>
+                                ))
+                              ) : (
+                                <li className="text-gray-500 py-2">No reflex tests available</li>
+                              )}
                             </ul>
                           </div>
+
                         </div>
                       </div>
 

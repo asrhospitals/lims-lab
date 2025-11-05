@@ -272,6 +272,7 @@ const AddInvestigation = () => {
     console.log("Complete payload being sent to API:", payload);
 
     try {
+      await addInvestigation(payload);
       toast.success("Investigation added successfully");
       reset();
       // Reset child component states

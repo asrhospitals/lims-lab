@@ -145,7 +145,7 @@ const AddReferalDoctor = () => {
             <li className="text-gray-400">/</li>
             <li>
               <Link
-                to="/view-refdoc"
+                to="/view-referal-doctor"
                 className="text-gray-700 hover:text-teal-600"
               >
                 Referral Doctors

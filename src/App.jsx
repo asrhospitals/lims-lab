@@ -448,7 +448,7 @@ function App() {
             element: requireRole("admin", <ViewReferalDoctor />),
           },
           {
-            path: "update-referal-doctor",
+            path: "update-referal-doctor/:id",
             element: requireRole("admin", <UpdateReferalDoctor />),
           },
           {

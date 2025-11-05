@@ -29,9 +29,8 @@ export const addDepartment = async (departmentData) => {
 export const viewDepartments = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-department${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-department${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -64,9 +63,8 @@ export const updateDepartment = async (id, departmentData) => {
 export const viewSubDepartments = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-subdepartment${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-subdepartment${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -128,9 +126,8 @@ export const updateSubDepartment = async (id, subDepartmentData) => {
 export const viewHospitalTypes = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-hsptltype${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-hsptltype${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -172,9 +169,8 @@ export const updateHospitalType = async (id, hospitalTypeData) => {
 export const viewHospitals = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-hospital${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-hospital${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -217,9 +213,8 @@ export const updateHospital = async (id, hospitalData) => {
 export const viewNodals = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-nodal${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-nodal${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -259,9 +254,8 @@ export const updateNodal = async (id, nodalData) => {
 export const viewNodalHospitals = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-nodalhospital${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-nodalhospital${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -441,9 +435,8 @@ export const updateNodalInstrument = async (id, nodalInstrumentData) => {
 export const viewRoles = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-role${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-role${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -483,9 +476,8 @@ export const updateRole = async (id, roleData) => {
 export const viewPhlebotomists = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-phlebo${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-phlebo${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -536,9 +528,8 @@ export const updatePhlebotomist = async (id, phlebotomistData) => {
 export const viewReceptions = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-recep${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-recep${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -578,9 +569,8 @@ export const updateReception = async (id, receptionData) => {
 export const viewTechnicians = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-tech${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-tech${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -620,9 +610,8 @@ export const updateTechnician = async (id, technicianData) => {
 export const viewLabToLabs = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-labtolab${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-labtolab${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -665,9 +654,8 @@ export const updateLabToLab = async (id, labToLabData) => {
 export const viewSpecimenTypes = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-specimen${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-specimen${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -715,9 +703,8 @@ export const updateSpecimenType = async (id, specimenTypeData) => {
 export const viewInvestigations = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-test${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-test${queryString ? `?${queryString}` : ""
+      }`;
 
     const res = await axios.get(url);
     return res.data;
@@ -756,8 +743,37 @@ export const updateInvestigation = async (id, investigationData) => {
   }
 };
 
+export const updateMandatoryCondition = async (resultId, mandatoryId, payload) => {
+  try {
+    const response = await axios.put(
+      `${API_ROOT_URL}/master/update-mandatoryflex/${resultId}/mandatory-flex/${mandatoryId}`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating mandatory condition:", error);
+    throw error;
+  }
+};
 
-
+export const updateReflexTest = async (resultId, reflexId, payload) => {
+  try {
+    const response = await axios.put(
+      `${API_ROOT_URL}/master/update-reflex/${resultId}/reflex-tests/${reflexId}`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error in updateReflexTest API:", error);
+    throw error;
+  }
+};
 
 
 // Profile API functions
@@ -783,9 +799,8 @@ export const addProfile = async (profileData) => {
 export const viewProfiles = async (params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_ROOT_URL}/master/get-profile${
-      queryString ? `?${queryString}` : ""
-    }`;
+    const url = `${API_ROOT_URL}/master/get-profile${queryString ? `?${queryString}` : ""
+      }`;
     const res = await axios.get(url);
     return res.data;
   } catch (error) {
