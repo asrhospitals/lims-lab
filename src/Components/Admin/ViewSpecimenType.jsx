@@ -108,12 +108,12 @@ const ViewSpecimenType = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link to="/view-specimenType" className="text-gray-700 hover:text-teal-600">
                 Specimen Types
               </Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li className="text-gray-500">View Specimen Types</li>
           </ol>

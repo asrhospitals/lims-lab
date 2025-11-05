@@ -70,46 +70,51 @@ const UpdateDept = () => {
   }, [id, setDepartmentToUpdate, reset, navigate]);
 
   // Submit handler
-  const onSubmit = async (data) => {
-    try {
-      // Trim department name to avoid leading/trailing spaces
-      const payload = {
-        dptname: data.dptname.trim(),
-        isactive: data.isactive === "true", // convert string to boolean
-      };
+const onSubmit = async (data) => {
+  try {
+    // ✅ Convert all string fields to uppercase and trim spaces
+    const formattedData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        typeof value === "string" ? value.trim().toUpperCase() : value,
+      ])
+    );
 
-      // Call your API function
-      const response = await updateDepartment(id, payload);
+    // ✅ Prepare payload
+    const payload = {
+      dptname: formattedData.dptname,
+      isactive: formattedData.isactive === "TRUE" || formattedData.isactive === true,
+    };
 
-      // ✅ Show toast first, then navigate after 1 second
-      toast.success("Department updated successfully!", {
-        position: "top-right",
-        autoClose: 2000,
-      });
+    // ✅ Call API
+    const response = await updateDepartment(id, payload);
 
-      setTimeout(() => {
-        // Clear the form state
-        setDepartmentToUpdate(null);
+    // ✅ Success toast
+    toast.success("Department updated successfully!", {
+      position: "top-right",
+      autoClose: 2000,
+    });
 
-        // Navigate back to department list
-        navigate("/view-departments");
-      }, 1000);
+    // ✅ Navigate after short delay
+    setTimeout(() => {
+      setDepartmentToUpdate(null);
+      navigate("/view-departments");
+    }, 1000);
+  } catch (error) {
+    console.error("Update Department Error:", error);
 
-    } catch (error) {
-      console.error("Update Department Error:", error);
+    const message =
+      error?.response?.data?.message ||
+      error?.message ||
+      "❌ Failed to update department. Please try again.";
 
-      // Show detailed error if available
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "❌ Failed to update department. Please try again.";
+    toast.error(message, {
+      position: "top-right",
+      autoClose: 3000,
+    });
+  }
+};
 
-      toast.error(message, {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
-  };
 
   if (isLoading) {
     return (

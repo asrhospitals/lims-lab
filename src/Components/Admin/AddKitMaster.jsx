@@ -70,6 +70,11 @@ const AddKitMaster = () => {
     }
   };
 
+  const lettersOnlyRegex = /^[a-zA-Z\s_-]+$/; // allows letters, spaces, underscore, and hyphen
+  const alphanumericRegex = /^[a-zA-Z0-9\s\-_]+$/;
+  const pinCodeRegex = /^\d{6}$/;
+  const phoneRegex = /^[6-9]\d{9}$/;
+
   return (
     <>
       <div className="fixed top-[61px] w-full z-10">
@@ -103,9 +108,8 @@ const AddKitMaster = () => {
               </label>
               <select
                 {...register("profilename", { required: "Profile name is required" })}
-                className={`w-full px-4 py-2 rounded-lg border ${
-                  errors.profilename ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"
-                } focus:ring-2 transition`}
+                className={`w-full px-4 py-2 rounded-lg border ${errors.profilename ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"
+                  } focus:ring-2 transition`}
               >
                 <option value="">-- Select Profile --</option>
                 {profiles.map((profile) => (
@@ -116,9 +120,18 @@ const AddKitMaster = () => {
             </div>
 
             {/* Other Fields */}
-            {[
+            {/* {[
               { name: "manufacture", label: "Manufacture" },
-              { name: "kitname", label: "Kit Name" },
+              {
+                name: "kitname", label: "Kit Name", validation: {
+                  required: "Kit name is required",
+                  pattern: {
+                    value: lettersOnlyRegex,
+                    message: "Only letters, spaces, underscore (_) and hyphen (-) are allowed",
+                  },
+                  lettersOnly: true,
+                },
+              },
               { name: "negetiveindex", label: "Negative Index" },
               { name: "boderlineindex", label: "Borderline Index" }, // corrected
               { name: "positiveindex", label: "Positive Index" },
@@ -136,11 +149,64 @@ const AddKitMaster = () => {
                   {...register(name, { required: `${label} is required` })}
                   placeholder={`Enter ${label}`}
                   onBlur={() => trigger(name)}
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"
-                  } focus:ring-2 transition`}
+                  className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"
+                    } focus:ring-2 transition`}
                 />
                 {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name].message}</p>}
+              </div>
+            ))} */}
+            {[
+              {
+                name: "manufacture",
+                label: "Manufacture",
+                validation: {
+                  required: "Manufacture is required",
+                  pattern: {
+                    value: lettersOnlyRegex,
+                    message: "Only letters, spaces, underscore (_) and hyphen (-) are allowed",
+                  },
+                },
+              },
+              {
+                name: "kitname",
+                label: "Kit Name",
+                validation: {
+                  required: "Kit name is required",
+                  pattern: {
+                    value: lettersOnlyRegex,
+                    message: "Only letters, spaces, underscore (_) and hyphen (-) are allowed",
+                  },
+                },
+              },
+              { name: "negetiveindex", label: "Negative Index" },
+              { name: "boderlineindex", label: "Borderline Index" },
+              { name: "positiveindex", label: "Positive Index" },
+              { name: "method", label: "Method" },
+              { name: "batchno", label: "Batch No", type: "number" },
+              { name: "units", label: "Units", type: "number" },
+              { name: "negetiveinterpret", label: "Negative Interpretation" },
+              { name: "borderlineinterpret", label: "Borderline Interpretation" },
+              { name: "positiveinterpret", label: "Positive Interpretation" },
+            ].map(({ name, label, type = "text", validation }) => (
+              <div key={name} className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  {label} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type={type}
+                  {...register(name, validation || { required: `${label} is required` })}
+                  placeholder={`Enter ${label}`}
+                  onBlur={() => trigger(name)}
+                  className={`w-full px-4 py-2 rounded-lg border ${errors[name]
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-teal-500"
+                    } focus:ring-2 transition`}
+                />
+                {errors[name] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors[name].message}
+                  </p>
+                )}
               </div>
             ))}
           </div>

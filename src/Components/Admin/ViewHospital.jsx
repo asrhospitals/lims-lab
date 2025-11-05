@@ -121,7 +121,7 @@ const ViewHospital = () => {
 
             <li className="text-gray-400">/</li>
 
-            <li>
+            {/* <li>
               <Link
                 to="/view-hospital"
                 className="text-gray-700 hover:text-teal-600 transition-colors"
@@ -130,7 +130,7 @@ const ViewHospital = () => {
               </Link>
             </li>
 
-            <li className="text-gray-400">/</li>
+            <li className="text-gray-400">/</li> */}
 
             <li aria-current="page" className="text-gray-500">
               View Hospitals

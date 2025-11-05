@@ -29,7 +29,7 @@ const ViewSubDpt = () => {
 
         const res = await viewSubDepartments(params);
         const sortedData = res?.data.sort((a, b) => a.id - b.id);
-        
+
         setSubDpts(sortedData);
         setFilteredSubDpts(sortedData);
         setTotalPages(res?.meta?.totalPages || 1);
@@ -51,14 +51,15 @@ const ViewSubDpt = () => {
       setFilteredSubDpts(subDpts);
     } else {
       const lowerSearch = search.toLowerCase();
-      const filtered = subDpts.filter(
-        (item) =>
-          item.subdptname?.toLowerCase().includes(lowerSearch) ||
-          item.department?.dptname?.toLowerCase().includes(lowerSearch)
-      );
+      const filtered = subDpts.filter((item) => {
+        const subName = item.subdptname?.toLowerCase() || "";
+        const deptName = item.department?.dptname?.toLowerCase() || "";
+        return subName.includes(lowerSearch) || deptName.includes(lowerSearch);
+      });
       setFilteredSubDpts(filtered);
     }
   }, [search, subDpts]);
+
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -82,11 +83,12 @@ const ViewSubDpt = () => {
 
   const mappedItems = filteredSubDpts.map((item) => ({
     id: item.id,
-    dptname: item.department.dptname,
+    dptname: item.department?.dptname || "N/A", // ✅ Safe access + fallback
     subdptname: item.subdptname,
     isactive: item.isactive,
     status: item.isactive ? "Active" : "Inactive",
   }));
+
 
   return (
     <>
@@ -105,7 +107,7 @@ const ViewSubDpt = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link
                 to="/view-subDpt"
@@ -113,7 +115,7 @@ const ViewSubDpt = () => {
               >
                 Sub Department
               </Link>
-            </li>
+            </li>*/}
             <li className="text-gray-400">/</li>
             <li className="text-gray-500" aria-current="page">
               View Sub Department

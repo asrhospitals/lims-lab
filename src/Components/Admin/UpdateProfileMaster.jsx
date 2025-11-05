@@ -140,9 +140,17 @@ const UpdateProfileMaster = () => {
     }
   };
 
+  // const removeTest = (test) => {
+  //   setSelectedTests(selectedTests.filter((t) => t.id !== test.id));
+  // };
+
   const removeTest = (test) => {
+  const confirmRemove = window.confirm("Are you sure you want to remove this test?");
+  if (confirmRemove) {
     setSelectedTests(selectedTests.filter((t) => t.id !== test.id));
-  };
+  }
+};
+
 
   const handleReset = () => {
     // Reset to original values instead of clearing

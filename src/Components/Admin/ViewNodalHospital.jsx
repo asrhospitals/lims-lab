@@ -108,7 +108,7 @@ const ViewNodalHospital = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link
                 to="/view-nodal-hospitals"
@@ -116,7 +116,7 @@ const ViewNodalHospital = () => {
               >
                 Nodal Hospital
               </Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
               View Nodal Hospital

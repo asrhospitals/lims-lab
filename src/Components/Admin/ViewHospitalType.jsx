@@ -120,7 +120,7 @@ const ViewHospitalType = () => {
               </Link>
             </li>
 
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
 
             <li>
               <Link
@@ -129,7 +129,7 @@ const ViewHospitalType = () => {
               >
                 Hospital Type
               </Link>
-            </li>
+            </li> */}
 
             <li className="text-gray-400">/</li>
 

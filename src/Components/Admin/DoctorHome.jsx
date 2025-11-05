@@ -232,13 +232,14 @@ const sections = [
     icon: <FaUserDoctor  className="text-3xl text-[#238781]" />,
     buttons: [
       { label: "Referal Doctor Registration", route: "/add-referal-doctor" },
+      { label: "View Referal Doctor", route: "/view-referal-doctor" },
+
      
     ],
   },
   {
     title: "Doctor Registration",
     icon: <FaUserDoctor  className="text-3xl text-[#238781]" />,
-    inProgress: true,
 
     buttons: [
       { label: "Doctor Registration", route: "/doctor-registration" },

@@ -104,7 +104,7 @@ const ViewRole = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link
                 to="/view-roles"
@@ -112,7 +112,7 @@ const ViewRole = () => {
               >
                 Roles
               </Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
               View Role

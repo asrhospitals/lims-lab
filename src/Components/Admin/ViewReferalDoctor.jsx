@@ -78,25 +78,29 @@ const ViewReferalDoctor = () => {
 
   // ✅ Handle Update button click
   const handleUpdate = async (doctor) => {
-    try {
-      const response = await axios.get(
-        `https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc/${doctor.id}`,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
-
-      localStorage.setItem(
-        "referalDoctorToUpdate",
-        JSON.stringify(response.data)
-      );
-
+    console.log("d", doctor);
+    
       navigate(`/update-referal-doctor/${doctor.id}`);
 
-    } catch (err) {
-      console.error("Update fetch failed:", err);
-      alert("Failed to fetch Referral Doctor details. Please try again.");
-    }
+    // try {
+    //   const response = await axios.get(
+    //     `https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc/${doctor.id}`,
+    //     {
+    //       headers: getAuthHeaders(),
+    //     }
+    //   );
+
+    //   localStorage.setItem(
+    //     "referalDoctorToUpdate",
+    //     JSON.stringify(response.data)
+    //   );
+
+    //   navigate(`/update-referal-doctor/${doctor.id}`);
+
+    // } catch (err) {
+    //   console.error("Update fetch failed:", err);
+    //   alert("Failed to fetch Referral Doctor details. Please try again.");
+    // }
   };
 
   // ✅ Table Columns
@@ -199,7 +203,7 @@ const ViewReferalDoctor = () => {
           {/* Add New Button */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
-              onClick={() => navigate("/add-refdoc")}
+              onClick={() => navigate("/add-referal-doctor")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New

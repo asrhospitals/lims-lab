@@ -69,7 +69,7 @@ const AddUserMapping = () => {
         module: Array.isArray(u.module) ? u.module : u.module ? [u.module] : [],
       }));
       setUserOptions(options);
-    } catch {}
+    } catch { }
   };
 
   const onSubmit = async (data) => {
@@ -77,21 +77,33 @@ const AddUserMapping = () => {
       toast.error("Please select a valid user from the list.");
       return;
     }
+
     setIsSubmitting(true);
     try {
       const payload = {
         user_id: Number(selectedUser.value),
-        hospital_id: Number(data.hospitalselected),
-        nodal_id: Number(data.nodalselected),
+        hospitalid: data.hospitalselected ? Number(data.hospitalselected) : null,
+        nodalid: Number(data.nodalselected),
         role: Number(data.selectedroll),
-        module: selectedModule,
-        doctor_id: null,
+  module: Array.isArray(data.selectedModule)
+    ? data.selectedModule
+    : [data.selectedModule || selectedModule],
+            doctor_id: null,
         technician_id: null,
         reception_id: null,
         phlebotomist_id: null,
+        created_by: data.createdby || createdBy,
+        created_date: data.createddate || today,
+        is_active: data.isactive === "true",
       };
 
       const authToken = localStorage.getItem("authToken");
+
+
+
+
+      console.log("payloads ===", payload);
+
       const res = await axios.post(
         "https://asrlabs.asrhospitalindia.in/lims/authentication/assign-role",
         payload,
@@ -107,11 +119,16 @@ const AddUserMapping = () => {
         setTimeout(() => navigate("/view-user-mapping?page=last", { state: { refresh: true } }), 800);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "❌ Failed to add user mapping.");
+      if (error.response?.status === 409) {
+        toast.error("⚠️ This user mapping already exists.");
+      } else {
+        toast.error(error?.response?.data?.message || "❌ Failed to add user mapping.");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   const createdBy = localStorage.getItem("roleType");
 
@@ -120,7 +137,8 @@ const AddUserMapping = () => {
     { name: "hospitalselected", label: "Select Hospital", type: "select", options: hospitalsList, validation: { required: true } },
     { name: "nodalselected", label: "Select Nodal", type: "select", options: nodalsList, validation: { required: true } },
     { name: "selectedroll", label: "Select Role", type: "select", options: rolesList, validation: { required: true } },
-    { name: "selectedmodule", label: "Select Module", type: "text", placeholder: selectedModule.join(", ") },
+    // { name: "selectedmodule", label: "Select Module", type: "text", placeholder: selectedModule.join(", ") },
+    { name: "selectedModule", label: "Module", type: "select", options: [{ value: "user", label: "User" }, { value: "phlebotomist", label: "Phlebotomist" }, { value: "reception", label: "Reception" }, { value: "biochemistry", label: "Biochemistry" }, { value: "microbiology", label: "Microbiology" }, { value: "pathology", label: "Pathology" }], validation: { required: "Module is required" } },
     { name: "createdby", label: "Created By", type: "text", placeholder: createdBy },
     { name: "createddate", label: "Created Date", type: "date", max: today, disabled: true, defaultValue: today },
     {
@@ -146,8 +164,8 @@ const AddUserMapping = () => {
             </li>
             <li className="text-gray-400">/</li>
             <li>
-              <Link to="/view-user-list" className="text-gray-700 hover:text-teal-600">
-                User Details
+              <Link to="/view-user-mapping" className="text-gray-700 hover:text-teal-600">
+                User Mapping Details
               </Link>
             </li>
             <li className="text-gray-400">/</li>

@@ -38,36 +38,6 @@ const AddInvestigation = () => {
 
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const [dept, subDept, role, spec, instruments] = await Promise.all([
-  //         viewDepartments(),
-  //         viewSubDepartments(),
-  //         viewRoles(),
-  //         viewSpecimenTypes(),
-  //         viewInstruments(),
-  //       ]);
-
-  //       console.log(dept, subDept, role, spec, instruments);
-
-  //       setDepartments((dept?.data || dept || []).filter((d) => d.isactive));
-  //       setSubDepartments(
-  //         (subDept?.data || subDept || []).filter((d) => d.isactive)
-  //       );
-  //       setRoleTypes((role?.data || role || []).filter((r) => r.isactive));
-  //       setSpecimens((spec || []).filter((s) => s.isactive));
-  //       setInstruments(
-  //         (instruments?.data || instruments || []).filter((i) => i.isactive)
-  //       );
-  //     } catch (err) {
-  //       toast.error("❌ Failed to load master data");
-  //       console.error(err);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, []);
 
   // Fetch Departments
   useEffect(() => {
@@ -84,30 +54,7 @@ const AddInvestigation = () => {
     fetchDepartments();
   }, []);
 
-  // useEffect(() => {
-  //   const fetchSpecimens = async () => {
-  //     try {
-  //   const token = localStorage.getItem("authToken");
-
-
-  //       const res = await axios.get(
-  //         "https://asrlabs.asrhospitalindia.in/lims/master/get-specimen",   {
-  //           headers: { Authorization: `Bearer ${token}` },
-  //         }
-  //       );
-
-  //       console.log("Specimens API Response:", res.data);
-
-  //       setSpecimens(res.data.data || []);
-  //     } catch (err) {
-  //       console.error("Failed to fetch specimens:", err);
-  //     }
-  //   };
-
-  //   fetchSpecimens();
-  // }, []);
-
- useEffect(() => {
+  useEffect(() => {
     const fetchSpecimens = async () => {
       try {
         const res = await viewAllSpecimenType();
@@ -204,111 +151,6 @@ const AddInvestigation = () => {
       return;
     }
 
-    // const payload = {
-    //   loniccode: data.loincCode || null,
-    //   cptcode: data.cptCode || null,
-    //   testname: data.testName,
-    //   testcategory: data.testCategory,
-    //   shortname: data.shortName || null,
-    //   shortcode: data.shortCode ? parseInt(data.shortCode) : null,
-    //   departmentId: data.department || null,
-    //   subdepartment: data.subDepartment || null,
-    //   roletype: data.roleType || null,
-    //   reporttype: data.reportType || null,
-    //   sample: data.specimenType || null,
-    //   sampleqty: data.sampleQuantity || null,
-    //   sampletemp: data.sampleTemperature || null,
-    //   method: data.method || null,
-    //   instrumenttype: data.instrumentType || null,
-    //   description: data.description || null,
-    //   sac: data.sac || null,
-    //   order: data.order || null,
-    //   derivedtest: data.derivedTest || null,
-    //   extranal_test_id: data.externalTestId || null,
-    //   containertype: data.container_selection || null,
-    //   seperateprint: data.separatePrint || false,
-    //   qrcode: data.qrCode || false,
-    //   labreg: data.labRegNo || false,
-    //   noheader: data.noHeaderReport || false,
-    //   enableautoemail: data.enableAutoEmailAtApproval || false,
-    //   enaautosms: data.enableAutoSMSAtApproval || false,
-    //   enableautowhatsap: data.enableAutoWhatsappAtApproval || false,
-    //   enableintermidiate: data.enableIntermediateResult || false,
-    //   enablestags: data.enableStages || false,
-    //   showtext: data.showTestDocs || false,
-    //   // walkinprice: data.walkInPrice ? parseFloat(data.walkInPrice) : null,
-    //   // b2bprice: data.b2bPrice ? parseFloat(data.b2bPrice) : null,
-    //   // ppprice: data.pppPrice ? parseFloat(data.pppPrice) : null,
-    //   // govtprice: data.govtPrice ? parseFloat(data.govtPrice) : null,
-    //   price: data.normalPrice ? parseFloat(data.normalPrice) : null,
-    //   checkimage: data.showImagesSide || false,
-    //   template: data.template || null,
-    //   checkoutsrc: data.isOutsourced || false,
-    //   barcodelngt: 8, // Required field, ensure it's an integer
-    //   barcode: data.barcode ? parseInt(data.barcode) : null,
-    //   spbarcode: data.separateBarcode || null,
-    //   suffbarcode: data.suffixedBarcodes || null,
-    //   tat: Number(data.tatValue), // Required field
-    //   tat_unit: data.tatUnit || null,
-    //   stat: data.statValue || null,
-    //   statunit: data.statUnit || null,
-    //   status: data.status || "Active",
-    //   instruction: instruction || null,
-    //   interpretation: interpretation || null,
-    //   remark: remarks || null,
-    //   test_collection: data.colelctioncenter || "No",
-    //   results: results.map((result) => ({
-    //     resultname: result.name,
-    //     unit: result.unit,
-    //     valueType: result.valueType,
-    //     formula: result.formula,
-    //     order: result.order ? parseInt(result.order) : null,
-    //     roundOff: result.roundOff ? parseInt(result.roundOff) : null,
-    //     showTrends: result.showTrends || false,
-    //     defaultValue: result.defaultValue ? parseInt(result.defaultValue): null, // Ensure integer type
-    //     normalValues: [
-    //       {
-    //           "rangeMax": 200
-    //       }
-    //   ],
-    //     // normalValues: result.normalValues.map((nv) => ({
-    //     //   gender: nv.type || null,
-    //     //   ageMin: nv.ageMinYear ? parseInt(nv.ageMinYear) : null,
-    //     //   ageMax: nv.ageMaxYear ? parseInt(nv.ageMaxYear) : null,
-    //     //   rangeMin: nv.rangeMin ? parseFloat(nv.rangeMin) : null,
-    //     //   rangeMax: nv.rangeMax ? parseFloat(nv.rangeMax) : null,
-    //     //   validRangeMin: nv.validRangeMin ? parseFloat(nv.validRangeMin) : null,
-    //     //   validRangeMax: nv.validRangeMax ? parseFloat(nv.validRangeMax) : null,
-    //     //   criticalLow: nv.criticalRangeLow
-    //     //     ? parseFloat(nv.criticalRangeLow)
-    //     //     : null,
-    //     //   criticalHigh: nv.criticalRangeHigh
-    //     //     ? parseFloat(nv.criticalRangeHigh)
-    //     //     : null,
-    //     //   isRangeAbnormal: nv.rangeAbnormal || false,
-    //     //   avoidInReport: nv.avoidRangeInReport || false,
-    //     // })),
-    //     mandatories: [
-    //       {
-    //         resultname: "Total Protine level",
-    //         resultvalue: "12345"
-    //     }
-    //     ],
-    //     reflexTests:[
-    //       {
-    //         triggerparams: "Critical Range",
-    //         reflextest: [
-    //             "TROPONIN I"
-    //         ]
-    //     }
-    //     ],
-    //   })),
-    //   acreeditionname: accreditationItems,
-    //   acreeditiondate :"2025/08/29",
-    //   consumableitems: consumableItems,
-    //   labconsumables: labConsumableItems,
-    // };
-
 
     const payload = {
       loniccode: data.loincCode || null,
@@ -320,17 +162,16 @@ const AddInvestigation = () => {
       departmentId: data.department || null,
       subdepartment: data.subDepartment || null,
       roletype: data.roleType || null,
-      reporttype: data.reportType || null,
-      sample: data.specimenType || null,
+      sampletype: data.specimenType || null,
       sampleqty: data.sampleQuantity || null,
       sampletemp: data.sampleTemperature || null,
-      method: data.method || null,
+      testmethod: data.method || null,
       instrumenttype: data.instrumentType || null,
       description: data.description || null,
       sac: data.sac || null,
       order: data.order || null,
       derivedtest: data.derivedTest || null,
-      extranal_test_id: data.externalTestId || null,
+      extranaltest: data.externalTestId || null,
       containertype: data.container_selection || null,
       seperateprint: data.separatePrint || false,
       qrcode: data.qrCode || false,
@@ -342,16 +183,13 @@ const AddInvestigation = () => {
       enableintermidiate: data.enableIntermediateResult || false,
       enablestags: data.enableStages || false,
       showtext: data.showTestDocs || false,
-      price: data.normalPrice ? parseFloat(data.normalPrice) : null,
+      normalprice: data.normalPrice || null,
       checkimage: data.showImagesSide || false,
       template: data.template || null,
       checkoutsrc: data.isOutsourced || false,
-      barcodelngt: 8, // Required integer
-      barcode: data.barcode ? String(data.barcode) : null, // Store as string
-      spbarcode: data.separateBarcode || null,
-      suffbarcode: data.suffixedBarcodes || null,
+
       tat: Number(data.tatValue) || 0, // Required numeric
-      tat_unit: data.tatUnit || null,
+      tatunit: data.tatUnit || null,
       stat: data.statValue || null,
       statunit: data.statUnit || null,
       status: data.status || "Active",
@@ -359,52 +197,77 @@ const AddInvestigation = () => {
       interpretation: interpretation || null,
       remark: remarks || null,
       test_collection: data.colelctioncenter || "No", // ENUM: Yes/No
+
       results: results.map((result) => ({
         resultname: result.name,
         unit: result.unit,
         valueType: result.valueType,
-        formula: result.formula || null,
+        formula: result.formula || "",
         order: result.order ? parseInt(result.order) : null,
         roundOff: result.roundOff ? parseInt(result.roundOff) : null,
         showTrends: result.showTrends || false,
-        defaultValue: result.defaultValue ? parseInt(result.defaultValue) : null,
-        normalValues: [
+        defaultValue: result.defaultValue || "",
+
+        normalValues:
+          result.normalValues?.length > 0
+            // ? result.normalValues.map((n) => ({
+            //   gender: n.type,
+            //   ageMinYear: n.ageMinYear,
+            //   ageMinMonth: n.ageMinMonth,
+            //   ageMinDay: n.ageMinDay,
+            //   ageMaxYear: n.ageMaxYear,
+            //   ageMaxMonth: n.ageMaxMonth,
+            //   ageMaxDay: n.ageMaxDay,
+            //   rangeMin: n.rangeMin,
+            //   rangeMax: n.rangeMax,
+            //   validRangeMin: n.validRangeMin,
+            //   validRangeMax: n.validRangeMax,
+            //   criticalRangeLow: n.criticalRangeLow,
+            //   criticalRangeHigh: n.criticalRangeHigh,
+            //   rangeAbnormal: n.rangeAbnormal,
+            //   avoidRangeInReport: n.avoidRangeInReport,
+            // }))
+             ? result.normalValues.map((n) => ({
+              gender: n.type,
+              age_min_yyyy: n.ageMinYear,
+              age_min_mm: n.ageMinMonth,
+              age_min_dd: n.ageMinDay,
+              age_max_yyyy: n.ageMaxYear,
+              age_max_mm: n.ageMaxMonth,
+              age_max_dd: n.ageMaxDay,
+              range_min: n.rangeMin,
+              range_max: n.rangeMax,
+              valid_range_min: n.validRangeMin,
+              valid_range_max: n.validRangeMax,
+              critical_low: n.criticalRangeLow,
+              critical_high: n.criticalRangeHigh,
+              isrange_abnormal: n.rangeAbnormal,
+              avoid_in_report: n.avoidRangeInReport,
+            }))
+            : [],
+
+        mandatories: result.mandatoryConditions || [
           {
-            gender: "Both",
-            ageMin: 0,
-            ageMax: 120,
-            rangeMin: 0,
-            rangeMax: 200,
-            validRangeMin: 0,
-            validRangeMax: 200,
-            criticalLow: 0,
-            criticalHigh: 200,
-            isRangeAbnormal: false,
-            avoidInReport: false,
-            resultId: result.id || null
-          }
+            resultname: result.name || null,
+            resultvalue: result.resultValue || null,
+            resultId: result.id || null,
+          },
         ],
-        mandatories: [
+
+        reflexTests: result.reflexTests || [
           {
-            resultname: result.name,
-            resultvalue: "12345",
-            resultId: result.id || null
-          }
+            triggerparams: result.triggerParameter,
+            reflextest: result.selectedTests,
+            resultId: result.id || null,
+          },
         ],
-        reflexTests: [
-          {
-            triggerparams: "Critical Range",
-            reflextest: ["TROPONIN I"],
-            resultId: result.id || null
-          }
-        ]
       })),
       acreeditionname: accreditationItems || [],
       acreeditiondate: [new Date("2025-08-29")], // Proper Date array
       consumableitems: consumableItems || [],
       labconsumables: labConsumableItems || []
     };
-    
+
 
     console.log("Complete payload being sent to API:", payload);
 
@@ -420,10 +283,29 @@ const AddInvestigation = () => {
       setInstruction("");
       setInterpretation("");
       setRemarks("");
-      navigate("/view-investigation");
+      setTimeout(() => {
+        navigate("/view-investigation");
+      }, 2000);
     } catch (err) {
-      toast.error("❌ Failed to add investigation");
-      console.error(err);
+      // Handle API validation errors
+      if (err.response && err.response.data) {
+        const { message, errors } = err.response.data;
+
+        if (errors && Array.isArray(errors) && errors.length > 0) {
+          // Show each validation error
+          errors.forEach((e) => {
+            toast.error(`${e.field}: ${e.message}`);
+          });
+        } else if (message) {
+          toast.error(`❌ ${message}`);
+        } else {
+          toast.error("❌ Something went wrong");
+        }
+      } else {
+        toast.error("❌ Network error or server not reachable");
+      }
+
+      console.error("Add Investigation Error:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -496,6 +378,189 @@ const AddInvestigation = () => {
       name: "Derived Test 2",
     },
   ];
+
+
+
+  const [inputs, setInputs] = useState({
+    accreditation: { name: "", date: "" },
+    consumable: { name: "", qty: "" },
+    labConsumable: { name: "", qty: "" }
+  });
+  const [items, setItems] = useState({
+    accreditation: accreditationItems,
+    consumable: consumableItems,
+    labConsumable: labConsumableItems
+  });
+  useEffect(() => {
+    setItems({
+      accreditation: accreditationItems,
+      consumable: consumableItems,
+      labConsumable: labConsumableItems
+    });
+  }, [accreditationItems, consumableItems, labConsumableItems]);
+
+  const updateParentState = (type, newItems) => {
+    if (type === "accreditation") {
+      setAccreditationItems(newItems);
+    } else if (type === "consumable") {
+      setConsumableItems(newItems);
+    } else if (type === "labConsumable") {
+      setLabConsumableItems(newItems);
+    }
+  };
+
+  const [editing, setEditing] = useState({
+    type: null,
+    index: null
+  });
+  const handleInputChange = (e, type) => {
+    const { name, value } = e.target;
+    setInputs(prev => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [name]: value
+      }
+    }));
+  };
+
+  const handleAddItem = (type, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const currentInput = inputs[type];
+
+    if (!currentInput.name || (type === "accreditation" ? !currentInput.date : !currentInput.qty)) {
+      alert(`Please fill in all required fields for ${type}`);
+      return;
+    }
+
+    if (editing.type === type && editing.index !== null) {
+      const updatedItems = [...items[type]];
+      updatedItems[editing.index] = currentInput;
+      updateParentState(type, updatedItems);
+      setEditing({ type: null, index: null });
+    } else {
+      updateParentState(type, [...items[type], currentInput]);
+    }
+
+    setInputs(prev => ({
+      ...prev,
+      [type]: type === "accreditation" ? { name: "", date: "" } : { name: "", qty: "" }
+    }));
+  };
+
+  const handleEdit = (type, index, e) => {
+    e.preventDefault();
+    const itemToEdit = items[type][index];
+    setInputs(prev => ({
+      ...prev,
+      [type]: { ...itemToEdit }
+    }));
+    setEditing({ type, index });
+  };
+
+  const handleRemove = (type, index, e) => {
+    e.preventDefault();
+    const updatedItems = items[type].filter((_, i) => i !== index);
+    updateParentState(type, updatedItems);
+
+    if (editing.type === type && editing.index === index) {
+      setEditing({ type: null, index: null });
+      setInputs(prev => ({
+        ...prev,
+        [type]: type === "accreditation" ? { name: "", date: "" } : { name: "", qty: "" }
+      }));
+    } else if (editing.index > index) {
+      setEditing(prev => ({ ...prev, index: prev.index - 1 }));
+    }
+  };
+
+  const renderRows = (type) => {
+    return items[type].map((item, index) => (
+      <tr key={`${type}-${index}`} className="text-sm hover:bg-gray-50">
+        <td className="border px-2 py-1">{item.name}</td>
+        <td className="border px-2 py-1">{type === "accreditation" ? item.date : item.qty}</td>
+        <td className="border px-2 py-1">
+          <button
+            type="button"
+            onClick={(e) => handleEdit(type, index, e)}
+            className="text-blue-600 hover:underline mr-3"
+          >
+            Edit
+          </button>
+        </td>
+        <td className="border px-2 py-1">
+          <button
+            type="button"
+            onClick={(e) => handleRemove(type, index, e)}
+            className="text-red-600 hover:underline"
+          >
+            Remove
+          </button>
+        </td>
+      </tr>
+    ));
+  };
+
+  const renderFormFields = (type) => (
+    <tr>
+      <td className="border px-2 py-1">
+        <input
+          name="name"
+          value={inputs[type].name}
+          onChange={(e) => handleInputChange(e, type)}
+          placeholder={
+            type === "accreditation" ? "Accreditation Name" :
+              "Product Name"
+          }
+          className="w-full border px-2 py-1"
+        />
+      </td>
+      <td className="border px-2 py-1">
+        {type === "accreditation" ? (
+          <input
+            name="date"
+            value={inputs[type].date}
+            type="date"
+            onChange={(e) => handleInputChange(e, type)}
+            className="w-full border px-2 py-1"
+          />
+        ) : (
+          <input
+            name="qty"
+            value={inputs[type].qty}
+            onChange={(e) => handleInputChange(e, type)}
+            placeholder="Quantity"
+            className="w-full border px-2 py-1"
+          />
+        )}
+      </td>
+      <td className="border px-2 py-1" colSpan="2">
+        <button
+          type="button"
+          onClick={(e) => handleAddItem(type, e)}
+          className={`px-3 py-1 rounded ${editing.type === type ?
+            "bg-yellow-100 text-yellow-700 border-yellow-700" :
+            "bg-purple-100 text-purple-700 border-purple-700"
+            } border hover:opacity-90`}
+        >
+          {editing.type === type ? "Update" : "Add"}
+        </button>
+      </td>
+    </tr>
+  );
+
+
+
+
+
+
+
+
+
+
+
+
   return (
     <>
       <div className="fixed top-[61px] w-full z-10">
@@ -996,20 +1061,17 @@ const AddInvestigation = () => {
           </div>
 
           {/* Test Price for Different Categories */}
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div className="col-span-full">
               <h2 className="text-lg font-semibold text-gray-800 mb-2">
                 Test Price
               </h2>
               <div className="col-span-full border-b border-gray-300"></div>
             </div>
-          </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          </div> */}
+          {/* <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[
-              // { label: "Walk-in Price", name: "walkInPrice" },
-              // { label: "B2B Price", name: "b2bPrice" },
-              // { label: "PPP Price", name: "pppPrice" },
-              // { label: "Govt. Price", name: "govtPrice" },
+           
               { label: "Normal Price", name: "normalPrice" },
             ].map((price) => (
               <div key={price.name}>
@@ -1041,9 +1103,44 @@ const AddInvestigation = () => {
                 )}
               </div>
             ))}
+          </div> */}
+
+
+
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 m-4">
+              Normal Price
+            </label>
+            <div className="flex gap-0">
+              <input
+                {...register("normalPrice", {
+                  validate: (value) => {
+                    if (value && isNaN(parseFloat(value))) {
+                      return "price must be in number";
+                    }
+                    return true;
+                  },
+                })}
+                type="number"
+                step="0.01"
+                placeholder="Enter price"
+                className="max-w-40 border m-4 px-3 py-2 rounded"
+              />
+            </div>
+            {errors.sampleQuantity && (
+              <p className="text-red-600 text-xs mt-1">
+                {errors.sampleQuantity.message}
+              </p>
+            )}
           </div>
 
           <AddInvestigationResult results={results} setResults={setResults} />
+
+
+
+
+
 
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div className="col-span-full">
@@ -1301,14 +1398,100 @@ const AddInvestigation = () => {
               </select>
             </div>
           </div>
-          <AccrediationDetails
+
+
+          {/* <AccrediationDetails
             accreditationItems={accreditationItems}
             setAccreditationItems={setAccreditationItems}
             consumableItems={consumableItems}
             setConsumableItems={setConsumableItems}
             labConsumableItems={labConsumableItems}
             setLabConsumableItems={setLabConsumableItems}
-          />
+          /> */}
+
+
+
+
+
+          <div className="p-6 grid gap-6 w-full">
+            {/* Accreditation Section */}
+            <div className="col-span-full">
+              <h3 className="font-bold mb-2">Add Accreditation</h3>
+              <table className="mb-4 w-full border">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border px-2 py-1 text-orange-600">Name</th>
+                    <th className="border px-2 py-1 text-orange-600">Date</th>
+                    <th className="border px-2 py-1" colSpan="2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {renderFormFields("accreditation")}
+                  {renderRows("accreditation")}
+                </tbody>
+              </table>
+            </div>
+
+            {/* <div className="col-span-full">
+        <h3 className="font-bold mb-2">Add Consumables123</h3>
+        <table className="mb-4 w-full border">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border px-2 py-1 text-orange-600">Product</th>
+              <th className="border px-2 py-1 text-orange-600">Qty</th>
+              <th className="border px-2 py-1" colSpan="2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {renderFormFields("consumable")}
+            {renderRows("consumable")}
+          </tbody>
+        </table>
+      </div> */}
+
+            <div className="col-span-full">
+              <h3 className="font-bold mb-2">Lab Consumables</h3>
+              <table className="w-full border">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border px-2 py-1 text-orange-600">Product</th>
+                    <th className="border px-2 py-1 text-orange-600">Qty</th>
+                    <th className="border px-2 py-1" colSpan="2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {renderFormFields("labConsumable")}
+                  {renderRows("labConsumable")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           {/* Instruction */}
           <div className="col-span-full grid grid-cols-6 items-start gap-4 mx-20">
             <div className="col-span-1 font-bold mt-4">

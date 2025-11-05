@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import DataTable from "../utils/DataTable";
+import ModalPopUpDataTable from "../utils/ModalPopUpDataTable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-const PatientRegistration = () => { 
+const PatientRegistration = () => {
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [search, setSearch] = useState("");
@@ -14,6 +14,8 @@ const PatientRegistration = () => {
   const [toDate, setToDate] = useState("");
   const [pBarcode, setPBarcode] = useState("");
   const navigate = useNavigate();
+  const [showTable, setShowTable] = useState(false);
+
 
   // 🔹 Initial Fetch Patients
   useEffect(() => {
@@ -48,6 +50,7 @@ const PatientRegistration = () => {
           hospital_name: item.hospital?.hospitalname ?? "-",
           p_regdate: item.p_regdate,
           registration_status: item.registration_status ?? "-",
+          patientBills: item.patientBills ?? "-",
         }));
 
         setPatients(formattedData);
@@ -77,16 +80,41 @@ const PatientRegistration = () => {
     setFilteredPatients(filtered);
   }, [search, patients]);
 
+
+
+  // 🔹 Auto-fetch patients as barcode changes (live search)
+  useEffect(() => {
+    const lower = pBarcode.toLowerCase().trim();
+
+    if (!lower) {
+      setFilteredPatients(patients); // show all if input empty
+      return;
+    }
+
+    const filtered = patients.filter(
+      (item) =>
+        item.pbarcode?.toLowerCase().includes(lower) ||
+        item.p_name?.toLowerCase().includes(lower) ||
+        item.p_mobile?.includes(lower) ||
+        item.reg_by?.includes(lower) ||
+        item.p_gender?.includes(lower)
+    );
+
+    setFilteredPatients(filtered);
+  }, [pBarcode, patients]);
+
+
   // 🔹 Fetch by Date / Barcode
   const fetchPatientsByDate = async () => {
-    if ((!fromDate || !toDate) && !pBarcode) {
-      alert("Please enter a date range or a patient barcode to search.");
+    if ((!fromDate || !toDate)) {
+      alert("Please enter a date range search.");
       return;
     }
 
     try {
       setLoading(true);
       const authToken = localStorage.getItem("authToken");
+      const hospitalIdLocalStorage = localStorage.getItem("hospital_id");
 
       let query = [];
       if (fromDate && toDate)
@@ -94,7 +122,7 @@ const PatientRegistration = () => {
       if (pBarcode) query.push(`pbarcode=${pBarcode}`);
 
       const response = await fetch(
-        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient?${query.join(
+        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient/${hospitalIdLocalStorage}?${query.join(
           "&"
         )}`,
         {
@@ -139,6 +167,67 @@ const PatientRegistration = () => {
     }
   };
 
+
+  const fetchPatientsDetails = async () => {
+    try {
+      setLoading(true);
+      setShowTable(false); // hide table while searching
+
+      const authToken = localStorage.getItem("authToken");
+      const hospitalIdLocalStorage = localStorage.getItem("hospital_id");
+
+      let query = [];
+      if (pBarcode) query.push(`pbarcode=${pBarcode}`);
+
+      const response = await fetch(
+        `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient/${hospitalIdLocalStorage}?${query.join("&")}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch patient data");
+
+      const result = await response.json();
+      const patientsArray = Array.isArray(result) ? result : result.data || [];
+
+      const formattedData = patientsArray.map((item, idx) => ({
+        id: item.id || idx + 1,
+        p_name: item.p_name,
+        pbarcode: item.patientPPModes?.[0]?.pbarcode ?? "-",
+        p_age: item.p_age,
+        p_gender: item.p_gender,
+        p_mobile: item.p_mobile ?? "-",
+        hospital_name: item.hospital?.hospitalname ?? "-",
+        p_regdate: item.p_regdate,
+        registration_status: item.registration_status ?? "-",
+      }));
+
+      setPatients(formattedData);
+      setFilteredPatients(formattedData);
+
+      if (formattedData.length === 0) {
+        setError("No patients found for this barcode.");
+        setShowTable(false); // hide table if no data
+      } else {
+        setError("");
+        setShowTable(true); // show table only when data is present
+      }
+    } catch (err) {
+      console.error("Error fetching patients:", err);
+      setError("Failed to fetch patients.");
+      setShowTable(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   // 🔹 Export to Excel
   const handleExportExcel = () => {
     if (!filteredPatients || filteredPatients.length === 0) {
@@ -176,10 +265,51 @@ const PatientRegistration = () => {
     { key: "p_age", label: "Age" },
     { key: "p_gender", label: "Gender" },
     { key: "p_mobile", label: "Mobile" },
+    {
+      key: "patientBills",
+      label: "Bill Details",
+      render: (item) => (
+        <div className="relative group">
+          <span className="text-blue-600 underline cursor-pointer text-sm">View Bills</span>
+
+          {/* Compact Hover Pop-up */}
+          <div className="absolute left-0 top-full mt-1 w-64 max-h-64 overflow-y-auto bg-white border shadow-md rounded p-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
+            {item.patientBills && item.patientBills.length > 0 ? (
+              <table className="w-full border-collapse text-lg">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-1 text-left">Total</th>
+                    <th className="p-1 text-left">Paid</th>
+                    <th className="p-1 text-left">Due</th>
+                    <th className="p-1 text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {item.patientBills.map((bill, idx) => (
+                    <tr key={idx} className="border-b">
+                      <td className="p-1">{bill.ptotal}</td>
+                      <td className="p-1">{bill.pamtrcv}</td>
+                      <td className="p-1">{bill.pamtdue}</td>
+                      <td className="p-1">{bill.billstatus}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-gray-500">No bills found</p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+
+
+
     { key: "hospital_name", label: "Hospital" },
     { key: "p_regdate", label: "Registration Date" },
     { key: "registration_status", label: "Status" },
   ];
+
 
   const mappedItems = filteredPatients.map((item) => ({
     ...item,
@@ -274,13 +404,18 @@ const PatientRegistration = () => {
 
             <div className="flex flex-col w-full md:w-48">
               <label className="block text-sm font-medium text-gray-700">
-                Patient Barcode
+                Search Details
               </label>
               <input
                 type="text"
                 value={pBarcode}
                 onChange={(e) => setPBarcode(e.target.value)}
-                placeholder="Enter barcode"
+                onKeyUp={(e) => {
+                  if (e.key === "Enter" && pBarcode.trim() !== "") {
+                    fetchPatientsDetails();
+                  }
+                }}
+                placeholder="Enter details"
                 className="border px-3 py-2 rounded w-full"
               />
             </div>
@@ -307,17 +442,19 @@ const PatientRegistration = () => {
                 No patients found.
               </div>
             ) : (
-              <DataTable
+              <ModalPopUpDataTable
                 items={mappedItems}
                 columns={columns}
                 itemsPerPage={10}
                 showDetailsButtons={false}
                 onUpdate={(patient) =>
-               navigate(`/update-patient-details/${patient.id}`)
+                  navigate(`/update-patient-details/${patient.id}`)
                 }
               />
             )}
           </div>
+   
+
         </div>
       </div>
     </>

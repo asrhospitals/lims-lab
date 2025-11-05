@@ -117,7 +117,7 @@ const ViewNodalInstrument = () => {
               </Link>
             </li>
             <li className="text-gray-400">/</li>
-            <li>
+            {/* <li>
               <Link
                 to="/view-nodal-instruments"
                 className="text-gray-700 hover:text-teal-600 transition-colors"
@@ -125,7 +125,7 @@ const ViewNodalInstrument = () => {
                 Nodal Instrument
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            <li className="text-gray-400">/</li> */}
             <li aria-current="page" className="text-gray-500">
               View Nodal Instruments
             </li>

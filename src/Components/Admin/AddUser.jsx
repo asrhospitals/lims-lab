@@ -31,7 +31,7 @@ const AddUser = () => {
     },
   });
 
-  const createdby = localStorage.getItem("userid");
+  const createdby = localStorage.getItem("roleType");
   const mobileNumberValue = watch("mobileNumber");
   const whatsappSame = watch("whatsappSame");
 
@@ -89,8 +89,10 @@ const AddUser = () => {
         pincode: data.pincode,
         username: data.loginId,
         password: data.password,
-        created_by: Number(createdby),
-        module: [data.selectedmodule],
+        created_by: createdby,
+       created_date: today,
+        // module: [data.selectedmodule],
+        module: ["admin"],
         isactive: data.isactive === "true",
         image: uploadedImageName,
       };
@@ -161,8 +163,9 @@ const AddUser = () => {
     { name: "pincode", label: "PIN Code", placeholder: "Enter PIN Code", validation: { required: "PIN Code is required", pattern: /^\d{6}$/ } },
     { name: "loginId", label: "Login ID", placeholder: "Enter Login ID", validation: { required: "Login ID is required" } },
     { name: "password", label: "Password", placeholder: "Enter Password", validation: { required: "Password is required" } },
-    { name: "selectedmodule", label: "Module", type: "select", options: [{ value: "admin", label: "Admin" }, { value: "user", label: "User" }, { value: "phelobomist", label: "Phelobomist" },{ value: "reception", label: "Reception" },{ value: "biochemistry", label: "Biochemistry" },{ value: "microbiology", label: "Microbiology" },{ value: "pathology", label: "Pathology" }], validation: { required: "Module is required" } },
-    { name: "createdDate", label: "Created Date", type: "date", validation: { required: "" }, max: today },
+    // { name: "selectedmodule", label: "Module", type: "select", options: [{ value: "admin", label: "Admin" }, { value: "user", label: "User" }, { value: "phelobomist", label: "Phelobomist" },{ value: "reception", label: "Reception" },{ value: "biochemistry", label: "Biochemistry" },{ value: "microbiology", label: "Microbiology" },{ value: "pathology", label: "Pathology" }], validation: { required: "Module is required" } },
+    { name: "cratedby", label: "Created By", placeholder: "Admin",disabled: true},
+    { name: "created_date", label: "Created Date", placeholder :today,disabled: true},
     { name: "isActive", label: "Is Active?", type: "radio", options: [{ value: "true", label: "Yes" }, { value: "false", label: "No" }], validation: { required: "Status is required." } },
   ];
 
