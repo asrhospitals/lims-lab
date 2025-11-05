@@ -756,10 +756,10 @@ export const updateMandatoryCondition = async (resultId, mandatoryId, payload) =
   }
 };
 
-export const updateReflexTest = async (resultId, reflexId, payload) => {
+export const updateReflexTest = async (resultId, reflexTestsId, payload) => {
   try {
     const response = await axios.put(
-      `${API_ROOT_URL}/master/update-reflex/${resultId}/reflex-tests/${reflexId}`,
+      `${API_ROOT_URL}/master/update-reflex/${resultId}/reflex-tests/${reflexTestsId}`,
       payload,
       {
         headers: {

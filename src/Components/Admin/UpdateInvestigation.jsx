@@ -38,9 +38,14 @@ const UpdateInvestigation = () => {
   const [interpretation, setInterpretation] = useState("");
   const [remark, setRemarks] = useState("");
   const [investigationData, setInvestigationData] = useState(null);
+  const [reflexTestsData, setReflexTestsData] = useState(null);
   const [showModalNormalValues, setShowModalNormalValues] = useState(false);
 
+
   const [normalValues, setNormalValues] = useState([]); // Existing values from API
+  const [eeflexTestsValues, setReflexTestsValues] = useState([]); // Existing values from API
+
+
   const [selectedIndex, setSelectedIndex] = useState(null); // Index of value being edited
   const [mastersLoaded, setMastersLoaded] = useState(false);
 
@@ -569,36 +574,102 @@ const UpdateInvestigation = () => {
     }));
   };
 
+  // useEffect(() => {
+  //   if (investigationData?.results?.length) {
+  //     const fetchedNormalValues = (investigationData.results[0].normalValues || []).map((nv) => {
+  //       console.log("nv==", nv);
+  //       return {
+  //         id: nv.id,
+  //         type: nv.gender,
+  //         age_min_yyyy: nv.age_min_yyyy || 0,
+  //         age_min_mm: nv.age_min_mm || 0,
+  //         age_min_dd: nv.age_min_dd || 0,
+  //         age_max_yyyy: nv.age_max_yyyy || 0,
+  //         age_max_mm: nv.age_max_mm || 0,
+  //         age_max_dd: nv.age_max_dd || 0,
+  //         range_min: nv.range_min || 0,
+  //         range_max: nv.range_max || 0,
+  //         isrange_abnormal: nv.isrange_abnormal || false,
+  //         avoid_in_report: nv.avoid_in_report || false,
+  //         valid_range_min: nv.valid_range_min || 0,
+  //         valid_range_max: nv.valid_range_max || 0,
+  //         critical_low: nv.critical_low || 0,
+  //         critical_high: nv.critical_high || 0,
+  //         resultId: nv.resultId || null,
+  //       };
+  //     });
+
+  //     setNormalValues(fetchedNormalValues);
+  //     console.log("✅ first resultId:", investigationData.results[0]?.id);
+  //     console.log("✅ first normal value id:", investigationData.results[0]?.normalValues?.[0]?.id);
+  //   }
+  // }, [investigationData]);
+
+
+
+  // useEffect(() => {
+  //   if (reflexTestsData?.results?.length) {
+  //     const fetchedReflexTests = (reflexTestsData.results[0].reflexTests || []).map((rt) => {
+  //       console.log("rt==", rt);
+  //       return {
+  //         id: rt.id,
+  //         reflextest: rt.reflextest,
+  //         triggerparams: rt.triggerparams || 0,
+  //         resultId: rt.resultId || null,
+  //       };
+  //     });
+
+  //     setReflexTestsValues(fetchedReflexTests);
+  //     console.log("✅ first reflexTestsData resultId:", reflexTestsData.results[0]?.id);
+  //     console.log("✅ first reflexTestsData value id:", reflexTestsData.results[0]?.reflexTests?.[0]?.id);
+  //   }
+  // }, [reflexTestsData]);
+
+
+
   useEffect(() => {
     if (investigationData?.results?.length) {
-      const fetchedNormalValues = (investigationData.results[0].normalValues || []).map((nv) => {
-        console.log("nv==", nv);
-        return {
-          id: nv.id,
-          type: nv.gender,
-          age_min_yyyy: nv.age_min_yyyy || 0,
-          age_min_mm: nv.age_min_mm || 0,
-          age_min_dd: nv.age_min_dd || 0,
-          age_max_yyyy: nv.age_max_yyyy || 0,
-          age_max_mm: nv.age_max_mm || 0,
-          age_max_dd: nv.age_max_dd || 0,
-          range_min: nv.range_min || 0,
-          range_max: nv.range_max || 0,
-          isrange_abnormal: nv.isrange_abnormal || false,
-          avoid_in_report: nv.avoid_in_report || false,
-          valid_range_min: nv.valid_range_min || 0,
-          valid_range_max: nv.valid_range_max || 0,
-          critical_low: nv.critical_low || 0,
-          critical_high: nv.critical_high || 0,
-          resultId: nv.resultId || null,
-        };
-      });
+      const result = investigationData.results[0];
 
+      // ---- Normal Values ----
+      const fetchedNormalValues = (result.normalValues || []).map((nv) => ({
+        id: nv.id,
+        type: nv.gender,
+        age_min_yyyy: nv.age_min_yyyy || 0,
+        age_min_mm: nv.age_min_mm || 0,
+        age_min_dd: nv.age_min_dd || 0,
+        age_max_yyyy: nv.age_max_yyyy || 0,
+        age_max_mm: nv.age_max_mm || 0,
+        age_max_dd: nv.age_max_dd || 0,
+        range_min: nv.range_min || 0,
+        range_max: nv.range_max || 0,
+        isrange_abnormal: nv.isrange_abnormal || false,
+        avoid_in_report: nv.avoid_in_report || false,
+        valid_range_min: nv.valid_range_min || 0,
+        valid_range_max: nv.valid_range_max || 0,
+        critical_low: nv.critical_low || 0,
+        critical_high: nv.critical_high || 0,
+        resultId: nv.resultId || null,
+      }));
       setNormalValues(fetchedNormalValues);
-      console.log("✅ first resultId:", investigationData.results[0]?.id);
-      console.log("✅ first normal value id:", investigationData.results[0]?.normalValues?.[0]?.id);
+
+      console.log(" first resultId:", result.id);
+      console.log(" first normal value id:", result.normalValues?.[0]?.id);
+
+      // ---- Reflex Tests ----
+      const fetchedReflexTests = (result.reflexTests || []).map((rt) => ({
+        id: rt.id,
+        reflextest: rt.reflextest,
+        triggerparams: rt.triggerparams || "",
+        resultId: rt.resultId || null,
+      }));
+      setReflexTestsValues(fetchedReflexTests);
+
+      console.log("first reflexTests resultId:", result.id);
+      console.log(" first reflexTests value id:", result.reflexTests?.[0]?.id);
     }
   }, [investigationData]);
+
 
 
   const handleEditNormalValues = (index) => {
@@ -828,6 +899,44 @@ const UpdateInvestigation = () => {
   };
 
 
+
+  //  Add test to list
+  const handleAddReflexTests = async () => {
+    try {
+      const payload = {
+        triggerparams: formData.triggerParameter === "critical" ? "Critical Range" : "Abnormal Range",
+        reflextest: [formData.reflexTest],
+      };
+
+      //  Access data correctly
+      const result = investigationData?.results?.[0];
+      const resultId = result?.id;
+      const reflexTestsId = result?.reflexTests?.[0]?.id;
+
+      console.log(" first reflexTests resultId:", resultId);
+      console.log("first reflexTests value id:", reflexTestsId);
+
+      if (!resultId) {
+        toast.error("❌ Missing result ID — cannot update reflex test");
+        return;
+      }
+
+      // Your API call
+      await updateReflexTest(resultId, reflexTestsId, payload);
+
+      toast.success(" Reflex test updated successfully");
+
+      //  Refresh the latest data from backend
+      fetchInvestigationData();
+    } catch (err) {
+      console.error("Error updating reflex test:", err);
+      toast.error("❌ Failed to update reflex test");
+    }
+  };
+
+
+
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     const payload = {
@@ -1031,25 +1140,6 @@ const UpdateInvestigation = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 👉 Add test to list
-  const handleAddReflexTests = async () => {
-    try {
-    const payload = {
-      triggerparams: formData.triggerParameter === "critical" ? "Critical Range" : "Abnormal Range",
-      reflextest: [formData.reflexTest],
-    };
-
-      await updateReflexTest(id, payload); // your PUT API call
-
-      toast.success("✅ Reflex test updated successfully");
-
-      // Refresh latest data from backend
-      fetchInvestigationData();
-    } catch (err) {
-      console.error("Error updating reflex test:", err);
-      toast.error("❌ Failed to update reflex test");
-    }
-  };
 
 
 
