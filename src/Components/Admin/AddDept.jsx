@@ -46,12 +46,24 @@ const AddDept = () => {
     setIsSubmitting(true);
 
     try {
+<<<<<<< HEAD
+=======
+      // ✅ Convert all string fields in data to uppercase
+      const upperCaseData = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [
+          key,
+          typeof value === "string" ? value.toUpperCase() : value,
+        ])
+      );
+
+      // ✅ Check for duplicate department (case-insensitive)
+>>>>>>> main
       const duplicate = departments.find(
         (dept) => dept.dptname?.toLowerCase() === data.dptname.toLowerCase()
       );
 
       if (duplicate) {
-        toast.error(" Department with this name already exists!", {
+        toast.error("Department with this name already exists!", {
           position: "top-right",
           autoClose: 4000,
         });
@@ -59,9 +71,18 @@ const AddDept = () => {
         return;
       }
 
+<<<<<<< HEAD
       const formattedData = { ...data, isactive: data.isactive === "true" };
       const response = await addDepartment(formattedData);
 
+=======
+      // ✅ Prepare data
+      const formattedData = { ...upperCaseData, isactive: data.isactive === "true" };
+
+      const response = await addDepartment(formattedData);
+
+      // ✅ Accept both 200 and 201 as success
+>>>>>>> main
       if (response.status === 200 || response.status === 201) {
         toast.success("Department added successfully!", {
           position: "top-right",
@@ -80,17 +101,18 @@ const AddDept = () => {
           navigate("/view-departments");
         }, 2200);
       } else {
-        toast.error(" Unexpected server response.");
+        toast.error("Unexpected server response.");
       }
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
-          " Failed to create department. Please try again."
+        "Failed to create department. Please try again."
       );
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <>
@@ -192,11 +214,10 @@ const AddDept = () => {
                     },
                   })}
                   placeholder="Enter Department Name"
-                  className={`w-full px-4 py-2 rounded-lg border ${
-                    errors.dptname
+                  className={`w-full px-4 py-2 rounded-lg border ${errors.dptname
                       ? "border-red-500 focus:ring-red-500"
                       : "border-gray-300 focus:ring-teal-500"
-                  } focus:ring-2 transition`}
+                    } focus:ring-2 transition`}
                   onKeyUp={(e) => {
                     if (/^[A-Za-z\s]+$/.test(e.target.value)) clearErrors("dptname");
                   }}

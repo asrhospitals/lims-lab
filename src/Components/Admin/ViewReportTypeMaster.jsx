@@ -110,7 +110,7 @@ const ViewReportTypeMaster = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link
                 to="/view-report-type-master"
@@ -118,7 +118,7 @@ const ViewReportTypeMaster = () => {
               >
                 Report Types
               </Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
               View Report Types

@@ -76,19 +76,19 @@ const WithoutActionTable = ({
       ...transformedColumns,
       ...(showDetailsButtons
         ? [
-            {
-              id: "toggle",
-              header: "",
-              cell: ({ row }) => (
-                <button
-                  className="text-sm text-blue-600 hover:underline"
-                  onClick={() => toggleDetails(row.original.id)}
-                >
-                  {expandedRows.includes(row.original.id) ? "Hide" : "Show"}
-                </button>
-              ),
-            },
-          ]
+          {
+            id: "toggle",
+            header: "",
+            cell: ({ row }) => (
+              <button
+                className="text-sm text-blue-600 hover:underline"
+                onClick={() => toggleDetails(row.original.id)}
+              >
+                {expandedRows.includes(row.original.id) ? "Hide" : "Show"}
+              </button>
+            ),
+          },
+        ]
         : []),
     ],
     [transformedColumns, expandedRows, showDetailsButtons]
@@ -146,9 +146,8 @@ const WithoutActionTable = ({
           {table.getRowModel().rows.map((row) => (
             <React.Fragment key={row.original.id}>
               <tr
-                className={`cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-y-[1.05] hover:bg-blue-50 hover:shadow-md ${
-                  selectedRow?.id === row.original.id ? "bg-blue-100" : ""
-                }`}
+                className={`cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-y-[1.05] hover:bg-blue-50 hover:shadow-md 
+                  }`}
                 onClick={() => setSelectedRow(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
@@ -282,44 +281,42 @@ const WithoutActionTable = ({
 
           {serverSidePagination
             ? Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
 
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => onPageChange && onPageChange(pageNum)}
-                    className={`px-3 py-1 rounded border ${
-                      pageNum === currentPage
-                        ? "bg-teal-800 text-white"
-                        : "bg-white text-gray-800"
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })
-            : Array.from({ length: table.getPageCount() }, (_, i) => (
+              return (
                 <button
-                  key={i}
-                  onClick={() => table.setPageIndex(i)}
-                  className={`px-3 py-1 rounded border ${
-                    i === table.getState().pagination.pageIndex
+                  key={pageNum}
+                  onClick={() => onPageChange && onPageChange(pageNum)}
+                  className={`px-3 py-1 rounded border ${pageNum === currentPage
                       ? "bg-teal-800 text-white"
                       : "bg-white text-gray-800"
-                  }`}
+                    }`}
                 >
-                  {i + 1}
+                  {pageNum}
                 </button>
-              ))}
+              );
+            })
+            : Array.from({ length: table.getPageCount() }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => table.setPageIndex(i)}
+                className={`px-3 py-1 rounded border ${i === table.getState().pagination.pageIndex
+                    ? "bg-teal-800 text-white"
+                    : "bg-white text-gray-800"
+                  }`}
+              >
+                {i + 1}
+              </button>
+            ))}
 
           <button
             onClick={() => {

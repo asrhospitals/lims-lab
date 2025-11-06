@@ -102,10 +102,10 @@ const ViewInstrument = () => {
               </Link>
             </li>
             <li className="text-gray-400">/</li>
-            <li aria-current="page" className="text-gray-500">
+            {/* <li aria-current="page" className="text-gray-500">
               Instruments
             </li>
-             <li className="text-gray-400">/</li>
+             <li className="text-gray-400">/</li> */}
             <li aria-current="page" className="text-gray-500">
               View Instruments
             </li>

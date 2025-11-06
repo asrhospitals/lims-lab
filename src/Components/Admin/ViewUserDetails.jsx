@@ -24,7 +24,11 @@ const ViewUserDetails = () => {
       try {
         const token = localStorage.getItem("authToken");
 
+<<<<<<< HEAD
         // ✅ Use full URL to correct domain directly here
+=======
+        // ✅ Correct API URL
+>>>>>>> main
         const res = await api.post(
           "https://asrauth.asrhospitalindia.in/lims/authentication/get-all-users",
           {

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -153,7 +154,7 @@ useEffect(() => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li>
               <Link
                 to="/view-investigation"
@@ -161,7 +162,7 @@ useEffect(() => {
               >
                 Patient Details
               </Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
               View Patient
@@ -347,3 +348,4 @@ useEffect(() => {
 };
 
 export default ViewPatientDetails;
+

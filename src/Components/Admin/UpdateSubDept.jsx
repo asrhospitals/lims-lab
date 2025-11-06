@@ -99,7 +99,7 @@ const UpdateSubDpt = () => {
         isactive: data.isactive === "true",
       });
 
-      toast.success("✅ Sub-department updated successfully!", {
+      toast.success(" Sub-department updated successfully!", {
         position: "top-right",
         autoClose: 2000,
       });

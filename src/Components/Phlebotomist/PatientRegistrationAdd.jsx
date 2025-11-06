@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import Barcode from "react-barcode";
+import { debounce } from "lodash";
 
 import {
   Tabs,
@@ -70,6 +71,11 @@ const PatientRegistrationAdd = () => {
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBillingCompleted, setIsBillingCompleted] = useState(false);
+  const [pBarcode, setPBarcode] = useState("");
+  const [barcodeStatus, setBarcodeStatus] = useState(null);
+
+
+
 
   // Handle payment mode changes
   useEffect(() => {
@@ -827,6 +833,72 @@ if (!hospitalId) {
       sendEmail(email);
     }
   }, [emailAlerts, email, errors]);
+
+
+
+
+const checkBarcode = async (barcode) => {
+  if (!barcode || barcode.length !== 8) return;
+
+  console.log("inside checkBarcode with:", barcode);
+
+  try {
+    setLoading(true);
+    const authToken = localStorage.getItem("authToken");
+    const hospitalIdLocalStorage = localStorage.getItem("hospital_id");
+
+const response = await fetch(
+  `https://asrphleb.asrhospitalindia.in/api/v1/phleb/search-patient/${hospitalIdLocalStorage}?barcodeNo=${barcode}`,
+  {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+      "Content-Type": "application/json",
+    },
+  }
+);
+
+
+    const data = await response.json();
+    console.log("API data ===>", data);
+
+    if (Array.isArray(data) && data.length > 0) {
+      // ✅ Check all patientPPModes for a matching barcode
+      const duplicateFound = data.some(patient =>
+        Array.isArray(patient.patientPPModes) &&
+        patient.patientPPModes.some(pp => pp.pbarcode?.toString() === barcode.toString())
+      );
+
+      if (duplicateFound) {
+        console.log("Duplicate barcode found!");
+        setBarcodeStatus("duplicate");
+      } else {
+        console.log("Barcode is unique!");
+        setBarcodeStatus("unique");
+      }
+    } else {
+      // API returned no data
+      console.log("No patient data found, barcode is unique!");
+      setBarcodeStatus("unique");
+    }
+  } catch (err) {
+    console.error("Error checking barcode:", err);
+    setBarcodeStatus(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleKeyDown = (e) => {
+  console.log("inside handleKeyDown, key:", e.key);
+  if (e.key === "Enter" || e.key === "NumpadEnter") {
+    e.preventDefault();
+    const currentBarcode = e.target.value;
+    console.log("Calling checkBarcode with:", currentBarcode);
+    checkBarcode(currentBarcode);
+  }
+};
+
 
   return (
     <>
@@ -2258,7 +2330,7 @@ if (!hospitalId) {
                     />
                   </div>
 
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Barcode No<span className="text-red-500">*</span>
                     </label>
@@ -2282,7 +2354,53 @@ if (!hospitalId) {
                         {errors.barcodeNo.message}
                       </p>
                     )}
-                  </div>
+                  </div> */}
+
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Barcode No<span className="text-red-500">*</span>
+      </label>
+
+<input
+  {...register("barcodeNo", {
+    required: "Barcode number is required",
+    minLength: {
+      value: 8,
+      message: "Barcode must be 8 characters",
+    },
+    maxLength: {
+      value: 8,
+      message: "Barcode must be 8 characters",
+    },
+  })}
+  onChange={(e) => {
+    setPBarcode(e.target.value);
+    setBarcodeStatus(null); // reset when typing
+  }}
+  onKeyDown={handleKeyDown}  // ✅ must be here
+  type="text"
+  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+
+      {/* Validation Error */}
+      {errors.barcodeNo && (
+        <p className="text-red-500 text-sm mt-1">
+          {errors.barcodeNo.message}
+        </p>
+      )}
+
+      {/* API Status */}
+      {loading && <p className="text-blue-500 text-sm mt-1">Checking barcode...</p>}
+
+      {barcodeStatus === "duplicate" && (
+        <p className="text-red-600 text-sm mt-1">This barcode already exists!</p>
+      )}
+
+      {barcodeStatus === "unique" && (
+        <p className="text-green-600 text-sm mt-1">✅ This barcode is available</p>
+      )}
+    </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">

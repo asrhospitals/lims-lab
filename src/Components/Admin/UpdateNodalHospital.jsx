@@ -4,8 +4,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import {
-  viewNodals,
-  viewHospitals,
+  getAllNodals,
+  viewAllHosiptalList,
   viewNodalHospital,
   updateNodalHospital,
 } from "../../services/apiService";
@@ -45,13 +45,13 @@ const UpdateNodalHospital = () => {
         setLoading(true);
 
         const [nodalRes, hospitalRes, nodalHospitalRes] = await Promise.all([
-          viewNodals(),
-          viewHospitals(),
+          getAllNodals(),
+          viewAllHosiptalList(),
           viewNodalHospital(id),
         ]);
 
-        const nodalData = nodalRes?.data || [];
-        const hospitalData = hospitalRes?.data || [];
+        const nodalData = nodalRes || [];
+        const hospitalData = hospitalRes || [];
         const nodalHospitalData = nodalHospitalRes || null;
 
         setNodalList(nodalData);

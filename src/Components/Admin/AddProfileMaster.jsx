@@ -73,9 +73,13 @@ const AddProfileMaster = () => {
     }
   };
 
-  const removeTest = (test) => {
+const removeTest = (test) => {
+  const confirmRemove = window.confirm("Are you sure you want to remove this test?");
+  if (confirmRemove) {
     setSelectedTests(selectedTests.filter((t) => t.id !== test.id));
-  };
+  }
+};
+
 
   const handleReset = () => {
     setSelectedProfile("");
@@ -154,9 +158,17 @@ const AddProfileMaster = () => {
                 🏠 Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            <li className="text-gray-400">/</li> 
             <li>
+<<<<<<< HEAD
               <Link to="/view-profile-master" className="text-gray-700 hover:text-teal-600">Profile Master</Link>
+=======
+               <Link
+                to="/view-profile-master"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+              <span className="text-gray-700">Profile Master</span></Link>
+>>>>>>> main
             </li>
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">

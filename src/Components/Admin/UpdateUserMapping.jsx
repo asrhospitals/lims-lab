@@ -30,7 +30,6 @@ const UpdateUserMapping = () => {
       ]);
 
       const [hData, nData, rData] = await Promise.all([hRes.json(), nRes.json(), rRes.json()]);
-
       setHospitalsList(hData?.data || []);
       setNodalsList(nData?.data || []);
       setRolesList(rData?.data || []);
@@ -49,8 +48,6 @@ const UpdateUserMapping = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (!res.ok) throw new Error("Failed to fetch user mapping");
-
       const data = await res.json();
       setUserMapping(data);
 
@@ -59,16 +56,18 @@ const UpdateUserMapping = () => {
         hospital: data.hospitalid,
         nodal: data.nodalid,
         role: data.role,
-        module: data.module || [],
 
-        // Show name instead of id if available
-        // created_by: data.created_by_name || data.created_by,
-         created_by: "Admin",
-        created_date: data.created_date,
+        module: data.module, 
 
-        // Editable fields
-        modified_by: data.modified_by_name || "",
-        modified_date: data.modified_date || "",
+        created_by: data.created_by_name || "Admin",
+        created_date: data.created_date || "",
+
+        update_by: data.update_by || "Admin",
+        update_date: data.update_date
+          ? new Date(data.update_date).toLocaleDateString("en-GB")
+          : data.updatedAt
+          ? new Date(data.updatedAt).toLocaleDateString("en-GB")
+          : "",
 
         isactive: data.isactive ? "true" : "false",
       });
@@ -128,40 +127,42 @@ const UpdateUserMapping = () => {
   //   }
   // };
   const onSubmit = async (data) => {
-  setIsSubmitting(true);
-  try {
-    const token = localStorage.getItem("authToken");
 
-    const selectedModules = Array.from(document.getElementById("moduleSelect").selectedOptions).map(opt => opt.value);
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem("authToken");
 
-    // ✅ Auto-Set Modified Values
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    const modifiedBy = localStorage.getItem("username") || "Admin"; // FROM LOGIN USER
+      const today = new Date().toISOString().split("T")[0];
+      const updatedBy = "Admin";
 
-    const payload = {
-      role: Number(data.role),
-      hospitalid: Number(data.hospital),
-      nodalid: Number(data.nodal),
-      module: selectedModules,
-      isactive: data.isactive === "true",
+      const payload = {
+        role: Number(data.role),
+        hospitalid: Number(data.hospital),
+        nodalid: Number(data.nodal),
+        module: data.module, 
+        isactive: data.isactive === "true",
+        update_by: updatedBy,
+        update_date: today,
+      };
 
-      // ✅ Correct Modified Fields (no manual typing required)
-      modified_by: modifiedBy,
-      modified_date: today,
-    };
+      const response = await axios.put(
+        `https://asrlabs.asrhospitalindia.in/lims/authentication/update-roles/${id}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    const response = await axios.put(
-      `https://asrlabs.asrhospitalindia.in/lims/authentication/update-roles/${id}`,
-      payload,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      if (response.status === 200) {
+        toast.success(" User mapping updated successfully!");
+        setTimeout(() => {
+          navigate("/view-user-mapping", { state: { refresh: true } });
+        }, 2000);
+      }
 
-    if (response.status === 200) {
-      toast.success("✅ User mapping updated successfully!");
+    } catch (err) {
+      toast.error("❌ Failed to update user mapping.");
+    } finally {
+      setIsSubmitting(false);
 
-      setTimeout(() => {
-        navigate("/view-user-mapping", { state: { refresh: true } });
-      }, 2000);
     }
 
   } catch (err) {
@@ -205,7 +206,8 @@ const UpdateUserMapping = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Select Hospital</label>
+
+                <label className="block text-sm font-medium text-gray-700">Select Hospital <span className="text-red-500">*</span></label>
                 <select {...register("hospital")} className="w-full px-4 py-2 rounded-lg border border-gray-300">
                   <option value="">Select Hospital</option>
                   {hospitalsList.map((h) => <option key={h.id} value={h.id}>{h.hospitalname}</option>)}
@@ -213,7 +215,8 @@ const UpdateUserMapping = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Select Nodal</label>
+
+                <label className="block text-sm font-medium text-gray-700">Select Nodal <span className="text-red-500">*</span></label>
                 <select {...register("nodal")} className="w-full px-4 py-2 rounded-lg border border-gray-300">
                   <option value="">Select Nodal</option>
                   {nodalsList.map((n) => <option key={n.id} value={n.id}>{n.nodalname}</option>)}
@@ -221,7 +224,8 @@ const UpdateUserMapping = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Select Role</label>
+
+                <label className="block text-sm font-medium text-gray-700">Select Role <span className="text-red-500">*</span></label>
                 <select {...register("role")} className="w-full px-4 py-2 rounded-lg border border-gray-300">
                   <option value="">Select Role</option>
                   {rolesList.map((r) => <option key={r.id} value={r.id}>{r.roletype}</option>)}
@@ -229,8 +233,11 @@ const UpdateUserMapping = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Module</label>
-                <select id="moduleSelect" {...register("module")} multiple className="w-full px-4 py-2 rounded-lg border border-gray-300">
+
+                <label className="block text-sm font-medium text-gray-700">Module <span className="text-red-500">*</span></label>
+                <select id="moduleSelect" {...register("module")} className="w-full px-4 py-2 rounded-lg border border-gray-300">
+                  <option value="">Select Module</option>
+
                   <option value="phlebotomist">Phlebotomist</option>
                   <option value="reception">Reception</option>
                   <option value="biochemistry">Biochemistry</option>
@@ -248,19 +255,20 @@ const UpdateUserMapping = () => {
                 <input type="text" {...register("created_date")} disabled className="w-full px-4 py-2 rounded-lg border border-gray-300" />
               </div>
 
-              {/* ✅ Editable Modified Fields */}
+
               <div>
-                <label className="block text-sm font-medium text-gray-700">Modified By</label>
-                <input type="text" {...register("modified_by")} className="w-full px-4 py-2 rounded-lg border border-gray-300" placeholder="Enter Modified By Name" />
+                <label className="block text-sm font-medium text-gray-700">Updated By</label>
+                <input type="text" {...register("update_by")} disabled className="w-full px-4 py-2 rounded-lg border border-gray-300" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Modified Date</label>
-                <input type="date" {...register("modified_date")} className="w-full px-4 py-2 rounded-lg border border-gray-300" />
+                <label className="block text-sm font-medium text-gray-700">Updated At</label>
+                <input type="text" {...register("update_date")} disabled className="w-full px-4 py-2 rounded-lg border border-gray-300" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Is Active</label>
+                <label className="block text-sm font-medium text-gray-700">Is Active <span className="text-red-500">*</span></label>
+
                 <div className="flex space-x-4 pt-2">
                   <label className="inline-flex items-center">
                     <input type="radio" value="true" {...register("isactive")} className="h-4 w-4 text-teal-600" />

@@ -6,7 +6,7 @@ import DataTable from "../utils/DataTable";
 const ViewUserMapping = () => {
   const [users, setUsers] = useState([]);
   const [hospitals, setHospitals] = useState([]);
-  const [nodals, setNodals] = useState([]);
+  const [nodals, setNodals] = useState([]); 
   const [roles, setRoles] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [search, setSearch] = useState("");
@@ -89,9 +89,10 @@ const ViewUserMapping = () => {
         u.first_name?.toLowerCase().includes(q) ||
         u.last_name?.toLowerCase().includes(q) ||
         u.username?.toLowerCase().includes(q) ||
-       getHospitalName(u.hospitalid).toLowerCase().includes(q) ||
-getNodalName(u.nodalid).toLowerCase().includes(q) ||
-       getRoleName(Number(u.role)).toLowerCase().includes(q)
+
+        getHospitalName(u.hospitalid).toLowerCase().includes(q) ||
+        getNodalName(u.nodalid).toLowerCase().includes(q) ||
+        getRoleName(Number(u.role)).toLowerCase().includes(q)
 
     );
     setFilteredUsers(filtered);
@@ -102,23 +103,29 @@ getNodalName(u.nodalid).toLowerCase().includes(q) ||
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  //
   const mappedItems = paginatedUsers.map((u) => ({
     ...u,
-    hospital_name: getHospitalName(u.hospitalid), 
-nodal_name: getNodalName(u.nodalid), 
-role_name: getRoleName(Number(u.role)),         
-module_name: Array.isArray(u.module) ? u.module.join(", ") : "-", 
-//  modified_by: u.modified_by || "-",    
- created_date: u.created_date || "-",          
-  // modified_date: u.modified_date || "-", 
- modified_date: u.updatedAt
-  ? new Date(u.updatedAt).toLocaleDateString("en-GB")
+
+    hospital_name: getHospitalName(u.hospitalid),
+    nodal_name: getNodalName(u.nodalid),
+    role_name: getRoleName(Number(u.role)),
+    module_name: Array.isArray(u.module) ? u.module.join(", ") : u.module || "-",
+
+    created_date: u.created_date
+      ? new Date(u.created_date).toLocaleDateString("en-GB")
+      : "-",
+
+    // updated_by: u.update_by || "-",
+updated_date: u.update_date || u.updatedAt
+  ? new Date(u.update_date || u.updatedAt).toLocaleDateString("en-GB")
   : "-",
 
-  // modified_date: u.modified_date ? u.modified_date : "-",
-  
+
+
   }));
 
+  //
   const columns = [
     { key: "user_id", label: "ID" },
     { key: "first_name", label: "First Name" },
@@ -128,9 +135,11 @@ module_name: Array.isArray(u.module) ? u.module.join(", ") : "-",
     { key: "hospital_name", label: "Hospital" },
     { key: "nodal_name", label: "Nodal" },
     { key: "module_name", label: "Module" },
-    // { key: "modified_by", label: "Modified By" },   
-      { key: "created_date", label: "Created Date" },   // ✅ 
-  { key: "modified_date", label: "Modified Date" }, 
+
+    { key: "created_date", label: "Created Date" },
+    // { key: "updated_by", label: "Updated By" },     
+    { key: "updated_date", label: "Updated Date" }, 
+
   ];
 
   return (
@@ -180,7 +189,8 @@ module_name: Array.isArray(u.module) ? u.module.join(", ") : "-",
             <DataTable
               items={mappedItems}
               columns={columns}
-               showAction={false}  
+
+              showAction={false}
               serverSidePagination={true}
               currentPage={currentPage}
               totalPages={totalPages}
@@ -188,7 +198,9 @@ module_name: Array.isArray(u.module) ? u.module.join(", ") : "-",
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
               onPageSizeChange={setItemsPerPage}
-              onUpdate={(row) => navigate(`/update-user-mapping/${row.user_id}`, { state: row })} // ✅ FIXED
+
+              onUpdate={(row) => navigate(`/update-user-mapping/${row.user_id}`, { state: row })}
+
             />
           )}
         </div>

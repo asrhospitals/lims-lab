@@ -118,10 +118,10 @@ const ViewLabToLab = () => {
                 🏠︎ Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
+            {/* <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
               Lab To Lab
-            </li>
+            </li> */}
              <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
                View Lab To Lab

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
-import DataTable from "../utils/DataTable";
+import ImageDIsplatDataTable from "../utils/ImageDIsplatDataTable";
 
 const stringToColor = (str) => {
   let hash = 0;
@@ -74,9 +74,17 @@ const ViewDoctorRegistration = () => {
     setCurrentPage(1);
   };
 
+  // const handleUpdate = (doctor) => {
+  //   navigate(`/update-doctor-registration/${doctor.id}`);
+  // };
   const handleUpdate = (doctor) => {
+<<<<<<< HEAD
     navigate(`/update-doctor-registration/${doctor.id}`);
   };
+=======
+  navigate(`/update-doctor-registration/${doctor.id}`, { state: { doctor } });
+};
+>>>>>>> main
 
   const columns = [
     { key: "id", label: "ID" },
@@ -96,6 +104,7 @@ const ViewDoctorRegistration = () => {
           ? d.dname.split(" ").map((n) => n[0]).join("").toUpperCase()
           : "?";
 
+<<<<<<< HEAD
         // ✅ FIXED: Ensure correct URL handling for S3 or relative paths
         const photoUrl =
           d.dphoto && d.dphoto.trim() !== ""
@@ -129,11 +138,33 @@ const ViewDoctorRegistration = () => {
                 {initials}
               </div>
             )}
+=======
+        const photoUrl =
+          d.dphoto && (d.dphoto.startsWith("http")
+            ? encodeURI(d.dphoto)
+            : `https://asrlabs.asrhospitalindia.in/${encodeURI(d.dphoto)}`);
+
+        return photoUrl ? (
+          <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border border-gray-200">
+            <img
+              src={photoUrl}
+              alt={d.dname}
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
+        ) : (
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs border border-gray-200"
+            style={{ backgroundColor: color }}
+          >
+            {initials}
+>>>>>>> main
           </div>
         );
       },
     },
     { key: "dstatus", label: "Status" },
+<<<<<<< HEAD
     {
       key: "actions",
       label: "Actions",
@@ -148,6 +179,12 @@ const ViewDoctorRegistration = () => {
     },
   ];
 
+=======
+
+  ];
+
+  // Map data to include Status and Actions for DataTable
+>>>>>>> main
   const mappedDoctors = (filteredDoctors || []).map((d) => ({
     ...d,
     dstatus: d.dstatus ? d.dstatus : "Pending",
@@ -175,10 +212,7 @@ const ViewDoctorRegistration = () => {
                 Doctors
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
-            <li aria-current="page" className="text-gray-500">
-              View Doctors
-            </li>
+
           </ol>
         </nav>
       </div>
@@ -211,7 +245,7 @@ const ViewDoctorRegistration = () => {
 
           <div className="flex flex-wrap gap-2 mb-4">
             <button
-              onClick={() => navigate("/add-doctor")}
+              onClick={() => navigate("/doctor-registration")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New
@@ -229,7 +263,7 @@ const ViewDoctorRegistration = () => {
           ) : (
             <div className="overflow-x-auto">
               <div className="min-w-[1000px]">
-                <DataTable
+                <ImageDIsplatDataTable
                   items={mappedDoctors}
                   columns={columns}
                   serverSidePagination

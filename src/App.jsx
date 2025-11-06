@@ -121,6 +121,9 @@ import UpdateAccessionMaster from "./Components/Admin/UpdateAccessionMaster";
 import UpdateUserDetails from "./Components/Admin/UpdateUserDetails";
 import UpdatePatientDetails from "./Components/Admin/UpdatePatientDetails";
 import ViewDoctorRegistration from "./Components/Admin/ViewDoctorRegistration";
+import UpdateDoctorRegistration from "./Components/Admin/UpdateDoctorRegistration";
+import UpdateUserMapping from "./Components/Admin/UpdateUserMapping";
+import UpdateNewUserMapping from "./Components/Admin/UpdateNewUserMapping";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -285,7 +288,16 @@ function App() {
                 <Navigate to="/" />
               ),
           },
-   
+   {
+  path: "update-doctor-registration/:doctorId",
+  element:
+    userRole === "admin" ? (
+      <UpdateDoctorRegistration />
+    ) : (
+      <Navigate to="/" />
+    ),
+},
+
 
           {
             path: "update-hospital/:id",
@@ -391,10 +403,12 @@ function App() {
             path: "view-user-mapping",
             element: requireRole("admin", <ViewUserMapping />),
           },
-            {
-    path: "update-user-mapping/:id",
-    element: requireRole("admin", <UpdateUserMapping />),
-  },
+
+              {
+            path: "update-user-mapping/:id",
+            element: requireRole("admin", <UpdateNewUserMapping />),
+          },
+
           
           {
             path: "update-role",
@@ -447,7 +461,7 @@ function App() {
             element: requireRole("admin", <ViewReferalDoctor />),
           },
           {
-            path: "update-referal-doctor",
+            path: "update-referal-doctor/:id",
             element: requireRole("admin", <UpdateReferalDoctor />),
           },
           {

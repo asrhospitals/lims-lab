@@ -105,7 +105,7 @@ const ViewNodal = () => {
             </li>
 
             <li className="text-gray-400">/</li>
-
+{/* 
             <li>
               <Link
                 to="/view-nodal"
@@ -115,7 +115,7 @@ const ViewNodal = () => {
               </Link>
             </li>
 
-            <li className="text-gray-400">/</li>
+            <li className="text-gray-400">/</li> */}
 
             <li aria-current="page" className="text-gray-500">
               View Nodal

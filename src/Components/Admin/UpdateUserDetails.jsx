@@ -31,16 +31,6 @@ const UpdateUserDetails = () => {
     }
   }, [sameAsMobile, watch("mobileNumber"), setValue]);
 
-  const parseBackendDate = (dateStr) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    if (isNaN(date)) return "";
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   const formatDateForBackend = (dateStr) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
@@ -73,27 +63,34 @@ const UpdateUserDetails = () => {
           whatsappNumber: userData.wattsapp_number || "",
           alternateNumber: userData.alternate_number || "",
           email: userData.email || "",
-          dob: parseBackendDate(userData.dob),
+          dob: userData.dob ? new Date(userData.dob).toISOString().split("T")[0] : "",
           gender: userData.gender || "",
           address: userData.address || "",
           city: userData.city || "",
           state: userData.state || "",
           pincode: userData.pincode || "",
           loginId: userData.username || "",
-          password: "*******", // ✅ masked password placeholder
+          password: "*******",
           selectedmodule:
             userData.module?.[0]?.toLowerCase() === "reception"
               ? "Reception"
-              : userData.module?.[0]?.toLowerCase() === "admin"
-              ? "admin"
-              : userData.module?.[0]?.toLowerCase() === "user"
-              ? "user"
-              : userData.module?.[0]?.toLowerCase() === "phlebotomist"
-              ? "phlebotomist"
-              : "",
+              : userData.module?.[0]?.toLowerCase(),
           isActive: userData.isactive ? "true" : "false",
-          createdDate: parseBackendDate(userData.created_at), // ✅ properly formatted
+          createdDate: userData.created_at
+            ? new Date(userData.created_at).toISOString().split("T")[0]
+            : "",
+
+          // ✅ NEW UPDATED LOGIC (NO PARSE FUNCTION)
+          updatedBy: userData.update_by || "Admin",
+          updatedAt: userData.update_date
+            ? new Date(userData.update_date).toLocaleDateString("en-GB")
+            : userData.updatedAt
+            ? new Date(userData.updatedAt).toLocaleDateString("en-GB")
+            : "",
         });
+
+        // ✅ AUTO CHECKBOX MATCH MOBILE & WHATSAPP
+        setSameAsMobile(userData.mobile_number === userData.wattsapp_number);
 
         setImagePreview(userData.image || "profile.jpg");
       } catch (err) {
@@ -124,7 +121,6 @@ const UpdateUserDetails = () => {
         state: data.state,
         pincode: data.pincode,
         username: data.loginId,
-        module: [data.selectedmodule],
         isactive: data.isActive === "true",
       };
 
@@ -136,7 +132,7 @@ const UpdateUserDetails = () => {
 
       if (!res.status.toString().startsWith("2")) throw new Error("Failed to update user");
 
-      toast.success("✅ User updated successfully!");
+      toast.success(" User updated successfully!");
 
       setTimeout(() => {
         navigate("/view-user-list");
@@ -187,23 +183,13 @@ const UpdateUserDetails = () => {
     { name: "loginId", label: "Login ID", required: true },
     { name: "password", label: "Password", required: false, type: "password" },
     {
-      name: "selectedmodule",
-      label: "Module",
-      type: "select",
-      required: true,
-      options: [
-        { value: "admin", label: "Admin" },
-        { value: "user", label: "User" },
-        { value: "Reception", label: "Reception" },
-        { value: "phlebotomist", label: "Phlebotomist" },
-      ],
-    },
-    {
       name: "createdDate",
       label: "Created Date",
       type: "date",
       disabled: true,
     },
+    { name: "updatedBy", label: "Updated By", disabled: true },
+    { name: "updatedAt", label: "Updated At", type: "text", disabled: true },
     {
       name: "isActive",
       label: "Is Active?",
@@ -321,7 +307,6 @@ const UpdateUserDetails = () => {
               ))}
             </div>
 
-            {/* Upload Image */}
             <div className="bg-white border rounded-lg p-4 mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Upload Image (JPG/PNG, max 2MB)
