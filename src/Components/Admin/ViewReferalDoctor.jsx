@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom"; // <-- Add useLocation
+// import { useNavigate, Link, } from "react-router-dom";
 import axios from "axios";
 import { RiSearchLine } from "react-icons/ri";
 import DataTable from "../utils/DataTable";
+
 
 const ViewReferalDoctor = () => {
   const [referalDoctors, setReferalDoctors] = useState([]);
@@ -12,49 +14,77 @@ const ViewReferalDoctor = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+  const location = useLocation(); // <-- Add this
 
-  // ✅ Get token from localStorage
+  //  Get token from localStorage
   const token = localStorage.getItem("authToken");
 
-  // ✅ Correct header format for backend
+  //  Correct header format for backend
   const getAuthHeaders = () => ({
     Authorization: token?.startsWith("Bearer ")
       ? token
       : `Bearer ${token}`,
   });
 
-  // ✅ Fetch referal doctors
-  useEffect(() => {
-    const fetchReferalDoctors = async () => {
-      try {
-        const response = await axios.get(
-          "https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc",
-          {
-            headers: getAuthHeaders(),
-          }
-        );
+  // Fetch referal doctors
+//   useEffect(() => {
+//     const fetchReferalDoctors = async () => {
+//       try {
+//         const response = await axios.get(
+//           "https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc",
+//           {
+//             headers: getAuthHeaders(),
+//           }
+//         );
 
-       const data = (response.data?.data || []).sort(
-  (a, b) => Number(a.id) - Number(b.id)
-);
+//        const data = (response.data?.data || []).sort(
+//   (a, b) => Number(a.id) - Number(b.id)
+// );
 
-        setReferalDoctors(data);
-        setFilteredDoctors(data);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        setError(
-          err.response?.data?.message ||
-            "❌ Failed to fetch Referral Doctors. Please check token or server."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+//         setReferalDoctors(data);
+//         setFilteredDoctors(data);
+//       } catch (err) {
+//         console.error("Fetch error:", err);
+//         setError(
+//           err.response?.data?.message ||
+//             "❌ Failed to fetch Referral Doctors. Please check token or server."
+//         );
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    fetchReferalDoctors();
-  }, []);
+//     fetchReferalDoctors();
+//   }, []);
+useEffect(() => {
+  const fetchReferalDoctors = async () => {
+    try {
+      const response = await axios.get(
+        "https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc",
+        { headers: getAuthHeaders() }
+      );
 
-  // ✅ Search filter
+      const data = (response.data?.data || []).sort(
+        (a, b) => Number(a.id) - Number(b.id)
+      );
+
+      setReferalDoctors(data);
+      setFilteredDoctors(data);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        "❌ Failed to fetch Referal Doctors. Please check token or server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchReferalDoctors(); // Runs on load and every time page is opened again
+}, [location]); // ✅ Key fix
+
+
+  //  Search filter
   useEffect(() => {
     if (!search.trim()) {
       setFilteredDoctors(referalDoctors);
@@ -76,34 +106,30 @@ const ViewReferalDoctor = () => {
     }
   }, [search, referalDoctors]);
 
-  // ✅ Handle Update button click
+  // Handle Update button click
   const handleUpdate = async (doctor) => {
-    console.log("d", doctor);
-    
+    try {
+      const response = await axios.get(
+        `https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc/${doctor.id}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      localStorage.setItem(
+        "referalDoctorToUpdate",
+        JSON.stringify(response.data)
+      );
+
       navigate(`/update-referal-doctor/${doctor.id}`);
 
-    // try {
-    //   const response = await axios.get(
-    //     `https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc/${doctor.id}`,
-    //     {
-    //       headers: getAuthHeaders(),
-    //     }
-    //   );
-
-    //   localStorage.setItem(
-    //     "referalDoctorToUpdate",
-    //     JSON.stringify(response.data)
-    //   );
-
-    //   navigate(`/update-referal-doctor/${doctor.id}`);
-
-    // } catch (err) {
-    //   console.error("Update fetch failed:", err);
-    //   alert("Failed to fetch Referral Doctor details. Please try again.");
-    // }
+    } catch (err) {
+      console.error("Update fetch failed:", err);
+      alert("Failed to fetch Referral Doctor details. Please try again.");
+    }
   };
 
-  // ✅ Table Columns
+  // Table Columns
   const columns = [
     { key: "id", label: "ID" },
     { key: "category", label: "Category" },
@@ -146,7 +172,7 @@ const ViewReferalDoctor = () => {
 
   return (
     <>
-      {/* ✅ Breadcrumb */}
+      {/*  Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav
           className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
@@ -161,24 +187,24 @@ const ViewReferalDoctor = () => {
                 🏠 Home
               </Link>
             </li>
-            <li className="text-gray-400">/</li>
-            <li>
+            {/* <li className="text-gray-400">/</li> */}
+            {/* <li>
               <Link
                 to="/view-refdoc"
                 className="text-gray-700 hover:text-teal-600"
               >
                 Referal Doctors
               </Link>
-            </li>
+            </li> */}
             <li className="text-gray-400">/</li>
             <li aria-current="page" className="text-gray-500">
-              View
+              View Referal Doctor
             </li>
           </ol>
         </nav>
       </div>
 
-      {/* ✅ Page Content */}
+      {/*  Page Content */}
       <div className="w-full mt-12 px-0 sm:px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
           {/* Header & Search */}
@@ -203,7 +229,7 @@ const ViewReferalDoctor = () => {
           {/* Add New Button */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
-              onClick={() => navigate("/add-referal-doctor")}
+              onClick={() => navigate("/add-refdoc")}
               className="ml-3 px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
             >
               Add New

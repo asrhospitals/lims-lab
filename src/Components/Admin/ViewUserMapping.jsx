@@ -1,13 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
-import WithoutActionTable from "../utils/WithoutActionTable";
-import api from "../../services/axiosService"; // ✅ use axiosService (like in other screens)
+import DataTable from "../utils/DataTable";
 
 const ViewUserMapping = () => {
   const [users, setUsers] = useState([]);
   const [hospitals, setHospitals] = useState([]);
-  const [nodals, setNodals] = useState([]);
+  const [nodals, setNodals] = useState([]); 
   const [roles, setRoles] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [search, setSearch] = useState("");
@@ -15,106 +14,114 @@ const ViewUserMapping = () => {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Fetch Master Data
-  const fetchMasterData = useCallback(async () => {
+  useEffect(() => {
+    if (location.state?.refresh) {
+      fetchUsers();
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const fetchMasterData = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
       const [hRes, nRes, rRes] = await Promise.all([
-        api.get("/master/get-hospital?page=1&limit=1000", { headers }),
-        api.get("/master/get-nodal?page=1&limit=1000", { headers }),
-        api.get("/master/get-role", { headers }),
+        fetch("https://asrlabs.asrhospitalindia.in/lims/master/get-hospital?page=1&limit=1000", { headers }),
+        fetch("https://asrlabs.asrhospitalindia.in/lims/master/get-nodal?page=1&limit=1000", { headers }),
+        fetch("https://asrlabs.asrhospitalindia.in/lims/master/get-role", { headers }),
       ]);
 
-      setHospitals(hRes.data?.data || []);
-      setNodals(nRes.data?.data || []);
-      setRoles(rRes.data?.data || []);
+      const [hData, nData, rData] = await Promise.all([hRes.json(), nRes.json(), rRes.json()]);
+      setHospitals(hData?.data || []);
+      setNodals(nData?.data || []);
+      setRoles(rData?.data || []);
     } catch (err) {
       console.error("Failed to fetch master data:", err);
     }
-  }, []);
+  };
 
-  // ✅ Fetch Users (server-side pagination)
-  const fetchUsers = useCallback(async (page = currentPage, limit = itemsPerPage) => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("authToken");
 
-      const res = await api.get(
-        `/authentication/get-all-users?page=${page}&limit=${limit}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const res = await fetch(
+        "https://asrlabs.asrhospitalindia.in/lims/authentication/get-all-users",
+        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
       );
 
-      const usersData = Array.isArray(res.data?.data) ? res.data.data : [];
-      const meta = res.data?.meta || {};
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-      setUsers(usersData);
-      setFilteredUsers(usersData);
-      setTotalItems(meta.totalItems || usersData.length);
-      setTotalPages(meta.totalPages || Math.ceil(usersData.length / limit));
+      const data = await res.json();
+      const userList = Array.isArray(data?.data) ? data.data : [];
+      const sorted = userList.sort((a, b) => a.user_id - b.user_id);
+
+      setUsers(sorted);
+      setFilteredUsers(sorted);
     } catch (err) {
       console.error("Failed to fetch users:", err);
       setError("Failed to fetch users.");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage]);
+  };
 
-  // ✅ Load data initially & when page changes
   useEffect(() => {
     (async () => {
       await fetchMasterData();
       await fetchUsers();
     })();
-  }, [fetchMasterData, fetchUsers, currentPage, itemsPerPage]);
+  }, []);
 
-  // ✅ Search filter (client-side)
-  useEffect(() => {
-    if (!search.trim()) {
-      setFilteredUsers(users);
-    } else {
-      const q = search.toLowerCase();
-      const filtered = users.filter(
-        (u) =>
-          u.first_name?.toLowerCase().includes(q) ||
-          u.last_name?.toLowerCase().includes(q) ||
-          u.username?.toLowerCase().includes(q) ||
-          getHospitalName(u.hospital_id).toLowerCase().includes(q) ||
-          getNodalName(u.nodal_id).toLowerCase().includes(q) ||
-          getRoleName(u.role).toLowerCase().includes(q)
-      );
-      setFilteredUsers(filtered);
-    }
-  }, [search, users, hospitals, nodals, roles]);
-
-  // ✅ Helper functions
   const getHospitalName = (id) => hospitals.find((h) => h.id === id)?.hospitalname || "-";
   const getNodalName = (id) => nodals.find((n) => n.id === id)?.nodalname || "-";
   const getRoleName = (id) => roles.find((r) => r.id === id)?.roletype || "-";
 
-  // ✅ Pagination handlers
-  const handlePageChange = (page) => setCurrentPage(page);
-  const handlePageSizeChange = (size) => {
-    setItemsPerPage(size);
+  useEffect(() => {
+    const q = search.toLowerCase();
+    const filtered = users.filter(
+      (u) =>
+        u.first_name?.toLowerCase().includes(q) ||
+        u.last_name?.toLowerCase().includes(q) ||
+        u.username?.toLowerCase().includes(q) ||
+        getHospitalName(u.hospitalid).toLowerCase().includes(q) ||
+        getNodalName(u.nodalid).toLowerCase().includes(q) ||
+        getRoleName(Number(u.role)).toLowerCase().includes(q)
+    );
+    setFilteredUsers(filtered);
     setCurrentPage(1);
-  };
+  }, [search, users, hospitals, nodals, roles]);
 
-  // ✅ Map formatted items
-  const mappedItems = filteredUsers.map((u) => ({
+  const totalItems = filteredUsers.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  //
+  const mappedItems = paginatedUsers.map((u) => ({
     ...u,
-    hospital_name: getHospitalName(u.hospital_id),
-    nodal_name: getNodalName(u.nodal_id),
-    role_name: getRoleName(u.role),
-    module_name: u.module_name || u.module || (Array.isArray(u.modules) ? u.modules.join(", ") : "-"),
+    hospital_name: getHospitalName(u.hospitalid),
+    nodal_name: getNodalName(u.nodalid),
+    role_name: getRoleName(Number(u.role)),
+    module_name: Array.isArray(u.module) ? u.module.join(", ") : u.module || "-",
+
+    created_date: u.created_date
+      ? new Date(u.created_date).toLocaleDateString("en-GB")
+      : "-",
+
+    // updated_by: u.update_by || "-",
+updated_date: u.update_date || u.updatedAt
+  ? new Date(u.update_date || u.updatedAt).toLocaleDateString("en-GB")
+  : "-",
+
+
   }));
 
+  //
   const columns = [
     { key: "user_id", label: "ID" },
     { key: "first_name", label: "First Name" },
@@ -124,78 +131,67 @@ const ViewUserMapping = () => {
     { key: "hospital_name", label: "Hospital" },
     { key: "nodal_name", label: "Nodal" },
     { key: "module_name", label: "Module" },
+    { key: "created_date", label: "Created Date" },
+    // { key: "updated_by", label: "Updated By" },     
+    { key: "updated_date", label: "Updated Date" }, 
   ];
-  const handleActions = (user) =>
-    navigate(`/update-user-mapping/${user.user_id}`, { state: { user } });
 
   return (
     <>
-      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
         <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
-              <Link to="/admin-dashboard" className="inline-flex items-center text-gray-700 hover:text-teal-600 transition-colors">
-                🏠︎ Home
+              <Link to="/admin-dashboard" className="text-gray-700 hover:text-teal-600">
+                🏠 Home
               </Link>
             </li>
             <li className="text-gray-400">/</li>
-            <li aria-current="page" className="text-gray-500">
-              User Mapping
-            </li>
+            <li className="text-gray-500">User Mapping</li>
           </ol>
         </nav>
       </div>
 
-      {/* Content */}
       <div className="w-full mt-12 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-          {/* Header & Search */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">User Mapping List</h2>
-            <div className="relative w-full sm:w-56">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-gray-800">User Mapping List</h2>
+            <div className="relative w-56">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500"
                 placeholder="Search User..."
               />
               <RiSearchLine className="absolute left-3 top-2.5 text-lg text-gray-400" />
             </div>
           </div>
 
-          {/* Add Button */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <button
-              onClick={() => navigate("/add-user-mapping")}
-              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow hover:from-teal-700 hover:to-teal-600 transition-transform transform hover:scale-105"
-            >
-              Add New
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/add-user-mapping")}
+            className="px-6 py-2 bg-teal-600 text-white rounded-lg shadow hover:bg-teal-700 mb-4"
+          >
+            Add New
+          </button>
 
-          {/* Table */}
           {loading ? (
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
-          ) : mappedItems.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">No Users found.</div>
           ) : (
-            <WithoutActionTable
+            <DataTable
               items={mappedItems}
               columns={columns}
+              showAction={false}
               serverSidePagination={true}
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              showDetailsButtons={false}
-              // onUpdate={handleActions}
-
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setItemsPerPage}
+              onUpdate={(row) => navigate(`/update-user-mapping/${row.user_id}`, { state: row })}
             />
           )}
         </div>

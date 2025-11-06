@@ -120,6 +120,7 @@ import UpdateAccessionMaster from "./Components/Admin/UpdateAccessionMaster";
 import UpdateUserDetails from "./Components/Admin/UpdateUserDetails";
 import UpdatePatientDetails from "./Components/Admin/UpdatePatientDetails";
 import ViewDoctorRegistration from "./Components/Admin/ViewDoctorRegistration";
+import UpdateDoctorRegistration from "./Components/Admin/UpdateDoctorRegistration";
 import UpdateUserMapping from "./Components/Admin/UpdateUserMapping";
 import UpdateNewUserMapping from "./Components/Admin/UpdateNewUserMapping";
 
@@ -286,7 +287,16 @@ function App() {
                 <Navigate to="/" />
               ),
           },
-   
+   {
+  path: "update-doctor-registration/:doctorId",
+  element:
+    userRole === "admin" ? (
+      <UpdateDoctorRegistration />
+    ) : (
+      <Navigate to="/" />
+    ),
+},
+
 
           {
             path: "update-hospital/:id",

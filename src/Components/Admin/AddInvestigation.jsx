@@ -5,6 +5,8 @@ import { useNavigate, Link } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
+import AddInvestigationResultNormalValueModal from "./AddInvestigationResultNormalValueModal";
+import AddNormalValueModal from './AddNormalValueModal';
 
 import AddInvestigationResult from "./AddInvestigationResult";
 import AccrediationDetails from "./AccrediationDetails";
@@ -25,6 +27,9 @@ const AddInvestigation = () => {
   const [specimens, setSpecimens] = useState([]);
   const [instruments, setInstruments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNormalModal, setShowNormalModal] = useState(false);
+  
+
 
   const [roles, setRoles] = useState([]);
 
@@ -934,6 +939,8 @@ const AddInvestigation = () => {
                   { name: "Pink", hex: "#E342AD" },
                   { name: "Purple", hex: "#8D82CF" },
                   { name: "Dark Blue", hex: "#224E98" },
+                   { name: "Black", hex: "#070707ff" },
+                   { name: "Gray", hex: "#9c9999ff" },
                 ].map((color) => (
                   <label
                     key={`Tube_${color.name}`}

@@ -729,7 +729,7 @@ const formatDateTime = (dtString) => {
 
       const payload = {
         p_title: data.p_title,
-        hospital_id: data.referralSource,
+        hospitalid: data.referralSource,
         city: data.city,
         state: data.state,
         p_name: data.p_name,

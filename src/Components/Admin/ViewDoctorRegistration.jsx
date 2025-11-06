@@ -74,9 +74,13 @@ const ViewDoctorRegistration = () => {
     setCurrentPage(1);
   };
 
+  // const handleUpdate = (doctor) => {
+  //   navigate(`/update-doctor-registration/${doctor.id}`);
+  // };
   const handleUpdate = (doctor) => {
-    navigate(`/update-doctor-registration/${doctor.id}`);
-  };
+  navigate(`/update-doctor-registration/${doctor.id}`, { state: { doctor } });
+};
+
   const columns = [
     { key: "id", label: "ID" },
     { key: "dname", label: "Name" },
