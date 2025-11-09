@@ -31,8 +31,8 @@ const LoginPage = () => {
 
       localStorage.setItem("hospital_name", response.data.hospitalname);
       localStorage.setItem("nodalname", response.data.nodalname);
-      localStorage.setItem("nodal_id", response.data.nodal_id);
-      localStorage.setItem("hospital_id", response.data.hospital_id);
+      localStorage.setItem("nodal_id", response.data.nodalid);
+      localStorage.setItem("hospital_id", response.data.hospitalid);
       localStorage.setItem("roleType", response.data.roleType);
       localStorage.setItem("role", response.data.role);
 

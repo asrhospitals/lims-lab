@@ -2236,7 +2236,7 @@ const UpdateInvestigation = () => {
                         }}
                         className="bg-green-600 text-white px-4 py-2 rounded hover:bg-teal-700 mr-3"
                       >
-                        Add Mandatory Conditions
+                        Update Mandatory Conditions
                       </button>
 
                       <div
@@ -2352,7 +2352,7 @@ const UpdateInvestigation = () => {
                         }}
                         className="bg-green-600 text-white px-4 py-2 rounded hover:bg-teal-700"
                       >
-                        Add Reflex Tests
+                        Update Reflex Tests
                       </button>
                       <div className={`${showModalReflexTests ? 'block' : 'hidden'} fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75`}>
                         <div className="bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-3xl p-6">
@@ -2469,7 +2469,7 @@ const UpdateInvestigation = () => {
                         className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700"
                         onClick={handleAddResult}
                       >
-                        Add Result
+                        Update Result
                       </button>
                     </div>
                   </React.Fragment>

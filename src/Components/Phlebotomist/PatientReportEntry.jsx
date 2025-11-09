@@ -130,7 +130,7 @@ const PatientReportEntry = () => {
     const payload = {
       test_results: [
         {
-          test_id: selectedItem.selectedTest.test_id, // actual test_id
+          id: selectedItem.selectedTest.test_id, // actual test_id
           rejection_reason: rejectionReason,
         },
       ],
