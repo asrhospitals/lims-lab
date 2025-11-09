@@ -77,14 +77,14 @@ const AddNormalValueModal = ({ showModal, handleClose, onDataUpdate }) => {
         <div
             className={`${showModal ? 'block' : 'hidden'} fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75`}
         >
-            <div className="bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-6xl p-1">
-                <div className="border bottom-5 border-green-400 p-3">
-                    <h2 className="text-xl font-semibold text-center">Create Normal Values - New</h2>
-                    <button className="text-gray-600 float-right" onClick={handleClose}>
-                        ✖
-                    </button>
+            <div className="bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-6xl flex flex-col">
+                <div className="border-b border-green-400 p-3 flex justify-between items-center">
+                    <h2 className="text-xl font-semibold text-center flex-grow">Create Normal Values - New</h2>
+                    <button className="text-gray-600" onClick={handleClose}>✖</button>
                 </div>
-                <div className="p-6 overflow-auto max-h-90">
+
+                {/* Scrollable form area */}
+                <div className="p-6 overflow-auto max-h-[40vh]">
                     <form onSubmit={handleAdd}>
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6'>
                             <div>
@@ -239,11 +239,14 @@ const AddNormalValueModal = ({ showModal, handleClose, onDataUpdate }) => {
                         </div>
                     </form>
                 </div>
-                <div className="border-t border-gray-400 p-4 max-h-96 ">
+
+                {/* Scrollable table area */}
+                <div className="border-t border-gray-400 p-4 overflow-auto max-h-[35vh]">
                     <h3 className="text-lg font-semibold">Edited Normal Value List</h3>
                     <table className="min-w-full mt-2">
                         <thead>
                             <tr>
+                                <th className="border px-4 py-2">S.No</th>
                                 <th className="border px-4 py-2">Type</th>
                                 <th className="border px-4 py-2">Age (Min)</th>
                                 <th className="border px-4 py-2">Age (Max)</th>
@@ -261,6 +264,7 @@ const AddNormalValueModal = ({ showModal, handleClose, onDataUpdate }) => {
                         <tbody>
                             {normalValues.map((value, index) => (
                                 <tr key={index}>
+                                    <td className="border px-4 py-2">{index + 1}</td>
                                     <td className="border px-4 py-2">{value.type}</td>
                                     <td className="border px-4 py-2">{`${value.ageMinYear}Y ${value.ageMinMonth}M ${value.ageMinDay}D`}</td>
                                     <td className="border px-4 py-2">{`${value.ageMaxYear}Y ${value.ageMaxMonth}M ${value.ageMaxDay}D`}</td>
@@ -274,7 +278,7 @@ const AddNormalValueModal = ({ showModal, handleClose, onDataUpdate }) => {
                                     <td className="border px-4 py-2">{value.criticalRangeHigh}</td>
                                     <td className="border px-4 py-2">
                                         <button
-                                            className="text-blue-500 hover:underline"
+                                            className="text-blue-500 hover:underline mr-2"
                                             onClick={() => handleEdit(index)}
                                         >
                                             Edit
@@ -291,6 +295,8 @@ const AddNormalValueModal = ({ showModal, handleClose, onDataUpdate }) => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Buttons always visible */}
                 <div className="p-4 bg-gray-200 space-x-2 flex justify-between">
                     <button className="bg-gray-500 text-white rounded-lg w-1/2 py-2 hover:bg-gray-600" onClick={handleClose}>
                         Cancel

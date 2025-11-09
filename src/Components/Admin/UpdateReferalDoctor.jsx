@@ -6,8 +6,8 @@ import { useNavigate, Link, useParams } from "react-router-dom";
 import axios from "axios";
 import AdminContext from "../../context/adminContext";
 
-const UpdateReferalDoctor = () => {
-  const { id } = useParams(); // Get doctor ID from URL
+const UpdateReferalDoctor = () => { 
+  const { id } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { referalDoctorToUpdate, setReferalDoctorToUpdate } = useContext(AdminContext);
@@ -20,46 +20,24 @@ const UpdateReferalDoctor = () => {
     formState: { errors },
   } = useForm({ mode: "onBlur" });
 
-  // Fetch the doctor data if not already in context
-  // useEffect(() => {
-  //   const fetchDoctor = async () => {
-  //     try {
-  //       const token = localStorage.getItem("authToken");
-  //       if (!referalDoctorToUpdate) {
-  //         const response = await axios.get(
-  //           `https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc/${id}`,
-  //           { headers: { Authorization: `Bearer ${token}` } }
-  //         );
-  //         setReferalDoctorToUpdate(response.data);
-  //       }
-  //     } catch (err) {
-  //       toast.error("Failed to load referral doctor data.");
-  //       navigate("/view-referal-doctor");
-  //     }
-  //   };
-  //   fetchDoctor();
-  // }, [id, referalDoctorToUpdate, setReferalDoctorToUpdate, navigate]);
   useEffect(() => {
-  const fetchDoctor = async () => {
-    try {
-      const token = localStorage.getItem("authToken");
-      const response = await axios.get(
-        `https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setReferalDoctorToUpdate(response.data); // update context
-      reset(response.data); // pre-fill form
-    } catch (err) {
-      toast.error("Failed to load referal doctor data.");
-      navigate("/view-referal-doctor");
-    }
-  };
+    const fetchDoctor = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await axios.get(
+          `https://asrlabs.asrhospitalindia.in/lims/master/get-refdoc/${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setReferalDoctorToUpdate(response.data);
+        reset(response.data);
+      } catch (err) {
+        toast.error("Failed to load referal doctor data.");
+        navigate("/view-referal-doctor");
+      }
+    };
+    fetchDoctor();
+  }, [id, reset, setReferalDoctorToUpdate, navigate]);
 
-  fetchDoctor();
-}, [id, reset, setReferalDoctorToUpdate, navigate]);
-
-
-  // Pre-fill form once doctor data is available
   useEffect(() => {
     if (referalDoctorToUpdate) {
       reset({
@@ -69,7 +47,7 @@ const UpdateReferalDoctor = () => {
         ref_by: referalDoctorToUpdate.ref_by || "",
         status: referalDoctorToUpdate.isactive ? "Active" : "Inactive",
         incentive_plan_name: referalDoctorToUpdate.incentive_plan_name || "",
-        alternate_contact_no: referalDoctorToUpdate.alternate_contact_no || "", // ✅ add this
+        alternate_contact_no: referalDoctorToUpdate.alternate_contact_no || "",
         street: referalDoctorToUpdate.street || "",
         company: referalDoctorToUpdate.company || "",
         area: referalDoctorToUpdate.area || "",
@@ -89,9 +67,6 @@ const UpdateReferalDoctor = () => {
       });
     }
   }, [referalDoctorToUpdate, reset]);
-
-  // Clean helper for optional fields
-  const clean = (val) => (val === "" || val === undefined ? null : val);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -122,11 +97,9 @@ const UpdateReferalDoctor = () => {
     }
   };
 
-  // ENUM-safe options
   const CONSULTANT_PLANS = ["20 PERCENTAGE", "25 PERCENTAGE", "30 PERCENTAGE", "40 PERCENTAGE"];
   const REFERRAL_PLANS = ["20 PERCENTAGE", "25 PERCENTAGE", "30 PERCENTAGE", "40 PERCENTAGE"];
   const yesNoOptions = ["Yes", "No"];
-  const statusOptions = ["Active", "Inactive"];
   const categoryOptions = ["Hospital", "External Doctor"];
   const visitTypes = ["OP"];
   const incentiveAmountTypes = ["Billed Amount", "Collected Amount"];
@@ -136,7 +109,6 @@ const UpdateReferalDoctor = () => {
     { name: "ref_doc_name", label: "Name", placeholder: "Enter Name", validation: { required: "Name is required" } },
     { name: "contact_no", label: "Contact No", placeholder: "+91...", validation: { required: "Contact number is required" } },
     { name: "ref_by", label: "Referred By", placeholder: "Enter Referred By" },
-    { name: "status", label: "Status", type: "select", options: statusOptions, validation: { required: "Status is required" } },
     { name: "incentive_plan_name", label: "Incentive Plan", type: "select", options: REFERRAL_PLANS, validation: { required: "Incentive Plan is required" } },
     { name: "alternate_contact_no", label: "Alternate Contact No", placeholder: "Enter Alternate Contact No" },
     { name: "street", label: "Street", placeholder: "Enter Street" },
@@ -180,15 +152,22 @@ const UpdateReferalDoctor = () => {
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
               {fields.map(({ name, label, placeholder, type = "text", options, validation }) => (
                 <div key={name}>
-                  <label className="block mb-1 font-medium text-gray-700">{label}</label>
+                  <label className="block mb-1 font-medium text-gray-700">
+                    {label} {validation?.required && <span className="text-red-500">*</span>}
+                  </label>
+
                   {type === "select" ? (
-                    <select {...register(name, validation)} onBlur={() => trigger(name)}
-                      className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"} focus:ring-2 transition`}>
+                    <select
+                      {...register(name, validation)}
+                      onBlur={() => trigger(name)}
+                      className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"} focus:ring-2 transition`}
+                    >
                       <option value="">Select {label}</option>
                       {options.map(opt => (
-                        <option key={opt} value={opt} selected={referalDoctorToUpdate?.[name] === opt}>{opt}</option>
+                        <option key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
                   ) : type === "textarea" ? (
@@ -196,16 +175,64 @@ const UpdateReferalDoctor = () => {
                   ) : (
                     <input type={type} placeholder={placeholder} {...register(name, validation)} onBlur={() => trigger(name)} className={`w-full px-4 py-2 rounded-lg border ${errors[name] ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-teal-500"} focus:ring-2 transition`} />
                   )}
+
                   {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name].message}</p>}
                 </div>
               ))}
+
+              {/* ✅ Status Radio Buttons (Active default always) */}
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Status <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-6 mt-1">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="Active"
+                      defaultChecked
+                      {...register("status", { required: "Status is required" })}
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500"
+                    />
+                    Active
+                  </label>
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="Inactive"
+                      {...register("status", { required: "Status is required" })}
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500"
+                    />
+                    Inactive
+                  </label>
+                </div>
+
+                {errors.status && (
+                  <p className="text-red-500 text-xs mt-1">{errors.status.message}</p>
+                )}
+              </div>
+
             </div>
 
-            <div className="mt-6 flex justify-end">
-              <button type="submit" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-2 rounded-md transition disabled:opacity-60">
-                {isSubmitting ? "Updating..." : "Update Referal Doctor"}
-              </button>
-            </div>
+           <div className="mt-6 flex justify-end gap-3">
+  <button
+    type="button"
+    onClick={() => navigate("/view-referal-doctor")}
+    className="bg-gray-400 hover:bg-gray-500 text-white font-semibold px-6 py-2 rounded-md transition"
+  >
+    Cancel
+  </button>
+
+  <button
+    type="submit"
+    disabled={isSubmitting}
+    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-2 rounded-md transition disabled:opacity-60"
+  >
+    {isSubmitting ? "Updating..." : "Update Referal Doctor"}
+  </button>
+</div>
+
           </div>
         </form>
       </div>

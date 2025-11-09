@@ -12,41 +12,46 @@ const ViewUserDetails = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   const navigate = useNavigate();
 
-
+  // Fetch users
   useEffect(() => {
-    const fetchUsers = async (page = currentPage, limit = itemsPerPage) => {
+    const fetchUsers = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("authToken");
-        const res = await api.get(
-          `/authentication/get-all-users?page=${page}&limit=${limit}`,
+
+        // ✅ Correct API URL
+        const res = await api.post(
+          "https://asrauth.asrhospitalindia.in/lims/authentication/get-all-users",
           {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+            userid: 1,
+            otp: 7519,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const usersArray = res.data?.data || [];
+        const sortedData = (res.data || []).sort((a, b) => a.user_id - b.user_id);
 
-        setUsers(usersArray);
-        setFilteredUsers(usersArray);
-        setTotalItems(res.data?.meta?.totalItems || usersArray.length);
-        setTotalPages(res.data?.meta?.totalPages || Math.ceil(usersArray.length / limit));
+        setUsers(sortedData);
+        setFilteredUsers(sortedData);
+        setTotalItems(sortedData.length);
+        setTotalPages(Math.ceil(sortedData.length / itemsPerPage));
       } catch (err) {
-        console.error("Error fetching users:", err);
+        console.error("Fetch users error:", err);
         setError("Failed to fetch users.");
       } finally {
         setLoading(false);
       }
     };
-    fetchUsers();
-  }, [currentPage, itemsPerPage]);
 
-  // ✅ Search filtering (client-side)
+    fetchUsers();
+  }, [itemsPerPage]);
+
+  // Client-side search filtering
   useEffect(() => {
     if (!search.trim()) {
       setFilteredUsers(users);
@@ -60,36 +65,18 @@ const ViewUserDetails = () => {
       );
       setFilteredUsers(filtered);
     }
-    // setCurrentPage(1);
+    setCurrentPage(1);
   }, [search, users]);
 
-  // ✅ Pagination handlers
-  // const handlePageChange = (page) => {
-  //   setCurrentPage(page);
-  //   fetchUsers(page, itemsPerPage);
-  // };
-
-  // const handlePageSizeChange = (size) => {
-  //   setItemsPerPage(size);
-  //   setCurrentPage(1);
-  //   fetchUsers(1, size);
-  // };
-
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-
+  const handlePageChange = (page) => setCurrentPage(page);
+  const handlePageSizeChange = (size) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
   };
 
-  const handlePageSizeChange = (newSize) => {
-    setItemsPerPage(newSize);
-    setCurrentPage(1); // Reset to first page when changing page size
-  };
-
-  // ✅ Navigation on action
+  // Actions function for DataTable
   const handleActions = (user) =>
-    // navigate(`/update-user-details/${user.user_id}`, { state: { user } });
-    navigate(`/update-user-details/${user.user_id}`);
+    navigate(`/update-user-details/${user.user_id}`, { state: { user } });
 
   const columns = [
     { key: "user_id", label: "ID" },
@@ -105,32 +92,33 @@ const ViewUserDetails = () => {
     { key: "updatedAt", label: "Updated At" },
   ];
 
-  // ✅ Map and format data
-  // const mappedItems = filteredUsers.map((user) => ({
-  //   ...user,
-  //   dob: user.dob ? new Date(user.dob).toLocaleDateString("en-IN") : "-",
-  //   created_date: user.created_date
-  //     ? new Date(user.created_date).toLocaleDateString("en-IN")
-  //     : "-",
-  //   createdAt: user.createdAt
-  //     ? new Date(user.createdAt).toLocaleString("en-IN")
-  //     : "-",
-  //   updatedAt: user.updatedAt
-  //     ? new Date(user.updatedAt).toLocaleString("en-IN")
-  //     : "-",
-  //   isactive: user.isactive ? "Active" : "Inactive",
-  // }));
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-  const mappedItems = (filteredUsers || []).map((h) => ({
-    ...h,
-    status: h.isactive ? "Active" : "Inactive",
+  const mappedItems = paginatedUsers.map((user) => ({
+    ...user,
+    dob: user.dob ? new Date(user.dob).toLocaleDateString("en-IN") : "-",
+    created_date: user.created_date
+      ? new Date(user.created_date).toLocaleDateString("en-IN")
+      : "-",
+    createdAt: user.createdAt
+      ? new Date(user.createdAt).toLocaleString("en-IN")
+      : "-",
+    updatedAt: user.updatedAt
+      ? new Date(user.updatedAt).toLocaleString("en-IN")
+      : "-",
+    isactive: user.isactive ? "Active" : "Inactive",
   }));
 
   return (
     <>
-      {/* Breadcrumb */}
       <div className="fixed top-[61px] w-full z-10">
-        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg">
+        <nav
+          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
+          aria-label="Breadcrumb"
+        >
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
             <li>
               <Link
@@ -148,14 +136,10 @@ const ViewUserDetails = () => {
         </nav>
       </div>
 
-      {/* Content */}
       <div className="w-full mt-12 px-2 space-y-4 text-sm">
         <div className="bg-white rounded-lg shadow p-4">
-          {/* Header & Search */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-              User List
-            </h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">User List</h2>
             <div className="relative w-full sm:w-56">
               <input
                 type="text"
@@ -168,7 +152,6 @@ const ViewUserDetails = () => {
             </div>
           </div>
 
-          {/* Add Button */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => navigate("/add-user")}
@@ -178,28 +161,14 @@ const ViewUserDetails = () => {
             </button>
           </div>
 
-          {/* Table */}
           {loading ? (
             <div className="text-center py-6 text-gray-500">Loading...</div>
           ) : error ? (
             <div className="text-center py-6 text-red-500">{error}</div>
           ) : mappedItems.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">No users found.</div>
+            <div className="text-center py-6 text-gray-500">No Users found.</div>
           ) : (
             <DataTable
-              // items={mappedItems}
-              // columns={columns}
-              // serverSidePagination={true}
-              // currentPage={currentPage}
-              // totalPages={totalPages}
-              // totalItems={totalItems}
-              // itemsPerPage={itemsPerPage}
-              // onPageChange={handlePageChange}
-              // onPageSizeChange={handlePageSizeChange}
-              // onUpdate={handleActions}
-              // showDetailsButtons={true}
-              // tableContainerClass="overflow-x-auto max-h-[65vh]"
-              // stickyActionColumn={true}
               items={mappedItems}
               columns={columns}
               serverSidePagination={true}
@@ -209,8 +178,10 @@ const ViewUserDetails = () => {
               itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
-              showDetailsButtons={false}
               onUpdate={handleActions}
+              showDetailsButtons={true}
+              tableContainerClass="overflow-x-auto max-h-[65vh]"
+              stickyActionColumn={true}
             />
           )}
         </div>

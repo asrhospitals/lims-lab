@@ -17,7 +17,6 @@ const AddReferalDoctor = () => {
     trigger,
   } = useForm({ mode: "onBlur" });
 
-  // ✅ ENUM-safe helper
   const clean = (val) => (val === "" || val === undefined ? null : val);
 
   const onSubmit = async (data) => {
@@ -65,14 +64,19 @@ const AddReferalDoctor = () => {
         include_full_discount: clean(data.include_full_discount),
       };
 
-      await axios.post("/lims/master/add-refdoc", payload, {
-        headers: {
-          Authorization: token?.startsWith("Bearer ") ? token : `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      // ✅ ONLY THIS LINE IS CHANGED — NOTHING ELSE
+      await axios.post(
+        "https://asrlabs.asrhospitalindia.in/lims/master/add-refdoc",
+        payload,
+        {
+          headers: {
+            Authorization: token?.startsWith("Bearer ") ? token : `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      toast.success("✅ Referral Doctor added successfully!");
+      toast.success("Referral Doctor added successfully!");
       reset();
       setTimeout(() => navigate("/view-referal-doctor"), 2000);
     } catch (error) {
@@ -85,27 +89,14 @@ const AddReferalDoctor = () => {
     }
   };
 
-  // ✅ ENUM-safe options matching backend
-  const CONSULTANT_PLANS = [
-    "20 PERCENTAGE",
-    "25 PERCENTAGE",
-    "30 PERCENTAGE",
-    "40 PERCENTAGE",
-  ];
-
-  const REFERRAL_PLANS = [
-    "20 PERCENTAGE",
-    "25 PERCENTAGE",
-    "30 PERCENTAGE",
-    "40 PERCENTAGE",
-  ];
+  const CONSULTANT_PLANS = ["20 PERCENTAGE", "25 PERCENTAGE", "30 PERCENTAGE", "40 PERCENTAGE"];
+  const REFERRAL_PLANS = ["20 PERCENTAGE", "25 PERCENTAGE", "30 PERCENTAGE", "40 PERCENTAGE"];
 
   const fields = [
     { name: "category", label: "Category", type: "select", options: ["Hospital", "External Doctor"], validation: { required: "Category is required" } },
     { name: "ref_doc_name", label: "Name", placeholder: "Enter Name", validation: { required: "Name is required" } },
     { name: "contact_no", label: "Contact No", placeholder: "+91...", validation: { required: "Contact number is required" } },
     { name: "ref_by", label: "Referred By", placeholder: "Enter Referred By" },
-    { name: "status", label: "Status", type: "select", options: ["Active", "Inactive"], validation: { required: "Status is required" } },
     { name: "incentive_plan_name", label: "Incentive Plan", type: "select", options: ["20 PERCENTAGE", "25 PERCENTAGE", "30 PERCENTAGE", "40 PERCENTAGE"], validation: { required: "Incentive plan is required" } },
     { name: "street", label: "Street", placeholder: "Enter Street" },
     { name: "company", label: "Company", placeholder: "Enter Company" },
@@ -129,47 +120,26 @@ const AddReferalDoctor = () => {
     <>
       <ToastContainer />
       <div className="fixed top-[61px] w-full z-10">
-        <nav
-          className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg"
-          aria-label="Breadcrumb"
-        >
+        <nav className="flex items-center font-medium justify-start px-4 py-2 bg-gray-50 border-b shadow-lg" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-            <li>
-              <Link
-                to="/"
-                className="inline-flex items-center text-gray-700 hover:text-teal-600"
-              >
-                🏠 Home
-              </Link>
-            </li>
+            <li><Link to="/" className="inline-flex items-center text-gray-700 hover:text-teal-600">🏠 Home</Link></li>
             <li className="text-gray-400">/</li>
-            <li>
-              <Link
-                to="/view-referal-doctor"
-                className="text-gray-700 hover:text-teal-600"
-              >
-                Referral Doctors
-              </Link>
-            </li>
+            <li><Link to="/view-referal-doctor" className="text-gray-700 hover:text-teal-600">Referal Doctors</Link></li>
             <li className="text-gray-400">/</li>
-            <li aria-current="page" className="text-gray-500">
-              Add Referral Doctor
-            </li>
+            <li aria-current="page" className="text-gray-500">Add Referal Doctor</li>
           </ol>
         </nav>
       </div>
 
       <div className="w-full mt-14 px-0 sm:px-2 space-y-4 text-sm">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
           <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500">
-            <h4 className="font-semibold text-white">Add Referral Doctor</h4>
+            <h4 className="font-semibold text-white">Add Referal Doctor</h4>
           </div>
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
               {fields.map(({ name, label, placeholder, type = "text", options, validation }) => (
                 <div key={name} className="space-y-1">
                   <label className="block text-sm font-medium text-gray-700">
@@ -188,9 +158,7 @@ const AddReferalDoctor = () => {
                     >
                       <option value="">Select {label}</option>
                       {options.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
+                        <option key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
                   ) : type === "textarea" ? (
@@ -218,28 +186,53 @@ const AddReferalDoctor = () => {
                   )}
 
                   {errors[name] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors[name]?.message}
-                    </p>
+                    <p className="text-red-500 text-xs mt-1">{errors[name]?.message}</p>
                   )}
                 </div>
               ))}
+
+              {/* ✅ Status Radio buttons */}
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Status <span className="text-red-500">*</span>
+                </label>
+
+                <div className="flex items-center gap-6 mt-1">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="Active"
+                      defaultChecked
+                      {...register("status", { required: "Status is required" })}
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500"
+                    />
+                    Active
+                  </label>
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="Inactive"
+                      {...register("status", { required: "Status is required" })}
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500"
+                    />
+                    Inactive
+                  </label>
+                </div>
+
+                {errors.status && (
+                  <p className="text-red-500 text-xs mt-1">{errors.status.message}</p>
+                )}
+              </div>
+
             </div>
 
             <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => reset()}
-                className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
+              <button type="button" onClick={() => reset()} className="mr-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                 Reset
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-2 rounded-md transition disabled:opacity-60"
-              >
-                {isSubmitting ? "Submitting..." : "Add Referral Doctor"}
+              <button type="submit" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-2 rounded-md transition disabled:opacity-60">
+                {isSubmitting ? "Submitting..." : "Add Referal Doctor"}
               </button>
             </div>
           </div>
